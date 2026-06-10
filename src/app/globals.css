@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================
+   デジタル庁デザインシステム（DADS）v2.12.0
+   CSSカスタムプロパティ（Tailwind外からも参照可能にする）
+   ========================================================= */
+:root {
+  /* color */
+  --color-primary-900: #003cb8;
+  --color-primary-800: #0050d0;
+  --color-primary-700: #0064e6;
+  --color-primary-100: #e8f1fe;
+  --color-primary-50: #f4f8ff;
+
+  --color-neutral-900: #1a1a1c;
+  --color-neutral-700: #474749;
+  --color-neutral-600: #626264;
+  --color-neutral-500: #767678;
+  --color-neutral-300: #b4b4b6;
+  --color-neutral-200: #d9d9db;
+  --color-neutral-100: #f0f0f2;
+  --color-neutral-50: #f8f8fa;
+  --color-white: #ffffff;
+
+  --color-success-900: #197a2e;
+  --color-success-100: #e5f5e8;
+  --color-warning-900: #926800;
+  --color-warning-100: #fff6db;
+  --color-error-900: #c52f24;
+  --color-error-100: #fceae8;
+  --color-info-900: #0064e6;
+  --color-info-100: #e8f1fe;
+
+  --color-focus: #ffdb1a;
+  --color-link: #0064e6;
+  --color-link-visited: #7b59c0;
+}
+
+/* ページ既定 */
+body {
+  background-color: var(--color-neutral-50);
+  color: var(--color-neutral-900);
+}
+
+/* アクセシビリティ: キーボードフォーカスを DADS の focus-yellow で明示 */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* 画面遷移の進捗バー */
+@keyframes route-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+.route-progress-bar {
+  animation: route-progress 1s ease-in-out infinite;
+}

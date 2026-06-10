@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "dads-design-system": {
+      "command": "node",
+      "args": [
+        "/Users/apple/Downloads/claude/design-system-mcp/dist/index.js"
+      ]
+    }
+  }
+}

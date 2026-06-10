@@ -1,0 +1,7 @@
+# デプロイに不要なもの（アプリ実行時に参照しない）
+/supabase
+/scripts
+/docs
+/mark.jpeg
+/syuugou.jpeg
+/mark.jpeg
