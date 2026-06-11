@@ -12,6 +12,7 @@ import { getPublishedEvents } from "@/lib/queries/events";
 import { getDepartmentNames } from "@/lib/queries/departments";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileCard } from "./ProfileCard";
+import { ChangePasswordCard } from "./ChangePasswordCard";
 
 export default async function MyPage() {
   const supabase = await createClient();
@@ -143,6 +144,8 @@ export default async function MyPage() {
             branchName={branchName}
             email={user?.email ?? "—"}
           />
+
+          <ChangePasswordCard email={user?.email ?? ""} />
         </div>
       </div>
     </AppShell>
