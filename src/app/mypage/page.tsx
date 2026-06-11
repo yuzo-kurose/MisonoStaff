@@ -9,18 +9,21 @@ import { yen, jpDate } from "@/lib/format";
 import { getMyProfile, getMyParticipations } from "@/lib/queries/me";
 import { getBranches } from "@/lib/queries/branches";
 import { getPublishedEvents } from "@/lib/queries/events";
+import { getDepartmentNames } from "@/lib/queries/departments";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileCard } from "./ProfileCard";
 
 export default async function MyPage() {
   const supabase = await createClient();
-  const [{ data: { user } }, profile, participations, branches, events] = await Promise.all([
-    supabase.auth.getUser(),
-    getMyProfile(),
-    getMyParticipations(),
-    getBranches(),
-    getPublishedEvents(),
-  ]);
+  const [{ data: { user } }, profile, participations, branches, events, departmentOptions] =
+    await Promise.all([
+      supabase.auth.getUser(),
+      getMyProfile(),
+      getMyParticipations(),
+      getBranches(),
+      getPublishedEvents(),
+      getDepartmentNames(),
+    ]);
 
   const branchName = branches.find((b) => b.id === profile?.branch_id)?.name ?? "—";
   const unpaidTotal = participations
@@ -136,6 +139,7 @@ export default async function MyPage() {
             kana={profile?.kana ?? ""}
             division={profile?.division ?? ""}
             department={profile?.department ?? ""}
+            departmentOptions={departmentOptions}
             branchName={branchName}
             email={user?.email ?? "—"}
           />

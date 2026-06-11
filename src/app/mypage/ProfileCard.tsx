@@ -7,7 +7,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { divisions, departments } from "@/lib/mock/data";
+import { divisions } from "@/lib/mock/data";
 import { updateMyProfile } from "./actions";
 
 type Props = {
@@ -15,6 +15,7 @@ type Props = {
   kana: string;
   division: string;
   department: string;
+  departmentOptions: string[];
   branchName: string;
   email: string;
 };
@@ -22,7 +23,15 @@ type Props = {
 const divisionLabel = (v: string) => divisions.find((d) => d.value === v)?.label ?? "—";
 
 /** 登録情報の表示＋本人編集（氏名・読み仮名・部・部署）。所属/メールは表示のみ。 */
-export function ProfileCard({ name, kana, division, department, branchName, email }: Props) {
+export function ProfileCard({
+  name,
+  kana,
+  division,
+  department,
+  departmentOptions,
+  branchName,
+  email,
+}: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name, kana, division, department });
@@ -96,7 +105,11 @@ export function ProfileCard({ name, kana, division, department, branchName, emai
           <Field label="部署（配置先）" hint="任意">
             <Select value={form.department} onChange={(e) => set("department", e.target.value)}>
               <option value="">未選択</option>
-              {departments.map((d) => (
+              {/* 現在値が選択肢に無い場合（マスタから削除された等）も維持できるよう補う */}
+              {form.department && !departmentOptions.includes(form.department) && (
+                <option value={form.department}>{form.department}（現在の設定）</option>
+              )}
+              {departmentOptions.map((d) => (
                 <option key={d} value={d}>{d}</option>
               ))}
             </Select>

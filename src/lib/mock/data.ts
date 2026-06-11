@@ -54,8 +54,10 @@ export const divisions = [
 ] as const;
 
 /**
- * 部署（配置先）。部(division)とは別軸の「当日の持ち場」を表す固定リスト。
- * 申込時は任意入力。値＝表示名でそのまま profiles.department に保存する。
+ * 部署（配置先）の初期値。部(division)とは別軸の「当日の持ち場」。
+ * ⚠️ 実行時の選択肢は DB の departments テーブル（部署マスタ）が正。
+ *    この定数は migration 20260611000003 の初期シードと同じ並びの参照用で、
+ *    画面では使用しない（管理者が部署マスタで追加・編集・削除する）。
  */
 export const departments = [
   "教祖殿エントランス",

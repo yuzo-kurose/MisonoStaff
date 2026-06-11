@@ -233,6 +233,14 @@ export interface Announcement {
   updated_at: string;
 }
 
+export interface Department {
+  id: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 // ---------- supabase-js 用 Database 型 ----------
 type TableShape<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
   Row: Row;
@@ -262,6 +270,7 @@ export interface Database {
       notification_logs: TableShape<NotificationLog>;
       audit_logs: TableShape<AuditLog>;
       announcements: TableShape<Announcement>;
+      departments: TableShape<Department>;
     };
     Views: Record<never, never>;
     Enums: Record<never, never>;
