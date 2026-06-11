@@ -1,33 +1,34 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { requireRole } from "@/lib/auth/guard";
+import { createClient } from "@/lib/supabase/server";
 
 type Result = { ok: boolean; error?: string };
 
 /**
  * 部署マスタの操作。
- *
- * なぜ admin client(service_role) + requireRole なのか：
- *   RLS の is_admin() は JWT(app_metadata.role) を見るが、ブラウザの access token が
- *   role 同期前に発行されていると role が乗っておらず、画面は開けても INSERT が
- *   「new row violates row-level security policy」で弾かれることがある（getUser は
- *   DB の最新 app_metadata を返すためミドルウェアは通る、という食い違い）。
- *   そこで返金・代行登録と同じく、service_role で RLS を迂回しつつ requireRole で
- *   呼び出し元が管理者であることを必ず自己検証する（guard は getUser 由来＝最新）。
- *   テーブルの RLS は多層防御として残す（service_role は迂回する）。
+ * 通常の user セッション client を使う＝RLS が効く。dept_write_admin ポリシーにより
+ * 管理者のみ insert/update/delete が成功する（service_role を使わないので認可は RLS が保証）。
+ * RLS の is_admin() は auth_role() 経由で profiles.role を権威的に読むため、JWT の鮮度に
+ * 依存せず判定される（migration 20260611000004）。拠点マスタと同じ方式。
  */
+async function requireUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { supabase, error: "ログインが必要です。" as string | null };
+  return { supabase, error: null as string | null };
+}
 
-/** 部署を追加。並び順は末尾（既存最大+1）。 */
+/** 部署を追加。並び順は末尾（既存最大+1）。RLS により管理者のみ成功。 */
 export async function createDepartment(name: string): Promise<Result> {
   if (!name.trim()) return { ok: false, error: "部署名を入力してください。" };
-  const auth = await requireRole(["admin"]);
-  if (!auth.ok) return { ok: false, error: auth.error };
+  const { supabase, error } = await requireUser();
+  if (error) return { ok: false, error };
 
-  const admin = createAdminClient();
   // 末尾に追加するため現在の最大 sort_order を取得
-  const { data: maxRow } = await admin
+  const { data: maxRow } = await supabase
     .from("departments")
     .select("sort_order")
     .order("sort_order", { ascending: false })
@@ -35,7 +36,7 @@ export async function createDepartment(name: string): Promise<Result> {
     .maybeSingle();
   const nextOrder = ((maxRow as { sort_order: number } | null)?.sort_order ?? 0) + 1;
 
-  const { error: insErr } = await admin.from("departments").insert({
+  const { error: insErr } = await supabase.from("departments").insert({
     name: name.trim(),
     sort_order: nextOrder,
     is_active: true,
@@ -53,11 +54,10 @@ export async function createDepartment(name: string): Promise<Result> {
 /** 部署名を変更。 */
 export async function updateDepartment(id: string, name: string): Promise<Result> {
   if (!name.trim()) return { ok: false, error: "部署名を入力してください。" };
-  const auth = await requireRole(["admin"]);
-  if (!auth.ok) return { ok: false, error: auth.error };
+  const { supabase, error } = await requireUser();
+  if (error) return { ok: false, error };
 
-  const admin = createAdminClient();
-  const { error: upErr } = await admin
+  const { error: upErr } = await supabase
     .from("departments")
     .update({ name: name.trim() } as never)
     .eq("id", id);
@@ -77,11 +77,10 @@ export async function updateDepartment(id: string, name: string): Promise<Result
  * （表示は残るが、今後この部署は新規選択できなくなる）。
  */
 export async function deleteDepartment(id: string): Promise<Result> {
-  const auth = await requireRole(["admin"]);
-  if (!auth.ok) return { ok: false, error: auth.error };
+  const { supabase, error } = await requireUser();
+  if (error) return { ok: false, error };
 
-  const admin = createAdminClient();
-  const { error: delErr } = await admin.from("departments").delete().eq("id", id);
+  const { error: delErr } = await supabase.from("departments").delete().eq("id", id);
   if (delErr) return { ok: false, error: delErr.message };
 
   revalidatePath("/admin/departments");
