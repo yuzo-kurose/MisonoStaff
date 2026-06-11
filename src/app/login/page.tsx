@@ -96,6 +96,11 @@ function LoginForm() {
           <Button type="submit" fullWidth size="lg" disabled={loading}>
             {loading ? "ログイン中…" : "ログイン"}
           </Button>
+          <p className="text-center text-body-sm">
+            <Link href="/forgot-password" className="text-link underline">
+              パスワードを忘れた方
+            </Link>
+          </p>
         </form>
       </Card>
       <p className="mt-4 text-center text-body-sm text-neutral-700">
