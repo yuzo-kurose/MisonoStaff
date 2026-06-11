@@ -2,12 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Check, X } from "lucide-react";
+import { Plus, Check, X, Pencil, Building2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { createBranch, updateBranch } from "./actions";
 
@@ -126,6 +127,7 @@ export function BranchesClient({
         </div>
       )}
 
+      {branches.length > 0 && (
       <Table
         head={
           <tr>
@@ -177,7 +179,7 @@ export function BranchesClient({
                     </>
                   ) : (
                     <Button variant="ghost" size="md" onClick={() => startEdit(b)}>
-                      編集
+                      <Pencil size={15} /> 編集
                     </Button>
                   )}
                 </div>
@@ -185,16 +187,21 @@ export function BranchesClient({
             </tr>
           );
         })}
-        {branches.length === 0 && (
-          <tr>
-            <Td>
-              <span className="text-neutral-600">拠点がありません。</span>
-            </Td>
-            <Td>{""}</Td>
-            <Td>{""}</Td>
-          </tr>
-        )}
       </Table>
+      )}
+
+      {branches.length === 0 && (
+        <EmptyState
+          icon={Building2}
+          title="拠点がまだありません"
+          description="「拠点を追加」から、全国の拠点を登録してください。拠点ごとに代表者を設定できます。"
+          action={
+            <Button onClick={() => setAdding(true)}>
+              <Plus size={18} /> 拠点を追加
+            </Button>
+          }
+        />
+      )}
     </AppShell>
   );
 }

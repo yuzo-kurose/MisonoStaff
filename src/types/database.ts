@@ -43,6 +43,7 @@ export interface Profile {
   kana: string;
   role: UserRole;
   division: Division | null;
+  department: string | null;
   branch_id: string | null;
   line_user_id: string | null;
   status: AccountStatus;
@@ -219,6 +220,19 @@ export interface AuditLog {
   created_at: string;
 }
 
+export type AnnouncementLevel = "important" | "info";
+export interface Announcement {
+  id: string;
+  level: AnnouncementLevel;
+  title: string;
+  body: string;
+  is_published: boolean;
+  published_at: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // ---------- supabase-js 用 Database 型 ----------
 type TableShape<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
   Row: Row;
@@ -247,6 +261,7 @@ export interface Database {
       attendances: TableShape<Attendance>;
       notification_logs: TableShape<NotificationLog>;
       audit_logs: TableShape<AuditLog>;
+      announcements: TableShape<Announcement>;
     };
     Views: Record<never, never>;
     Enums: Record<never, never>;

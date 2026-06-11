@@ -53,6 +53,38 @@ export const divisions = [
   { value: "general", label: "一般" },
 ] as const;
 
+/**
+ * 部署（配置先）。部(division)とは別軸の「当日の持ち場」を表す固定リスト。
+ * 申込時は任意入力。値＝表示名でそのまま profiles.department に保存する。
+ */
+export const departments = [
+  "教祖殿エントランス",
+  "教祖殿地下",
+  "サンクチュアリ",
+  "プラザ",
+  "みたらし",
+  "参道",
+  "天門",
+  "スクエア",
+  "宗務棟",
+  "講堂棟",
+  "研修棟",
+  "設営",
+  "キッチン",
+  "配布",
+  "浄化",
+  "交通本部",
+  "参拝報告",
+  "P1",
+  "P2",
+  "P3",
+  "P4",
+  "P5",
+  "P6",
+  "守山",
+  "未割当",
+] as const;
+
 // id は supabase/seed.sql の拠点UUIDと一致させる（サインアップのFK整合）
 export const branches: Branch[] = [
   { id: "11111111-1111-1111-1111-111111111111", name: "東京拠点", region: "関東", representative: "佐藤 健一" },

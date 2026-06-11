@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireRole } from "@/lib/auth/guard";
 
 export type ProxyMemberInput = {
   eventIds: string[];
@@ -9,6 +10,7 @@ export type ProxyMemberInput = {
   kana: string;
   email: string;
   division: string;
+  department?: string; // 配置先（任意）
 };
 
 /** 仮パスワード（本人が初回ログインで再設定する想定）。 */
@@ -34,21 +36,34 @@ export async function registerProxyMember(
   if (input.eventIds.length === 0)
     return { ok: false, error: "参加イベントを1つ以上選択してください。" };
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "ログインが必要です。" };
+  // 代行登録は service_role でアカウント作成・申込を行うため、呼び出し元の権限を必ず検証する。
+  const auth = await requireRole(["admin", "representative"]);
+  if (!auth.ok) return { ok: false, error: auth.error };
 
+  const supabase = await createClient();
   const { data: repRow } = await supabase
     .from("profiles")
     .select("id,branch_id")
-    .eq("id", user.id)
+    .eq("id", auth.userId)
     .single();
   const rep = repRow as { id: string; branch_id: string | null } | null;
   if (!rep?.branch_id)
     return { ok: false, error: "代表者の所属拠点が未設定です。拠点マスタで設定してください。" };
   const branchId = rep.branch_id;
+
+  // 代表者は「自分が代表を務める拠点」にしか代行登録できない。
+  // 代表者かどうかは branches.representative_user_id が authoritative（RLS の is_rep_of_branch と同じ判定）。
+  // role だけだと「representative ロールだが別拠点」のケースを許してしまうため、拠点との対応も確認する。
+  if (auth.role !== "admin") {
+    const { data: ownBranch } = await supabase
+      .from("branches")
+      .select("id")
+      .eq("id", branchId)
+      .eq("representative_user_id", auth.userId)
+      .maybeSingle();
+    if (!ownBranch)
+      return { ok: false, error: "代行登録は、管理者または自拠点の代表者のみ実行できます。" };
+  }
 
   const admin = createAdminClient();
 
@@ -62,6 +77,7 @@ export async function registerProxyMember(
       kana: input.kana.trim(),
       branch_id: branchId,
       division: input.division,
+      department: input.department?.trim() || "",
     },
   });
   if (cErr) {

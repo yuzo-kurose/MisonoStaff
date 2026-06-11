@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
   const profile = {
     branch_id: p.get("branch_id") ?? "",
     division: p.get("division") ?? "",
+    department: p.get("department") ?? "",
     name: p.get("name") ?? "",
     kana: p.get("kana") ?? "",
   };

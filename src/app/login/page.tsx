@@ -34,6 +34,10 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(
     () => ERROR_MESSAGES[params.get("error") ?? ""] ?? null,
   );
+  // メール確認が完了して戻ってきた場合の案内
+  const notice = params.get("confirmed") === "1"
+    ? "メールアドレスの確認が完了しました。登録したメールとパスワードでログインしてください。"
+    : null;
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -71,6 +75,7 @@ function LoginForm() {
       </p>
       <Card>
         <form className="space-y-4" onSubmit={onSubmit}>
+          {notice && <Alert variant="success">{notice}</Alert>}
           {error && <Alert variant="error">{error}</Alert>}
           <Field label="メールアドレス" required>
             <Input

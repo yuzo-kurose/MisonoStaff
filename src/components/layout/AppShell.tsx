@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, PanelLeft, House, ChevronDown } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { navByRole, navGroupsByRole, roleLabels, type Role } from "@/lib/nav";
+import { navByRole, navGroupsByRole, type Role } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser } from "@/hooks/useAuthUser";
 
@@ -14,6 +14,14 @@ function isActive(pathname: string, href: string) {
 }
 
 const COLLAPSE_KEY = "sidebar-collapsed";
+
+/** 役割ごとの色分け。どの立場の画面かを一目で判別できるようにする。 */
+const roleTheme: Record<Role, { label: string; pill: string }> = {
+  participant: { label: "参加者", pill: "bg-primary-100 text-primary-900" },
+  representative: { label: "代表者", pill: "bg-info-100 text-info-900" },
+  admin: { label: "管理者", pill: "bg-neutral-900 text-neutral-white" },
+  reception: { label: "受付", pill: "bg-warning-100 text-warning-900" },
+};
 
 /**
  * ダッシュボード型の共通シェル。
@@ -73,7 +81,9 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
             {!collapsed && (
               <div className="leading-tight">
                 <p className="text-label-md font-medium text-neutral-900">神苑スタッフ</p>
-                <p className="text-label-sm text-neutral-600">{roleLabels[role]}</p>
+                <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-label-sm font-medium ${roleTheme[role].pill}`}>
+                  {roleTheme[role].label}画面
+                </span>
               </div>
             )}
           </Link>
@@ -193,8 +203,8 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
             <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} />
             <span className="text-label-md font-medium text-neutral-900">神苑スタッフ</span>
           </Link>
-          <span className="ml-auto rounded-full bg-primary-100 px-2.5 py-0.5 text-label-sm text-primary-900">
-            {roleLabels[role]}
+          <span className={`ml-auto rounded-full px-2.5 py-0.5 text-label-sm font-medium ${roleTheme[role].pill}`}>
+            {roleTheme[role].label}画面
           </span>
         </header>
 

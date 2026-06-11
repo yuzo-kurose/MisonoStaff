@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const admin = createAdminClient();
 
     // 新規登録から引き継いだプロフィール（所属・部・氏名・読み仮名）
-    let signupProfile: { branch_id?: string; division?: string; name?: string; kana?: string } = {};
+    let signupProfile: { branch_id?: string; division?: string; department?: string; name?: string; kana?: string } = {};
     const rawProfile = request.cookies.get("line_signup_profile")?.value;
     if (rawProfile) {
       try {
@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
           kana: signupProfile.kana ?? "",
           branch_id: signupProfile.branch_id || null,
           division: signupProfile.division || null,
+          department: signupProfile.department || "",
           line_user_id: sub,
         },
       });

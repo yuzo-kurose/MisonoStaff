@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export type RegisterInput = {
   name: string;
@@ -9,13 +9,21 @@ export type RegisterInput = {
   password: string;
   branch_id: string;
   division: string;
+  department?: string; // 配置先（任意）
 };
 
 /**
- * 参加者の初期登録。
- * service_role で「メール確認済み」ユーザーを作成 → そのまま即ログイン可能にする。
- * （プロジェクトのメール確認設定に関わらず、登録直後から利用できる）
- * profiles 行は handle_new_user トリガが user_metadata から自動作成する。
+ * 参加者の初期登録（メール確認必須）。
+ *
+ * signUp を使い、確認メールを送信する。ユーザーはメール内リンク（/auth/confirm）で
+ * 本人確認するまでログインできない＝メールアドレスの所有を確認してから利用開始になる。
+ * profiles 行は handle_new_user トリガが user_metadata から作成する（確認前でも作成されるが
+ * ログイン不可なので実害なし）。
+ *
+ * セキュリティ上の注意:
+ *   既存メールで signUp しても Supabase はエラーを返さず（メール列挙攻撃の防止）、
+ *   ダミーのレスポンスを返す。よって呼び出し側は成否に関わらず
+ *   「確認メールを送信しました」と表示する（実在判定を漏らさない）。
  */
 export async function registerParticipant(
   input: RegisterInput,
@@ -27,22 +35,29 @@ export async function registerParticipant(
   if (!input.branch_id) return { ok: false, error: "所属（拠点）を選択してください。" };
   if (!input.division) return { ok: false, error: "部を選択してください。" };
 
-  const admin = createAdminClient();
-  const { error } = await admin.auth.admin.createUser({
-    email: input.email,
+  const supabase = await createClient();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  const { error } = await supabase.auth.signUp({
+    email: input.email.trim(),
     password: input.password,
-    email_confirm: true,
-    user_metadata: {
-      name: input.name,
-      kana: input.kana,
-      branch_id: input.branch_id,
-      division: input.division,
+    options: {
+      // handle_new_user トリガがこのメタデータから profiles を作る
+      data: {
+        name: input.name.trim(),
+        kana: input.kana.trim(),
+        branch_id: input.branch_id,
+        division: input.division,
+        department: input.department?.trim() || "",
+      },
+      // 確認リンクの戻り先（token_hash を /auth/confirm が検証してセッション確立）
+      emailRedirectTo: `${appUrl}/auth/confirm?next=/mypage`,
     },
   });
 
+  // メール列挙を防ぐため、既存メール等の詳細はユーザーに返さない。
+  // 設定不備など明確なエラーのみ通知する。
   if (error) {
-    if (error.message.toLowerCase().includes("already"))
-      return { ok: false, error: "このメールアドレスは既に登録されています。" };
     return { ok: false, error: error.message };
   }
   return { ok: true };

@@ -1,24 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { createClient } from "@/lib/supabase/client";
-import { branches, divisions } from "@/lib/mock/data";
+import { branches, divisions, departments } from "@/lib/mock/data";
 import { registerParticipant } from "./actions";
 
 type Method = "email" | "line";
 
 export default function SignupPage() {
-  const router = useRouter();
   const [method, setMethod] = useState<Method>("email");
   const [form, setForm] = useState({
     branch_id: "",
     division: "",
+    department: "",
     name: "",
     kana: "",
     email: "",
@@ -26,6 +24,7 @@ export default function SignupPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   // 認証方法に関わらず必須のプロフィール項目
@@ -39,23 +38,13 @@ export default function SignupPage() {
     setLoading(true);
 
     const res = await registerParticipant(form);
+    setLoading(false);
     if (!res.ok) {
-      setLoading(false);
       setError(res.error ?? "登録に失敗しました。");
       return;
     }
-    const supabase = createClient();
-    const { error: signInErr } = await supabase.auth.signInWithPassword({
-      email: form.email,
-      password: form.password,
-    });
-    setLoading(false);
-    if (signInErr) {
-      setError("登録は完了しましたが、ログインに失敗しました。ログイン画面からお試しください。");
-      return;
-    }
-    router.push("/mypage");
-    router.refresh();
+    // メール確認必須。確認メールを送ったので、リンク押下までは画面遷移しない。
+    setSent(true);
   }
 
   // LINE連携：入力済みプロフィールを OAuth に引き渡してアカウントへ反映する
@@ -68,6 +57,7 @@ export default function SignupPage() {
     const q = new URLSearchParams({
       branch_id: form.branch_id,
       division: form.division,
+      department: form.department,
       name: form.name,
       kana: form.kana,
     });
@@ -90,6 +80,23 @@ export default function SignupPage() {
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
       <h1 className="mb-1 text-center text-heading-xl text-neutral-900">新規登録</h1>
       <p className="mb-6 text-center text-body-sm text-neutral-700">以下の情報を登録します</p>
+      {sent ? (
+        <Card>
+          <div className="space-y-4 text-center">
+            <p className="text-heading-md text-neutral-900">確認メールを送信しました</p>
+            <p className="text-body-sm text-neutral-700">
+              <span className="font-medium">{form.email}</span> 宛に確認メールを送りました。
+              メール内のリンクをクリックすると登録が完了し、ログインできるようになります。
+            </p>
+            <p className="text-body-sm text-neutral-600">
+              メールが届かない場合は、迷惑メールフォルダをご確認ください。
+            </p>
+            <Link href="/login" className="inline-block text-link underline">
+              ログイン画面へ
+            </Link>
+          </div>
+        </Card>
+      ) : (
       <Card>
         <form className="space-y-4" onSubmit={onSubmitEmail}>
           {error && <Alert variant="error">{error}</Alert>}
@@ -116,6 +123,17 @@ export default function SignupPage() {
               {divisions.map((d) => (
                 <option key={d.value} value={d.value}>
                   {d.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          <Field label="部署（配置先）" hint="任意。決まっていなければ未選択のままで構いません">
+            <Select value={form.department} onChange={(e) => set("department", e.target.value)}>
+              <option value="">未選択</option>
+              {departments.map((d) => (
+                <option key={d} value={d}>
+                  {d}
                 </option>
               ))}
             </Select>
@@ -190,12 +208,15 @@ export default function SignupPage() {
           )}
         </form>
       </Card>
-      <p className="mt-4 text-center text-body-sm text-neutral-700">
-        既にアカウントをお持ちの方は{" "}
-        <Link href="/login" className="text-link underline">
-          ログイン
-        </Link>
-      </p>
+      )}
+      {!sent && (
+        <p className="mt-4 text-center text-body-sm text-neutral-700">
+          既にアカウントをお持ちの方は{" "}
+          <Link href="/login" className="text-link underline">
+            ログイン
+          </Link>
+        </p>
+      )}
     </main>
   );
 }

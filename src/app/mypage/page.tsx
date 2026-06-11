@@ -4,15 +4,22 @@ import { ButtonLink } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { QrPlaceholder } from "@/components/QrPlaceholder";
+import { CalendarClock } from "lucide-react";
 import { yen, jpDate } from "@/lib/format";
 import { getMyProfile, getMyParticipations } from "@/lib/queries/me";
 import { getBranches } from "@/lib/queries/branches";
+import { getPublishedEvents } from "@/lib/queries/events";
+import { createClient } from "@/lib/supabase/server";
+import { ProfileCard } from "./ProfileCard";
 
 export default async function MyPage() {
-  const [profile, participations, branches] = await Promise.all([
+  const supabase = await createClient();
+  const [{ data: { user } }, profile, participations, branches, events] = await Promise.all([
+    supabase.auth.getUser(),
     getMyProfile(),
     getMyParticipations(),
     getBranches(),
+    getPublishedEvents(),
   ]);
 
   const branchName = branches.find((b) => b.id === profile?.branch_id)?.name ?? "—";
@@ -20,12 +27,49 @@ export default async function MyPage() {
     .filter((p) => p.status === "confirmed")
     .reduce((s, p) => s + p.amount, 0);
 
+  // 直近の申込締切（今日以降で最も近い公開イベント）
+  const today = new Date().toISOString().slice(0, 10);
+  const nextDeadline = events
+    .filter((e) => e.application_deadline >= today)
+    .sort((a, b) => a.application_deadline.localeCompare(b.application_deadline))[0];
+  const daysLeft = nextDeadline
+    ? Math.round(
+        (new Date(nextDeadline.application_deadline).getTime() - new Date(today).getTime()) /
+          86400000,
+      )
+    : null;
+
   return (
     <AppShell role="participant">
       <PageHeader
         title="マイページ"
         description={`${profile?.name ?? ""} さん（${branchName}）`}
       />
+
+      {nextDeadline && (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-primary-100 bg-primary-50 px-4 py-3">
+          <span className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-primary-100 text-primary-900">
+            <CalendarClock size={20} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-label-sm text-primary-900">直近の申込締切</p>
+            <p className="truncate text-body-md text-neutral-900">
+              <span className="font-medium">{nextDeadline.name}</span>
+              <span className="mx-2 text-neutral-400">/</span>
+              {jpDate(nextDeadline.application_deadline)}まで
+            </p>
+          </div>
+          <span
+            className={`ml-auto flex-none rounded-full px-3 py-1 text-label-sm font-medium ${
+              daysLeft !== null && daysLeft <= 3
+                ? "bg-error-100 text-error-900"
+                : "bg-neutral-white text-primary-900"
+            }`}
+          >
+            {daysLeft === 0 ? "本日締切" : `あと${daysLeft}日`}
+          </span>
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-[auto,1fr]">
         <Card className="flex flex-col items-center">
@@ -86,6 +130,15 @@ export default async function MyPage() {
               </div>
             )}
           </Card>
+
+          <ProfileCard
+            name={profile?.name ?? ""}
+            kana={profile?.kana ?? ""}
+            division={profile?.division ?? ""}
+            department={profile?.department ?? ""}
+            branchName={branchName}
+            email={user?.email ?? "—"}
+          />
         </div>
       </div>
     </AppShell>

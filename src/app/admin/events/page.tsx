@@ -8,7 +8,7 @@ import { StatCard, StatGrid } from "@/components/ui/StatCard";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { yen, jpDate, eventPeriod } from "@/lib/format";
 import { getAdminEvents, getEventStats } from "@/lib/queries/events";
-import { duplicateEvent } from "./actions";
+import { EventRowActions } from "./EventRowActions";
 
 const statusBadge: Record<string, React.ReactNode> = {
   draft: <Badge variant="neutral">下書き</Badge>,
@@ -23,7 +23,7 @@ export default async function AdminEventsPage() {
     <AppShell role="admin">
       <PageHeader
         title="イベント管理"
-        description="作成・編集・複製、締切・対象拠点・フォーム・定員を設定します。"
+        description="イベントの作成・編集・コピー・削除、締切・対象拠点・定員を管理します。"
         action={
           <Link href="/admin/events/new">
             <Button>＋ イベントを作成</Button>
@@ -45,7 +45,6 @@ export default async function AdminEventsPage() {
             <Th>開催期間</Th>
             <Th>締切</Th>
             <Th>定員</Th>
-            <Th>フォーム</Th>
             <Th>状態</Th>
             <Th>操作</Th>
           </tr>
@@ -57,28 +56,9 @@ export default async function AdminEventsPage() {
             <Td>{eventPeriod(e.start_date, e.event_date)}</Td>
             <Td>{jpDate(e.application_deadline)}</Td>
             <Td>{e.capacity ?? "—"}</Td>
-            <Td>
-              <Link href={`/admin/forms/${e.id}`}>
-                <Button variant="ghost" size="md">
-                  {e.fieldCount}項目 編集
-                </Button>
-              </Link>
-            </Td>
             <Td>{statusBadge[e.status]}</Td>
             <Td>
-              <div className="flex gap-2">
-                <Link href={`/admin/events/${e.id}/edit`}>
-                  <Button variant="ghost" size="md">
-                    編集
-                  </Button>
-                </Link>
-                <form action={duplicateEvent}>
-                  <input type="hidden" name="eventId" value={e.id} />
-                  <Button type="submit" variant="ghost" size="md">
-                    複製
-                  </Button>
-                </form>
-              </div>
+              <EventRowActions eventId={e.id} eventName={e.name} />
             </Td>
           </tr>
         ))}

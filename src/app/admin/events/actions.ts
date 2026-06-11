@@ -94,3 +94,44 @@ export async function duplicateEvent(formData: FormData): Promise<void> {
   revalidatePath("/admin/events");
   redirect(`/admin/events/${newEventId}/edit`);
 }
+
+/**
+ * イベントを削除する。
+ * 申込者（participants）が1人でもいる場合は削除を拒否する＝決済・申込データの巻き添え削除を防ぐ
+ * （events 削除は applications→participants→payments へ CASCADE するため）。
+ * RLS（events_write_admin）により管理者のみ成功。
+ */
+export async function deleteEvent(
+  eventId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!eventId) return { ok: false, error: "対象が不明です。" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "ログインが必要です。" };
+
+  const { data: apps } = await supabase
+    .from("applications")
+    .select("id")
+    .eq("event_id", eventId);
+  const appIds = ((apps ?? []) as unknown as { id: string }[]).map((a) => a.id);
+  if (appIds.length) {
+    const { count } = await supabase
+      .from("participants")
+      .select("id", { count: "exact", head: true })
+      .in("application_id", appIds);
+    if ((count ?? 0) > 0)
+      return {
+        ok: false,
+        error: "申込者がいるイベントは削除できません。先に申込を取り消してください。",
+      };
+  }
+
+  const { error } = await supabase.from("events").delete().eq("id", eventId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/events");
+  return { ok: true };
+}

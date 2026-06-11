@@ -16,15 +16,18 @@ type DivisionOpt = { value: string; label: string };
 export function ProxyClient({
   events,
   divisions,
+  departments,
 }: {
   events: EventOpt[];
   divisions: DivisionOpt[];
+  departments: string[];
 }) {
   const [eventIds, setEventIds] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [kana, setKana] = useState("");
   const [email, setEmail] = useState("");
   const [division, setDivision] = useState("");
+  const [department, setDepartment] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -35,20 +38,20 @@ export function ProxyClient({
   const addOne = () => {
     setMsg(null);
     startTransition(async () => {
-      const res = await registerProxyMember({ eventIds, name, kana, email, division });
+      const res = await registerProxyMember({ eventIds, name, kana, email, division, department });
       if (res.ok) {
         setMsg({ ok: true, text: `${name} さんを登録しました。続けて入力できます。` });
         setName("");
         setKana("");
         setEmail("");
-        // eventIds・division は連続入力のため保持
+        // eventIds・division・department は連続入力のため保持
       } else {
         setMsg({ ok: false, text: res.error ?? "登録に失敗しました。" });
       }
     });
   };
 
-  // CSV: 氏名,読み仮名,メール,部(値),イベントID(；区切り・省略時は画面選択)
+  // CSV: 氏名,読み仮名,メール,部(値),部署(任意),イベントID(；区切り・省略時は画面選択)
   const onCsv = (file: File) => {
     setMsg(null);
     startTransition(async () => {
@@ -61,7 +64,7 @@ export function ProxyClient({
       const errs: string[] = [];
       for (const line of rows) {
         const cols = line.split(",").map((c) => c.replace(/^"|"$/g, "").trim());
-        const [cName, cKana, cEmail, cDivision, cEvents] = cols;
+        const [cName, cKana, cEmail, cDivision, cDepartment, cEvents] = cols;
         const ids = cEvents
           ? cEvents.split(/[;；]/).map((s) => s.trim()).filter(Boolean)
           : eventIds;
@@ -71,6 +74,7 @@ export function ProxyClient({
           kana: cKana ?? "",
           email: cEmail ?? "",
           division: cDivision ?? "",
+          department: cDepartment ?? "",
         });
         if (res.ok) ok++;
         else {
@@ -180,13 +184,23 @@ export function ProxyClient({
                   ))}
                 </Select>
               </Field>
+              <Field label="部署（配置先）" hint="任意">
+                <Select value={department} onChange={(e) => setDepartment(e.target.value)}>
+                  <option value="">未選択</option>
+                  {departments.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
             </div>
           </div>
         </SectionCard>
 
         <SectionCard
           title="CSVで一括取り込み"
-          description="列: 氏名, 読み仮名, メール, 部(値), イベントID(；区切り・省略時は上で選択中のイベント)。1行目が見出しなら自動でスキップします。"
+          description="列: 氏名, 読み仮名, メール, 部(値), 部署(任意), イベントID(；区切り・省略時は上で選択中のイベント)。1行目が見出しなら自動でスキップします。"
         >
           <input
             ref={fileRef}

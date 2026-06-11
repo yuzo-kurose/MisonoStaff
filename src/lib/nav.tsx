@@ -9,6 +9,7 @@ import {
   FileText,
   ListChecks,
   QrCode,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 
@@ -75,6 +76,11 @@ export const navGroupsByRole: Record<Role, NavGroup[]> = {
         { href: "/admin/forms", label: "フォーム", icon: FileText },
         { href: "/admin/branches", label: "拠点マスタ", icon: Building2 },
       ],
+    },
+    {
+      label: "お知らせ",
+      icon: Megaphone,
+      items: [{ href: "/admin/announcements", label: "連絡事項", icon: Megaphone }],
     },
   ],
   reception: [

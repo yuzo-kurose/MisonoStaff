@@ -4,6 +4,7 @@ import type { ParticipantStatus } from "@/types/database";
 export type AppRow = {
   participantId: string;
   name: string;
+  department: string;
   eventId: string;
   eventName: string;
   eventDate: string;
@@ -37,11 +38,11 @@ export async function getAdminApplications(): Promise<AppRow[]> {
       .in("id", [...new Set(participants.map((p) => p.application_id))]),
     supabase
       .from("profiles")
-      .select("id,name")
+      .select("id,name,department")
       .in("id", [...new Set(participants.map((p) => p.user_id))]),
   ]);
   const appList = (apps ?? []) as unknown as { id: string; event_id: string; branch_id: string }[];
-  const names = (profs ?? []) as unknown as { id: string; name: string }[];
+  const names = (profs ?? []) as unknown as { id: string; name: string; department: string | null }[];
 
   const [{ data: evs }, { data: brs }] = await Promise.all([
     supabase.from("events").select("id,name,event_date").in("id", [...new Set(appList.map((a) => a.event_id))]),
@@ -56,9 +57,11 @@ export async function getAdminApplications(): Promise<AppRow[]> {
     const app = appList.find((a) => a.id === p.application_id);
     const ev = events.find((e) => e.id === app?.event_id);
     const eventDate = ev?.event_date ?? "";
+    const prof = names.find((n) => n.id === p.user_id);
     return {
       participantId: p.id,
-      name: names.find((n) => n.id === p.user_id)?.name ?? "（不明）",
+      name: prof?.name ?? "（不明）",
+      department: prof?.department ?? "",
       eventId: app?.event_id ?? "",
       eventName: ev?.name ?? "（不明）",
       eventDate,

@@ -66,11 +66,15 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 className="text-heading-xl text-neutral-900">{title}</h1>
-        {description && (
-          <p className="mt-1 text-body-sm text-neutral-700">{description}</p>
-        )}
+      <div className="flex items-start gap-3">
+        {/* 見出しアクセント（全ページ共通の視認性・リッチ感） */}
+        <span className="mt-1 h-7 w-1.5 flex-none rounded-full bg-primary-700" aria-hidden />
+        <div>
+          <h1 className="text-heading-xl text-neutral-900">{title}</h1>
+          {description && (
+            <p className="mt-1 text-body-sm text-neutral-700">{description}</p>
+          )}
+        </div>
       </div>
       {action}
     </div>

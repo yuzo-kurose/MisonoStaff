@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireRole } from "@/lib/auth/guard";
 import { getStripe } from "@/lib/stripe";
 
 /**
@@ -14,11 +14,9 @@ export async function refundParticipant(
   participantId: string,
   reason?: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "ログインが必要です。" };
+  // 返金は service_role で RLS を迂回するため、ここで管理者ロールを必ず検証する。
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return { ok: false, error: auth.error };
 
   const admin = createAdminClient();
 
@@ -88,7 +86,7 @@ export async function refundParticipant(
     payment_id: payment.id,
     amount: payment.amount,
     reason: reason ?? null,
-    refunded_by_user_id: user.id,
+    refunded_by_user_id: auth.userId,
     stripe_refund_id: refundId,
   } as never);
   await admin
