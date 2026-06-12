@@ -43,6 +43,19 @@ export default function ReceptionPage() {
   async function loadCandidates(t: string, name: string | null) {
     setMsg(null);
     setLoading(true);
+
+    // 対象者名を先に確定する。スキャン（name=null）でもトークンから氏名を引き、
+    // 当日の対象イベントが0件でも対象者欄に実名を即表示するため。
+    let displayName = name;
+    if (!displayName) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("checkin_token", t)
+        .maybeSingle();
+      displayName = (prof as { name: string } | null)?.name ?? null;
+    }
+
     const { data, error } = await supabase.rpc("checkin_candidates", {
       p_token: t,
       p_date: date,
@@ -54,8 +67,20 @@ export default function ReceptionPage() {
       return;
     }
     const list = (data ?? []) as unknown as Candidate[];
+
+    // 氏名も候補も無い＝該当者なし（無効トークン等）。対象者欄は出さずに案内する。
+    const resolvedName = displayName ?? list[0]?.user_name ?? null;
+    if (!resolvedName) {
+      setRows([]);
+      setSelected(new Set());
+      setPerson(null);
+      setHits([]);
+      setMsg({ ok: false, text: "QRに該当する対象者が見つかりませんでした。トークンをご確認ください。" });
+      return;
+    }
+
     setRows(list);
-    setPerson(name ?? list[0]?.user_name ?? "対象者");
+    setPerson(resolvedName);
     setSelected(
       new Set(list.filter((r) => r.attendance_status !== "checked_in").map((r) => r.participant_id)),
     );
@@ -184,9 +209,12 @@ export default function ReceptionPage() {
 
         <Card>
           {!person ? (
-            <p className="py-12 text-center text-body-md text-neutral-600">
-              QRトークンを読み込むか、氏名で検索してください。
-            </p>
+            <div className="space-y-3">
+              {msg && !msg.ok && <Alert variant="error">{msg.text}</Alert>}
+              <p className="py-12 text-center text-body-md text-neutral-600">
+                QRトークンを読み込むか、氏名で検索してください。
+              </p>
+            </div>
           ) : (
             <>
               <div className="flex items-center justify-between">
