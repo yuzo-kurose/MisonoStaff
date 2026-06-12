@@ -15,12 +15,18 @@ function isActive(pathname: string, href: string) {
 
 const COLLAPSE_KEY = "sidebar-collapsed";
 
-/** 役割ごとの色分け。どの立場の画面かを一目で判別できるようにする。 */
-const roleTheme: Record<Role, { label: string; pill: string }> = {
-  participant: { label: "参加者", pill: "bg-primary-100 text-primary-900" },
-  representative: { label: "代表者", pill: "bg-info-100 text-info-900" },
-  admin: { label: "管理者", pill: "bg-neutral-900 text-neutral-white" },
-  reception: { label: "受付", pill: "bg-warning-100 text-warning-900" },
+/**
+ * 役割ごとの色分け。どの立場の画面かを一目で判別できるようにする。
+ * 4役割をはっきり違う色相に割り当てる（青＝参加者／緑＝代表者／黒＝管理者／金＝受付）。
+ * - bar : 画面上部のヘッダーバー背景（白文字、WCAG AA 合格の濃色トークン）
+ * - pill: サイドバー等に置く小バッジ（淡色背景＋濃色文字）
+ * 以前は参加者(primary)と代表者(info)がどちらも青で紛らわしかったため、代表者を緑(success)へ変更。
+ */
+const roleTheme: Record<Role, { label: string; bar: string; pill: string }> = {
+  participant: { label: "参加者", bar: "bg-primary-700 text-neutral-white", pill: "bg-primary-100 text-primary-900" },
+  representative: { label: "代表者", bar: "bg-success-900 text-neutral-white", pill: "bg-success-100 text-success-900" },
+  admin: { label: "管理者", bar: "bg-neutral-900 text-neutral-white", pill: "bg-neutral-900 text-neutral-white" },
+  reception: { label: "受付", bar: "bg-warning-900 text-neutral-white", pill: "bg-warning-100 text-warning-900" },
 };
 
 /**
@@ -196,16 +202,23 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
         </div>
       </aside>
 
-      {/* 上部バー（スマホ） */}
+      {/* 役割カラーの上部ヘッダー（全サイズ共通・固定）。色で立場を一目判別する。 */}
       <div className="flex-1">
-        <header className="flex h-14 items-center gap-2 border-b border-neutral-200 bg-neutral-white px-4 md:hidden">
-          <Link href="/" className="flex items-center gap-2" title="トップへ">
+        <header
+          className={`sticky top-0 z-20 flex h-14 items-center gap-3 px-4 md:h-16 md:px-8 ${roleTheme[role].bar}`}
+        >
+          {/* スマホはサイドバーが無いのでロゴを出す */}
+          <Link href="/" className="flex items-center gap-2 md:hidden" title="トップへ">
             <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} />
-            <span className="text-label-md font-medium text-neutral-900">神苑スタッフ</span>
           </Link>
-          <span className={`ml-auto rounded-full px-2.5 py-0.5 text-label-sm font-medium ${roleTheme[role].pill}`}>
+          <span className="text-heading-sm font-bold md:text-heading-md">
             {roleTheme[role].label}画面
           </span>
+          {who && (
+            <span className="ml-auto truncate text-label-sm opacity-90" title={who}>
+              {who}
+            </span>
+          )}
         </header>
 
         <main className="mx-auto max-w-6xl px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
