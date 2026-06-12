@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/server";
 
 /**
  * ロールに基づくサーバー側の認可ガード。
@@ -18,10 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 export type AppRole = "participant" | "representative" | "admin" | "reception";
 
 export async function getAuthContext(): Promise<{ userId: string | null; role: AppRole }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return { userId: null, role: "participant" };
   const role = (user.app_metadata?.role as AppRole | undefined) ?? "participant";
   return { userId: user.id, role };

@@ -1,12 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import type { Profile, Participant, EventRow } from "@/types/database";
 
 /** ログイン中ユーザーのプロフィール（未ログインなら null） */
 export async function getMyProfile(): Promise<Profile | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return null;
 
   const { data } = await supabase
@@ -29,43 +27,26 @@ export type MyParticipation = {
 /** ログイン中ユーザーの参加（申込）一覧 */
 export async function getMyParticipations(): Promise<MyParticipation[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return [];
 
-  const { data: parts } = await supabase
+  // participants → applications → events を FK リレーション埋め込みで1往復で取得する。
+  // （以前は participants/applications/events を直列に3往復していた）
+  // application_id・event_id は NOT NULL なので !inner で取りこぼさない。
+  const { data } = await supabase
     .from("participants")
-    .select("id,application_id,status,total_amount")
+    .select("id,status,total_amount,applications!inner(events!inner(name,event_date,venue))")
     .eq("user_id", user.id);
-  const participants = (parts ?? []) as unknown as {
+
+  const rows = (data ?? []) as unknown as {
     id: string;
-    application_id: string;
     status: Participant["status"];
     total_amount: number;
+    applications: { events: Pick<EventRow, "name" | "event_date" | "venue"> | null } | null;
   }[];
-  if (participants.length === 0) return [];
 
-  const appIds = [...new Set(participants.map((p) => p.application_id))];
-  const { data: apps } = await supabase
-    .from("applications")
-    .select("id,event_id")
-    .in("id", appIds);
-  const appList = (apps ?? []) as unknown as { id: string; event_id: string }[];
-
-  const eventIds = [...new Set(appList.map((a) => a.event_id))];
-  const { data: evs } = await supabase
-    .from("events")
-    .select("id,name,event_date,venue")
-    .in("id", eventIds);
-  const events = (evs ?? []) as unknown as Pick<
-    EventRow,
-    "id" | "name" | "event_date" | "venue"
-  >[];
-
-  return participants.map((p) => {
-    const app = appList.find((a) => a.id === p.application_id);
-    const ev = events.find((e) => e.id === app?.event_id);
+  return rows.map((p) => {
+    const ev = p.applications?.events ?? null;
     return {
       participantId: p.id,
       status: p.status,

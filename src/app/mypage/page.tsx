@@ -10,15 +10,14 @@ import { getMyProfile, getMyParticipations } from "@/lib/queries/me";
 import { getBranches } from "@/lib/queries/branches";
 import { getPublishedEvents } from "@/lib/queries/events";
 import { getDepartmentNames } from "@/lib/queries/departments";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/server";
 import { ProfileCard } from "./ProfileCard";
 import { ChangePasswordCard } from "./ChangePasswordCard";
 
 export default async function MyPage() {
-  const supabase = await createClient();
-  const [{ data: { user } }, profile, participations, branches, events, departmentOptions] =
+  const [user, profile, participations, branches, events, departmentOptions] =
     await Promise.all([
-      supabase.auth.getUser(),
+      getCurrentUser(),
       getMyProfile(),
       getMyParticipations(),
       getBranches(),

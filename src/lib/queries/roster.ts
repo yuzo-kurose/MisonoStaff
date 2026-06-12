@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import type { ParticipantStatus } from "@/types/database";
 
 export type RosterMember = {
@@ -23,9 +23,7 @@ export type RosterGroup = {
  */
 export async function getRoster(): Promise<RosterGroup[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return [];
 
   const { data: profile } = await supabase
