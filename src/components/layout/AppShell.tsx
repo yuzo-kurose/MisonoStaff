@@ -81,14 +81,14 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
               : "flex h-16 items-center justify-between px-4"
           }`}
         >
-          {/* ロゴ＝ホームへ戻る。役割名をメニュー最上部に明記する。 */}
+          {/* ロゴ＝ホームへ戻る。ロゴ横はブランド名のみ（役割名はメニュー上部に置く）。
+              ロゴ(紺色)が暗い役割色に溶けないよう、白タイルに乗せて常にくっきり見せる。 */}
           <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg hover:bg-white/10">
-            <Image src="/mark.png" alt="神慈秀明会" width={32} height={32} className="flex-none" priority />
+            <span className="grid flex-none place-items-center rounded-lg bg-white p-1">
+              <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} priority />
+            </span>
             {!collapsed && (
-              <div className="leading-tight">
-                <p className="text-label-sm text-white/70">神苑スタッフ</p>
-                <p className="text-heading-sm font-bold text-white">{roleTheme[role].label}</p>
-              </div>
+              <p className="text-label-md font-medium text-white">神苑スタッフ</p>
             )}
           </Link>
           <button
@@ -101,6 +101,12 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {/* メニュー上部に役割名を明記（立場の判別） */}
+          {!collapsed && (
+            <p className="px-3 pb-2 pt-1 text-heading-sm font-bold text-white">
+              {roleTheme[role].label}
+            </p>
+          )}
           {collapsed
             ? /* 折りたたみ時：子項目をアイコンのみで平坦表示 */
               items.map((it) => {
@@ -196,7 +202,9 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
           className={`sticky top-0 z-20 flex h-14 items-center gap-3 px-4 text-white md:hidden ${roleTheme[role].sidebar}`}
         >
           <Link href="/" className="flex items-center gap-2" title="ホームへ戻る">
-            <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} />
+            <span className="grid flex-none place-items-center rounded-lg bg-white p-1">
+              <Image src="/mark.png" alt="神慈秀明会" width={24} height={24} />
+            </span>
           </Link>
           <span className="text-heading-sm font-bold">{roleTheme[role].label}</span>
           {who && (
