@@ -82,15 +82,11 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
         <Link
           href="/"
           title="ホームへ戻る"
-          className="flex-none rounded-lg p-1 hover:bg-neutral-100"
+          className="flex items-center gap-2 rounded-lg p-1 hover:bg-neutral-100"
         >
           <Image src="/mark.png" alt="神慈秀明会" width={36} height={36} className="flex-none" priority />
+          <span className="text-heading-lg font-bold text-neutral-900">神苑スタッフ</span>
         </Link>
-
-        {/* 中央：ブランド（絶対中央・大きめ） */}
-        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-heading-lg font-bold text-neutral-900">
-          神苑スタッフ
-        </span>
 
         {/* 右：役割・ユーザー名・ログアウト */}
         <div className="ml-auto flex items-center gap-2 md:gap-3">

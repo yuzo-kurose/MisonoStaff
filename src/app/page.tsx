@@ -128,15 +128,11 @@ export default async function Home_() {
     <div className="flex min-h-screen flex-col bg-neutral-50">
       {/* 全幅トップヘッダー（白）。アプリ画面と同様、中央にブランド・右端にロゴ。 */}
       <header className="sticky top-0 z-30 flex h-16 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-3 md:px-4">
-        {/* 左：ロゴ＝ホームへ戻る */}
-        <Link href="/" title="ホームへ戻る" className="flex-none rounded-lg p-1 hover:bg-neutral-100">
+        {/* 左：ロゴ＋ブランド＝ホームへ戻る */}
+        <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg p-1 hover:bg-neutral-100">
           <Image src="/mark.png" alt="神慈秀明会" width={36} height={36} className="flex-none" priority />
+          <span className="text-heading-lg font-bold text-neutral-900">神苑スタッフ</span>
         </Link>
-
-        {/* 中央：ブランド（絶対中央・大きめ） */}
-        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-heading-lg font-bold text-neutral-900">
-          神苑スタッフ
-        </span>
 
         {/* 右：アカウント（ログイン／ユーザーアイコン） */}
         <div className="ml-auto flex items-center gap-2">
