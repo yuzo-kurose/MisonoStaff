@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { PublicSidebar } from "@/components/layout/PublicSidebar";
 import { HomeUserMenu } from "@/components/layout/HomeUserMenu";
+import { Card } from "@/components/ui/Card";
 import { jpDate } from "@/lib/format";
 import { getPublishedAnnouncements } from "@/lib/queries/announcements";
 import type { AnnouncementLevel } from "@/types/database";
@@ -148,23 +149,6 @@ export default async function Home_() {
         <PublicSidebar />
 
         <main className="min-w-0 flex-1">
-          {/* ヒーロー（画像なし・テキストのみ） */}
-          <section className="border-b border-neutral-200 bg-neutral-white">
-            <div className="mx-auto max-w-5xl px-4 py-8 md:px-8 md:py-10">
-              <p className="text-label-md font-medium text-primary-700">
-                神苑スタッフ 参加管理システム
-              </p>
-              <h1 className="mt-2 max-w-2xl text-display-sm text-neutral-900">
-                申込・事前決済・当日受付を、
-                <br />
-                ひとつのシステムで。
-              </h1>
-              <p className="mt-3 max-w-xl text-body-md text-neutral-700">
-                スマホから参加申込・決済。運営は当日受付まで漏れなく管理できます。
-              </p>
-            </div>
-          </section>
-
           {/* 連絡事項 */}
           <section className="mx-auto max-w-5xl px-4 pt-10 md:px-8 md:pt-12">
             <div className="flex items-center gap-2.5">
@@ -198,8 +182,9 @@ export default async function Home_() {
             )}
           </section>
 
-          {/* ご利用の流れ（時系列タイムライン） */}
-          <section className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-12">
+          {/* ご利用の流れ（時系列タイムライン）＝カードでまとめる */}
+          <section className="mx-auto max-w-5xl px-4 pt-10 md:px-8 md:pt-12">
+            <Card>
             <div className="flex items-center gap-2.5">
               <span className="h-6 w-1.5 rounded-full bg-primary-700" />
               <h2 className="text-heading-md text-neutral-900">ご利用の流れ</h2>
@@ -240,10 +225,12 @@ export default async function Home_() {
                 );
               })}
             </ol>
+            </Card>
           </section>
 
-          {/* 役割別の使い方 */}
-          <section className="mx-auto max-w-5xl px-4 pb-10 md:px-8 md:pb-12">
+          {/* 役割別の使い方＝カードでまとめる */}
+          <section className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-12">
+            <Card>
             <div className="flex items-center gap-2.5">
               <span className="h-6 w-1.5 rounded-full bg-primary-700" />
               <h2 className="text-heading-md text-neutral-900">役割別の使い方</h2>
@@ -255,7 +242,7 @@ export default async function Home_() {
               {roleGuides.map(({ icon: RoleIcon, tone, role, summary, actions }) => (
                 <div
                   key={role}
-                  className="rounded-xl border border-neutral-200 bg-neutral-white p-5 shadow-sm"
+                  className="rounded-lg border border-neutral-200 p-4"
                 >
                   <div className="flex items-center gap-3">
                     <span className={`grid h-11 w-11 flex-none place-items-center rounded-lg ${tone}`}>
@@ -277,6 +264,7 @@ export default async function Home_() {
                 </div>
               ))}
             </div>
+            </Card>
           </section>
 
           <footer className="border-t border-neutral-200 py-8 text-center text-body-sm text-neutral-600">
