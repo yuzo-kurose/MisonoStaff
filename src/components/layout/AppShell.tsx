@@ -74,37 +74,35 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
           roleTheme[role].sidebar
         } ${collapsed ? "w-16" : "w-60"}`}
       >
+        {/* ヘッダー帯は白背景の「ブランドキャップ」。役割色レールの上に白い帯で清潔感を出す。 */}
         <div
-          className={`border-b border-white/10 ${
+          className={`border-b border-neutral-200 bg-white ${
             collapsed
               ? "flex flex-col items-center gap-1 px-2 py-2"
               : "flex h-16 items-center justify-between px-4"
           }`}
         >
-          {/* ロゴ＝ホームへ戻る。ロゴ横はブランド名のみ（役割名はメニュー上部に置く）。
-              ロゴ(紺色)が暗い役割色に溶けないよう、白タイルに乗せて常にくっきり見せる。 */}
-          <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg hover:bg-white/10">
-            <span className="grid flex-none place-items-center rounded-lg bg-white p-1">
-              <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} priority />
-            </span>
+          {/* ロゴ＝ホームへ戻る。白地なので紺ロゴはそのままでくっきり見える。 */}
+          <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg hover:bg-neutral-100">
+            <Image src="/mark.png" alt="神慈秀明会" width={32} height={32} className="flex-none" priority />
             {!collapsed && (
-              <p className="text-label-md font-medium text-white">神苑スタッフ</p>
+              <p className="text-label-md font-medium text-neutral-900">神苑スタッフ</p>
             )}
           </Link>
           <button
             onClick={toggle}
             title={collapsed ? "メニューを開く" : "折りたたむ"}
-            className="rounded-lg p-1.5 text-white/70 hover:bg-white/10"
+            className="rounded-lg p-1.5 text-neutral-600 hover:bg-neutral-100"
           >
             <PanelLeft size={18} />
           </button>
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {/* メニュー上部に役割名を明記（立場の判別） */}
+          {/* メニュー上部に役割名を明記（立場の判別）。「○○メニュー」表記。 */}
           {!collapsed && (
             <p className="px-3 pb-2 pt-1 text-heading-sm font-bold text-white">
-              {roleTheme[role].label}
+              {roleTheme[role].label}メニュー
             </p>
           )}
           {collapsed
