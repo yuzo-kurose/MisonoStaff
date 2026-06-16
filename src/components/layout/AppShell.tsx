@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, PanelLeft, ChevronDown } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { navByRole, navGroupsByRole, roleLabels, type Role } from "@/lib/nav";
+import { allNavGroups, allNavItems, roleLabels, type Role } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser } from "@/hooks/useAuthUser";
 
@@ -23,13 +23,14 @@ const SIDEBAR_BG = "bg-primary-900";
  * - md以上：ヘッダー下の左に紺色サイドバー（折りたたみ可。状態は localStorage 保存）。
  *   展開時は「○○メニュー」グループをアコーディオンで開閉できる。
  * - md未満：トップヘッダー＋下部タブバー（サイドバーは出さない）。
- * メニュー項目は role（権限）ごとに navGroupsByRole で出し分ける。
+ * メニューは役割でフィルタせず、全ユーザー・全画面で全メニュー（4グループ）を表示する。
  */
 export function AppShell({ role, children }: { role: Role; children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const items = navByRole[role];
-  const groups = navGroupsByRole[role];
+  // 役割でフィルタせず、全ユーザー・全画面で全メニューを表示する。
+  const items = allNavItems;
+  const groups = allNavGroups;
   const { who } = useAuthUser();
   const [collapsed, setCollapsed] = useState(false);
   // 親カテゴリ（○○メニュー）の開閉状態。既定は全て開く。
@@ -186,8 +187,8 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
         </main>
       </div>
 
-      {/* 下部タブバー（スマホ） */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-neutral-200 bg-neutral-white md:hidden">
+      {/* 下部タブバー（スマホ）。全項目を表示するため横スクロール可。 */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex overflow-x-auto border-t border-neutral-200 bg-neutral-white md:hidden">
         {items.map((it) => {
           const active = isActive(pathname, it.href);
           const Icon = it.icon;
@@ -195,12 +196,12 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
             <Link
               key={it.href}
               href={it.href}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-label-sm ${
+              className={`flex w-[4.5rem] flex-none flex-col items-center gap-0.5 py-2 text-label-sm ${
                 active ? "text-primary-900" : "text-neutral-600"
               }`}
             >
               <Icon size={22} />
-              <span className="truncate">{it.label}</span>
+              <span className="max-w-full truncate px-1">{it.label}</span>
             </Link>
           );
         })}

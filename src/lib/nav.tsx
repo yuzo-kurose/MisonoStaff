@@ -95,3 +95,17 @@ export const navByRole: Record<Role, NavItem[]> = Object.fromEntries(
     groups.flatMap((g) => g.items),
   ]),
 ) as Record<Role, NavItem[]>;
+
+/**
+ * 全役割のメニューをまとめた一覧。役割でフィルタせず、全ユーザー・全画面で同じ表示にする。
+ * 並び順：参加者 → 代表者 → 管理者 → 受付管理。
+ */
+export const allNavGroups: NavGroup[] = [
+  ...navGroupsByRole.participant,
+  ...navGroupsByRole.representative,
+  ...navGroupsByRole.admin,
+  ...navGroupsByRole.reception,
+];
+
+/** allNavGroups を平坦化した全項目（モバイル下部タブ等で使用）。 */
+export const allNavItems: NavItem[] = allNavGroups.flatMap((g) => g.items);
