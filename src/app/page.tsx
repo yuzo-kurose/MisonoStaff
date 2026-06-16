@@ -209,10 +209,8 @@ export default async function Home_() {
             )}
           </section>
 
-          {/* ご利用の流れ＋役割別の使い方：PCは横2列、スマホは縦積み */}
-          <div className="mx-auto max-w-5xl space-y-10 px-4 py-10 md:grid md:grid-cols-2 md:items-start md:gap-10 md:space-y-0 md:px-8 md:py-12">
           {/* ご利用の流れ（時系列タイムライン） */}
-          <section>
+          <section className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-12">
             <div className="flex items-center gap-2.5">
               <span className="h-6 w-1.5 rounded-full bg-primary-700" />
               <h2 className="text-heading-md text-neutral-900">ご利用の流れ</h2>
@@ -256,7 +254,7 @@ export default async function Home_() {
           </section>
 
           {/* 役割別の使い方 */}
-          <section>
+          <section className="mx-auto max-w-5xl px-4 pb-10 md:px-8 md:pb-12">
             <div className="flex items-center gap-2.5">
               <span className="h-6 w-1.5 rounded-full bg-primary-700" />
               <h2 className="text-heading-md text-neutral-900">役割別の使い方</h2>
@@ -264,7 +262,7 @@ export default async function Home_() {
             <p className="mt-1 text-body-sm text-neutral-600">
               立場によってできることが異なります。あなたの役割をご確認ください。
             </p>
-            <div className="mt-6 grid gap-4">
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
               {roleGuides.map(({ icon: RoleIcon, tone, role, summary, actions }) => (
                 <div
                   key={role}
@@ -291,7 +289,6 @@ export default async function Home_() {
               ))}
             </div>
           </section>
-          </div>
 
           <footer className="border-t border-neutral-200 py-8 text-center text-body-sm text-neutral-600">
             神苑スタッフ 参加管理システム
