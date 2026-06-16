@@ -36,11 +36,14 @@ export const roleLabels: Record<Role, string> = {
   reception: "受付",
 };
 
-/** 左サイドメニュー（2階層）。親カテゴリ → 子項目。 */
+/**
+ * 左サイドメニュー。役割（権限）ごとに「○○メニュー」1グループにまとめ、
+ * グループ見出しをアコーディオンで開閉できる。色は役割によらず全て紺色で統一。
+ */
 export const navGroupsByRole: Record<Role, NavGroup[]> = {
   participant: [
     {
-      label: "参加",
+      label: "参加者メニュー",
       icon: Home,
       items: [
         { href: "/mypage", label: "マイページ", icon: Home },
@@ -50,46 +53,37 @@ export const navGroupsByRole: Record<Role, NavGroup[]> = {
   ],
   representative: [
     {
-      label: "申込管理",
+      label: "代表者メニュー",
       icon: ClipboardList,
       items: [
-        { href: "/rep/roster", label: "名簿・確定", icon: ClipboardList },
+        { href: "/rep/roster", label: "所属名簿", icon: ClipboardList },
         { href: "/rep/proxy", label: "代行入力", icon: UserPlus },
+        { href: "/rep/payments", label: "決済状況", icon: CreditCard },
       ],
-    },
-    {
-      label: "決済",
-      icon: CreditCard,
-      items: [{ href: "/rep/payments", label: "決済状況", icon: CreditCard }],
     },
   ],
   admin: [
     {
-      label: "申込管理",
+      label: "管理者メニュー",
       icon: ListChecks,
-      items: [{ href: "/admin/applications", label: "申込一覧", icon: ListChecks }],
-    },
-    {
-      label: "マスタ管理",
-      icon: Building2,
       items: [
-        { href: "/admin/events", label: "イベント", icon: Calendar },
-        { href: "/admin/forms", label: "フォーム", icon: FileText },
+        { href: "/admin/applications", label: "申込一覧", icon: ListChecks },
+        { href: "/admin/events", label: "イベント管理", icon: Calendar },
+        { href: "/admin/forms", label: "フォーム管理", icon: FileText },
+        { href: "/admin/announcements", label: "連絡事項管理", icon: Megaphone },
         { href: "/admin/branches", label: "拠点マスタ", icon: Building2 },
         { href: "/admin/departments", label: "部署マスタ", icon: Tags },
       ],
     },
-    {
-      label: "お知らせ",
-      icon: Megaphone,
-      items: [{ href: "/admin/announcements", label: "連絡事項", icon: Megaphone }],
-    },
   ],
   reception: [
     {
-      label: "受付",
+      label: "受付管理メニュー",
       icon: QrCode,
-      items: [{ href: "/reception", label: "受付", icon: QrCode }],
+      items: [
+        { href: "/reception", label: "受付対応", icon: QrCode },
+        { href: "/reception/list", label: "受付一覧", icon: ListChecks },
+      ],
     },
   ],
 };

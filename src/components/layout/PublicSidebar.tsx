@@ -27,6 +27,7 @@ const roleLinks: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/reception", label: "受付", icon: QrCode },
 ];
 
+/** トップページ用の左メニュー。紺色で統一（アプリ内サイドバーと同色）。折りたたみ可。 */
 export function PublicSidebar() {
   const router = useRouter();
   const { who, authed } = useAuthUser();
@@ -66,11 +67,11 @@ export function PublicSidebar() {
         key={m.href + m.label}
         href={m.href}
         title={collapsed ? m.label : undefined}
-        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-neutral-700 hover:bg-neutral-100 ${
+        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-white/80 hover:bg-white/10 ${
           collapsed ? "justify-center" : ""
         }`}
       >
-        <Icon size={20} className="text-neutral-600" />
+        <Icon size={20} className="text-white/70" />
         {!collapsed && m.label}
       </Link>
     );
@@ -78,55 +79,57 @@ export function PublicSidebar() {
 
   return (
     <aside
-      className={`hidden flex-none flex-col border-r border-neutral-200 bg-neutral-white md:flex ${
+      className={`hidden flex-none flex-col border-r border-white/10 bg-primary-900 text-white md:flex ${
         collapsed ? "w-16" : "w-60"
       }`}
     >
       <div
-        className={`border-b border-neutral-200 ${
+        className={`border-b border-white/10 ${
           collapsed
             ? "flex flex-col items-center gap-1 px-2 py-2"
             : "flex h-16 items-center justify-between px-4"
         }`}
       >
-        <Link href="/" title="トップへ" className="flex items-center gap-2 rounded-lg hover:bg-neutral-50">
-          <Image src="/mark.png" alt="神慈秀明会" width={32} height={32} className="flex-none" priority />
+        <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg hover:bg-white/10">
+          <span className="grid flex-none place-items-center rounded-lg bg-white p-1">
+            <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} className="flex-none" priority />
+          </span>
           {!collapsed && (
-            <span className="text-label-md font-medium text-neutral-900">神苑スタッフ</span>
+            <span className="text-heading-sm font-bold text-white">神苑スタッフ</span>
           )}
         </Link>
         <button
           onClick={toggle}
           title={collapsed ? "メニューを開く" : "折りたたむ"}
-          className="rounded-lg p-1.5 text-neutral-600 hover:bg-neutral-100"
+          className="rounded-lg p-1.5 text-white/70 hover:bg-white/10"
         >
           <PanelLeft size={18} />
         </button>
       </div>
 
-      {!collapsed && <p className="px-5 pt-2 text-label-sm font-medium text-neutral-500">メニュー</p>}
+      {!collapsed && <p className="px-5 pt-3 text-label-sm font-medium text-white/50">メニュー</p>}
       <nav className="space-y-1 p-3">{menu.map(link)}</nav>
 
       {!collapsed && (
-        <p className="px-5 pt-2 text-label-sm font-medium text-neutral-500">役割で開く（デモ）</p>
+        <p className="px-5 pt-2 text-label-sm font-medium text-white/50">役割で開く（デモ）</p>
       )}
       <nav className="space-y-1 p-3">{roleLinks.map(link)}</nav>
 
       {authed && (
-        <div className="mt-auto border-t border-neutral-200 p-3">
+        <div className="mt-auto border-t border-white/10 p-3">
           {who && !collapsed && (
-            <div className="truncate px-3 pb-2 text-label-sm text-neutral-600" title={who}>
+            <div className="truncate px-3 pb-2 text-label-sm text-white/60" title={who}>
               {who}
             </div>
           )}
           <button
             onClick={logout}
             title={collapsed ? "ログアウト" : undefined}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-neutral-700 hover:bg-neutral-100 ${
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-white/80 hover:bg-white/10 ${
               collapsed ? "justify-center" : ""
             }`}
           >
-            <LogOut size={20} className="text-neutral-600" />
+            <LogOut size={20} className="text-white/70" />
             {!collapsed && "ログアウト"}
           </button>
         </div>
