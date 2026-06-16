@@ -124,29 +124,30 @@ const roleGuides: {
 export default async function Home_() {
   const announcements = await getPublishedAnnouncements();
   return (
-    <div className="min-h-screen bg-neutral-50 md:flex">
-      {/* 左サイドバー（PC・折りたたみ可） */}
-      <PublicSidebar />
-
-      {/* メイン */}
-      <div className="relative flex-1">
-        {/* ログインユーザーアイコン（PC：右上に重ねて表示） */}
-        <div className="absolute right-4 top-4 z-20 hidden md:block">
-          <HomeUserMenu showLoginWhenAnon={false} />
+    <div className="flex min-h-screen flex-col bg-neutral-50">
+      {/* 全幅トップヘッダー（白）。アプリ画面と同様、中央にブランド・右端にロゴ。 */}
+      <header className="sticky top-0 z-30 flex h-16 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-3 md:px-4">
+        {/* 左：アカウント（ログイン／ユーザー） */}
+        <div className="flex items-center gap-2">
+          <HomeUserMenu />
         </div>
 
-        {/* モバイル用ヘッダー */}
-        <header className="flex h-14 items-center gap-2 border-b border-neutral-200 bg-neutral-white px-4 md:hidden">
-          <Link href="/" className="flex items-center gap-2" title="トップへ">
-            <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} />
-            <span className="text-label-md font-medium text-neutral-900">神苑スタッフ</span>
-          </Link>
-          <div className="ml-auto flex items-center gap-2">
-            <HomeUserMenu />
-          </div>
-        </header>
+        {/* 中央：ブランド（絶対中央・大きめ） */}
+        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-heading-lg font-bold text-neutral-900">
+          神苑スタッフ
+        </span>
 
-        <main>
+        {/* 右端：ロゴ＝ホームへ戻る */}
+        <Link href="/" title="ホームへ戻る" className="ml-auto flex-none rounded-lg p-1 hover:bg-neutral-100">
+          <Image src="/mark.png" alt="神慈秀明会" width={36} height={36} className="flex-none" priority />
+        </Link>
+      </header>
+
+      {/* ヘッダー下：サイドバー＋メイン */}
+      <div className="flex flex-1">
+        <PublicSidebar />
+
+        <main className="min-w-0 flex-1">
           {/* ヒーロー */}
           <section className="relative isolate overflow-hidden border-b border-neutral-200">
             <Image

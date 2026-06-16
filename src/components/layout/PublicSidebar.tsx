@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -79,25 +78,16 @@ export function PublicSidebar() {
 
   return (
     <aside
-      className={`hidden flex-none flex-col border-r border-white/10 bg-primary-900 text-white md:flex ${
+      className={`hidden flex-none flex-col border-r border-white/10 bg-primary-900 text-white md:sticky md:top-16 md:flex md:h-[calc(100vh-4rem)] ${
         collapsed ? "w-16" : "w-60"
       }`}
     >
+      {/* ブランド／ロゴはトップヘッダーが担うので、ここは折りたたみトグルのみ。 */}
       <div
-        className={`border-b border-white/10 ${
-          collapsed
-            ? "flex flex-col items-center gap-1 px-2 py-2"
-            : "flex h-16 items-center justify-between px-4"
+        className={`flex h-12 items-center border-b border-white/10 px-2 ${
+          collapsed ? "justify-center" : "justify-end"
         }`}
       >
-        <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg hover:bg-white/10">
-          <span className="grid flex-none place-items-center rounded-lg bg-white p-1">
-            <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} className="flex-none" priority />
-          </span>
-          {!collapsed && (
-            <span className="text-heading-sm font-bold text-white">神苑スタッフ</span>
-          )}
-        </Link>
         <button
           onClick={toggle}
           title={collapsed ? "メニューを開く" : "折りたたむ"}
