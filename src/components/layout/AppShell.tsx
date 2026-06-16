@@ -60,9 +60,9 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50">
-      {/* 全幅トップヘッダー（白）。中央にブランド、右端にロゴ。 */}
+      {/* 全幅トップヘッダー（白）。左＝トグル＋ロゴ／中央＝ブランド／右＝アカウント。 */}
       <header className="sticky top-0 z-30 flex h-16 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-3 md:px-4">
-        {/* 左：サイドバー折りたたみトグル（PCのみ）＋アカウント */}
+        {/* 左：サイドバー折りたたみトグル（PCのみ）＋ロゴ */}
         <button
           onClick={toggle}
           title={collapsed ? "メニューを開く" : "メニューを折りたたむ"}
@@ -70,7 +70,21 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
         >
           <PanelLeft size={20} />
         </button>
-        <div className="flex items-center gap-2 md:gap-3">
+        <Link
+          href="/"
+          title="ホームへ戻る"
+          className="flex-none rounded-lg p-1 hover:bg-neutral-100"
+        >
+          <Image src="/mark.png" alt="神慈秀明会" width={36} height={36} className="flex-none" priority />
+        </Link>
+
+        {/* 中央：ブランド（絶対中央・大きめ） */}
+        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-heading-lg font-bold text-neutral-900">
+          神苑スタッフ
+        </span>
+
+        {/* 右：役割・ユーザー名・ログアウト */}
+        <div className="ml-auto flex items-center gap-2 md:gap-3">
           <span className="hidden rounded-full bg-primary-50 px-3 py-1 text-label-sm font-medium text-primary-900 sm:inline">
             {roleLabels[role]}
           </span>
@@ -88,20 +102,6 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
             <span className="hidden md:inline">ログアウト</span>
           </button>
         </div>
-
-        {/* 中央：ブランド（絶対中央・大きめ） */}
-        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-heading-lg font-bold text-neutral-900">
-          神苑スタッフ
-        </span>
-
-        {/* 右端：ロゴ＝ホームへ戻る */}
-        <Link
-          href="/"
-          title="ホームへ戻る"
-          className="ml-auto flex-none rounded-lg p-1 hover:bg-neutral-100"
-        >
-          <Image src="/mark.png" alt="神慈秀明会" width={36} height={36} className="flex-none" priority />
-        </Link>
       </header>
 
       {/* ヘッダー下：サイドバー＋メイン */}
