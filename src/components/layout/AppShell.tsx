@@ -33,14 +33,22 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
   const groups = allNavGroups;
   const { who } = useAuthUser();
   const [collapsed, setCollapsed] = useState(false);
-  // 親カテゴリ（○○メニュー）の開閉状態。既定は全て開く。
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(groups.map((g) => [g.label, true])),
-  );
+  // 親カテゴリ（○○メニュー）の開閉状態。既定は「現在のページを含むグループのみ開く」。
+  const activeGroupsState = () =>
+    Object.fromEntries(
+      groups.map((g) => [g.label, g.items.some((it) => isActive(pathname, it.href))]),
+    );
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(activeGroupsState);
 
   useEffect(() => {
     setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
   }, []);
+
+  // ページ遷移時、現在のページのグループだけ開いた状態に戻す（既定）。
+  useEffect(() => {
+    setOpenGroups(activeGroupsState());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const toggleGroup = (label: string) =>
     setOpenGroups((s) => ({ ...s, [label]: !(s[label] ?? true) }));

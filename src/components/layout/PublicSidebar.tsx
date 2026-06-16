@@ -23,13 +23,21 @@ export function PublicSidebar() {
   const pathname = usePathname();
   const { who, authed } = useAuthUser();
   const [collapsed, setCollapsed] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(allNavGroups.map((g) => [g.label, true])),
-  );
+  // 既定は「現在のページを含むグループのみ開く」。
+  const activeGroupsState = () =>
+    Object.fromEntries(
+      allNavGroups.map((g) => [g.label, g.items.some((it) => isActive(pathname, it.href))]),
+    );
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(activeGroupsState);
 
   useEffect(() => {
     setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
   }, []);
+
+  useEffect(() => {
+    setOpenGroups(activeGroupsState());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const toggleGroup = (label: string) =>
     setOpenGroups((s) => ({ ...s, [label]: !(s[label] ?? true) }));
