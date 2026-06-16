@@ -69,25 +69,25 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
 
   return (
     <div className="min-h-screen bg-neutral-50 md:flex">
-      {/* サイドバー（PC） */}
+      {/* サイドバー（PC）：ブランドの藍を縦の柱に。暗色背景＋淡色テキストで品格を出す。 */}
       <aside
-        className={`hidden flex-none flex-col border-r border-neutral-200 bg-neutral-white md:flex ${
+        className={`hidden flex-none flex-col border-r border-primary-800 bg-primary-900 text-white md:flex ${
           collapsed ? "w-16" : "w-60"
         }`}
       >
         <div
-          className={`border-b border-neutral-200 ${
+          className={`border-b border-primary-800 ${
             collapsed
               ? "flex flex-col items-center gap-1 px-2 py-2"
               : "flex h-16 items-center justify-between px-4"
           }`}
         >
-          <Link href="/" title="トップへ" className="flex items-center gap-2 rounded-lg hover:bg-neutral-50">
+          <Link href="/" title="トップへ" className="flex items-center gap-2 rounded-lg hover:bg-white/10">
             <Image src="/mark.png" alt="神慈秀明会" width={32} height={32} className="flex-none" priority />
             {!collapsed && (
               <div className="leading-tight">
-                <p className="text-label-md font-medium text-neutral-900">神苑スタッフ</p>
-                <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-label-sm font-medium ${roleTheme[role].pill}`}>
+                <p className="text-label-md font-medium text-white">神苑スタッフ</p>
+                <span className="mt-0.5 inline-block rounded-full bg-white/10 px-2 py-0.5 text-label-sm font-medium text-white/90">
                   {roleTheme[role].label}画面
                 </span>
               </div>
@@ -96,7 +96,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
           <button
             onClick={toggle}
             title={collapsed ? "メニューを開く" : "折りたたむ"}
-            className="rounded-lg p-1.5 text-neutral-600 hover:bg-neutral-100"
+            className="rounded-lg p-1.5 text-white/70 hover:bg-white/10"
           >
             <PanelLeft size={18} />
           </button>
@@ -106,11 +106,11 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
           <Link
             href="/"
             title={collapsed ? "ホーム" : undefined}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-neutral-700 transition-colors hover:bg-neutral-100 ${
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-white/80 transition-colors hover:bg-white/10 ${
               collapsed ? "justify-center" : ""
             }`}
           >
-            <House size={20} className="text-neutral-600" />
+            <House size={20} className="text-white/70" />
             {!collapsed && "ホーム"}
           </Link>
 
@@ -126,11 +126,11 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
                     title={it.label}
                     className={`flex items-center justify-center rounded-lg px-3 py-2.5 transition-colors ${
                       active
-                        ? "bg-primary-50 text-primary-900"
-                        : "text-neutral-700 hover:bg-neutral-100"
+                        ? "bg-white/15 text-white"
+                        : "text-white/80 hover:bg-white/10"
                     }`}
                   >
-                    <Icon size={20} className={active ? "text-primary-900" : "text-neutral-600"} />
+                    <Icon size={20} className={active ? "text-white" : "text-white/70"} />
                   </Link>
                 );
               })
@@ -144,9 +144,9 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
                       type="button"
                       onClick={() => toggleGroup(group.label)}
                       aria-expanded={open}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-label-sm font-medium text-neutral-500 transition-colors hover:text-neutral-700"
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-label-sm font-medium text-white/50 transition-colors hover:text-white/90"
                     >
-                      <GroupIcon size={16} className="flex-none text-neutral-500" />
+                      <GroupIcon size={16} className="flex-none text-white/50" />
                       <span className="flex-1 text-left">{group.label}</span>
                       <ChevronDown
                         size={14}
@@ -164,13 +164,13 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
                               href={it.href}
                               className={`flex items-center gap-3 rounded-lg py-2.5 pl-9 pr-3 text-label-md transition-colors ${
                                 active
-                                  ? "bg-primary-50 font-medium text-primary-900"
-                                  : "text-neutral-700 hover:bg-neutral-100"
+                                  ? "bg-white/15 font-medium text-white"
+                                  : "text-white/80 hover:bg-white/10"
                               }`}
                             >
                               <Icon
                                 size={18}
-                                className={active ? "text-primary-900" : "text-neutral-600"}
+                                className={active ? "text-white" : "text-white/70"}
                               />
                               {it.label}
                             </Link>
@@ -183,20 +183,20 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
               })}
         </nav>
 
-        <div className="border-t border-neutral-200 p-3">
+        <div className="border-t border-primary-800 p-3">
           {who && !collapsed && (
-            <div className="truncate px-3 pb-2 text-label-sm text-neutral-600" title={who}>
+            <div className="truncate px-3 pb-2 text-label-sm text-white/60" title={who}>
               {who}
             </div>
           )}
           <button
             onClick={logout}
             title={collapsed ? "ログアウト" : undefined}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-neutral-700 hover:bg-neutral-100 ${
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-white/80 hover:bg-white/10 ${
               collapsed ? "justify-center" : ""
             }`}
           >
-            <LogOut size={20} className="text-neutral-600" />
+            <LogOut size={20} className="text-white/70" />
             {!collapsed && "ログアウト"}
           </button>
         </div>
