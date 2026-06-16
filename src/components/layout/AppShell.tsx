@@ -19,9 +19,10 @@ const SIDEBAR_BG = "bg-primary-900";
 
 /**
  * ダッシュボード型の共通シェル。
- * - md以上：左サイドバー（紺色。折りたたみ可＝アイコンのみ表示に切替、状態は localStorage 保存）。
+ * - 全幅の白いトップヘッダー（左：ロゴ＋ブランド／右：役割・ユーザー名・ログアウト）。
+ * - md以上：ヘッダー下の左に紺色サイドバー（折りたたみ可。状態は localStorage 保存）。
  *   展開時は「○○メニュー」グループをアコーディオンで開閉できる。
- * - md未満：上部バー＋下部タブバー
+ * - md未満：トップヘッダー＋下部タブバー（サイドバーは出さない）。
  * メニュー項目は role（権限）ごとに navGroupsByRole で出し分ける。
  */
 export function AppShell({ role, children }: { role: Role; children: ReactNode }) {
@@ -58,153 +59,129 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 md:flex">
-      {/* サイドバー（PC）：紺色で統一。折りたたみ可。 */}
-      <aside
-        className={`hidden flex-none flex-col border-r border-white/10 text-white md:flex ${SIDEBAR_BG} ${
-          collapsed ? "w-16" : "w-60"
-        }`}
-      >
-        {/* ヘッダー帯（紺色で統一・白くするのはロゴだけ） */}
-        <div
-          className={`border-b border-white/10 ${
-            collapsed
-              ? "flex flex-col items-center gap-1 px-2 py-2"
-              : "flex h-16 items-center justify-between px-4"
-          }`}
+    <div className="flex min-h-screen flex-col bg-neutral-50">
+      {/* 全幅トップヘッダー（白） */}
+      <header className="sticky top-0 z-30 flex h-14 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-3 md:px-4">
+        {/* サイドバー折りたたみトグル（PCのみ） */}
+        <button
+          onClick={toggle}
+          title={collapsed ? "メニューを開く" : "メニューを折りたたむ"}
+          className="hidden rounded-lg p-2 text-neutral-600 hover:bg-neutral-100 md:block"
         >
-          {/* ロゴ＝ホームへ戻る。ロゴ(紺色)が背景に溶けないよう白タイルに乗せる。 */}
-          <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg hover:bg-white/10">
-            <span className="grid flex-none place-items-center rounded-lg bg-white p-1">
-              <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} priority />
-            </span>
-            {!collapsed && (
-              <p className="text-heading-sm font-bold text-white">神苑スタッフ</p>
-            )}
-          </Link>
-          <button
-            onClick={toggle}
-            title={collapsed ? "メニューを開く" : "折りたたむ"}
-            className="rounded-lg p-1.5 text-white/70 hover:bg-white/10"
-          >
-            <PanelLeft size={18} />
-          </button>
-        </div>
+          <PanelLeft size={20} />
+        </button>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {collapsed
-            ? /* 折りたたみ時：子項目をアイコンのみで平坦表示 */
-              items.map((it) => {
-                const active = isActive(pathname, it.href);
-                const Icon = it.icon;
-                return (
-                  <Link
-                    key={it.href}
-                    href={it.href}
-                    title={it.label}
-                    className={`flex items-center justify-center rounded-lg px-3 py-2.5 transition-colors ${
-                      active
-                        ? "bg-white/15 text-white"
-                        : "text-white/80 hover:bg-white/10"
-                    }`}
-                  >
-                    <Icon size={20} className={active ? "text-white" : "text-white/70"} />
-                  </Link>
-                );
-              })
-            : /* 展開時：「○○メニュー」グループ → 子項目。グループ見出しで折りたたみ開閉。 */
-              groups.map((group) => {
-                const open = openGroups[group.label] ?? true;
-                const GroupIcon = group.icon;
-                return (
-                  <div key={group.label} className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => toggleGroup(group.label)}
-                      aria-expanded={open}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-label-lg font-bold text-white transition-colors hover:bg-white/10"
-                    >
-                      <GroupIcon size={18} className="flex-none text-white/80" />
-                      <span className="flex-1 text-left">{group.label}</span>
-                      <ChevronDown
-                        size={16}
-                        className={`flex-none transition-transform ${open ? "" : "-rotate-90"}`}
-                      />
-                    </button>
-                    {open && (
-                      <div className="mt-1 space-y-1">
-                        {group.items.map((it) => {
-                          const active = isActive(pathname, it.href);
-                          const Icon = it.icon;
-                          return (
-                            <Link
-                              key={it.href}
-                              href={it.href}
-                              className={`flex items-center gap-3 rounded-lg py-2.5 pl-9 pr-3 text-label-md transition-colors ${
-                                active
-                                  ? "bg-white/15 font-medium text-white"
-                                  : "text-white/80 hover:bg-white/10"
-                              }`}
-                            >
-                              <Icon
-                                size={18}
-                                className={active ? "text-white" : "text-white/70"}
-                              />
-                              {it.label}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-        </nav>
+        {/* ロゴ＋ブランド＝ホームへ戻る */}
+        <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-neutral-100">
+          <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} className="flex-none" priority />
+          <span className="text-heading-sm font-bold text-neutral-900">神苑スタッフ</span>
+        </Link>
 
-        <div className="border-t border-white/10 p-3">
-          {who && !collapsed && (
-            <div className="truncate px-3 pb-2 text-label-sm text-white/60" title={who}>
+        {/* 右側：役割・ユーザー名・ログアウト */}
+        <div className="ml-auto flex items-center gap-2 md:gap-3">
+          <span className="hidden rounded-full bg-primary-50 px-3 py-1 text-label-sm font-medium text-primary-900 sm:inline">
+            {roleLabels[role]}
+          </span>
+          {who && (
+            <span className="hidden max-w-[200px] truncate text-label-md text-neutral-900 md:inline" title={who}>
               {who}
-            </div>
+            </span>
           )}
           <button
             onClick={logout}
-            title={collapsed ? "ログアウト" : undefined}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-white/80 hover:bg-white/10 ${
-              collapsed ? "justify-center" : ""
-            }`}
+            title="ログアウト"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-label-md text-neutral-700 hover:bg-neutral-100"
           >
-            <LogOut size={20} className="text-white/70" />
-            {!collapsed && "ログアウト"}
+            <LogOut size={18} className="text-neutral-600" />
+            <span className="hidden md:inline">ログアウト</span>
           </button>
         </div>
-      </aside>
+      </header>
 
-      {/* スマホ用の上部バー（サイドバーが無いため、紺色バー＋役割名で立場を示す）。 */}
-      <div className="flex-1">
-        <header
-          className={`sticky top-0 z-20 flex h-14 items-center gap-3 px-4 text-white md:hidden ${SIDEBAR_BG}`}
+      {/* ヘッダー下：サイドバー＋メイン */}
+      <div className="flex flex-1">
+        {/* サイドバー（PC・紺色・折りたたみ可）。ロゴはヘッダーが担うのでメニューのみ。 */}
+        <aside
+          className={`hidden flex-none flex-col border-r border-white/10 text-white md:sticky md:top-14 md:flex md:h-[calc(100vh-3.5rem)] ${SIDEBAR_BG} ${
+            collapsed ? "w-16" : "w-60"
+          }`}
         >
-          <Link href="/" className="flex items-center gap-2" title="ホームへ戻る">
-            <span className="grid flex-none place-items-center rounded-lg bg-white p-1">
-              <Image src="/mark.png" alt="神慈秀明会" width={24} height={24} />
-            </span>
-          </Link>
-          <span className="text-heading-sm font-bold">{roleLabels[role]}</span>
-          {who && (
-            <span className="ml-auto truncate text-label-sm text-white/80" title={who}>
-              {who}
-            </span>
-          )}
-        </header>
+          <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+            {collapsed
+              ? /* 折りたたみ時：子項目をアイコンのみで平坦表示 */
+                items.map((it) => {
+                  const active = isActive(pathname, it.href);
+                  const Icon = it.icon;
+                  return (
+                    <Link
+                      key={it.href}
+                      href={it.href}
+                      title={it.label}
+                      className={`flex items-center justify-center rounded-lg px-3 py-2.5 transition-colors ${
+                        active ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/10"
+                      }`}
+                    >
+                      <Icon size={20} className={active ? "text-white" : "text-white/70"} />
+                    </Link>
+                  );
+                })
+              : /* 展開時：「○○メニュー」グループ → 子項目。グループ見出しで折りたたみ開閉。 */
+                groups.map((group) => {
+                  const open = openGroups[group.label] ?? true;
+                  const GroupIcon = group.icon;
+                  return (
+                    <div key={group.label} className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleGroup(group.label)}
+                        aria-expanded={open}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-label-lg font-bold text-white transition-colors hover:bg-white/10"
+                      >
+                        <GroupIcon size={18} className="flex-none text-white/80" />
+                        <span className="flex-1 text-left">{group.label}</span>
+                        <ChevronDown
+                          size={16}
+                          className={`flex-none transition-transform ${open ? "" : "-rotate-90"}`}
+                        />
+                      </button>
+                      {open && (
+                        <div className="mt-1 space-y-1">
+                          {group.items.map((it) => {
+                            const active = isActive(pathname, it.href);
+                            const Icon = it.icon;
+                            return (
+                              <Link
+                                key={it.href}
+                                href={it.href}
+                                className={`flex items-center gap-3 rounded-lg py-2.5 pl-9 pr-3 text-label-md transition-colors ${
+                                  active
+                                    ? "bg-white/15 font-medium text-white"
+                                    : "text-white/80 hover:bg-white/10"
+                                }`}
+                              >
+                                <Icon size={18} className={active ? "text-white" : "text-white/70"} />
+                                {it.label}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+          </nav>
+        </aside>
 
-        <main className="mx-auto max-w-6xl px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
-          {children}
+        {/* メイン */}
+        <main className="min-w-0 flex-1">
+          <div className="mx-auto max-w-6xl px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
+            {children}
+          </div>
         </main>
       </div>
 
       {/* 下部タブバー（スマホ） */}
-      <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-neutral-200 bg-neutral-white md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-neutral-200 bg-neutral-white md:hidden">
         {items.map((it) => {
           const active = isActive(pathname, it.href);
           const Icon = it.icon;
