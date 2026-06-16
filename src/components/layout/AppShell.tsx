@@ -60,9 +60,9 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50">
-      {/* 全幅トップヘッダー（白） */}
-      <header className="sticky top-0 z-30 flex h-14 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-3 md:px-4">
-        {/* サイドバー折りたたみトグル（PCのみ） */}
+      {/* 全幅トップヘッダー（白）。中央にブランド、右端にロゴ。 */}
+      <header className="sticky top-0 z-30 flex h-16 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-3 md:px-4">
+        {/* 左：サイドバー折りたたみトグル（PCのみ）＋アカウント */}
         <button
           onClick={toggle}
           title={collapsed ? "メニューを開く" : "メニューを折りたたむ"}
@@ -70,20 +70,12 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
         >
           <PanelLeft size={20} />
         </button>
-
-        {/* ロゴ＋ブランド＝ホームへ戻る */}
-        <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-neutral-100">
-          <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} className="flex-none" priority />
-          <span className="text-heading-sm font-bold text-neutral-900">神苑スタッフ</span>
-        </Link>
-
-        {/* 右側：役割・ユーザー名・ログアウト */}
-        <div className="ml-auto flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <span className="hidden rounded-full bg-primary-50 px-3 py-1 text-label-sm font-medium text-primary-900 sm:inline">
             {roleLabels[role]}
           </span>
           {who && (
-            <span className="hidden max-w-[200px] truncate text-label-md text-neutral-900 md:inline" title={who}>
+            <span className="hidden max-w-[180px] truncate text-label-md text-neutral-900 md:inline" title={who}>
               {who}
             </span>
           )}
@@ -96,13 +88,27 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
             <span className="hidden md:inline">ログアウト</span>
           </button>
         </div>
+
+        {/* 中央：ブランド（絶対中央・大きめ） */}
+        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-heading-lg font-bold text-neutral-900">
+          神苑スタッフ
+        </span>
+
+        {/* 右端：ロゴ＝ホームへ戻る */}
+        <Link
+          href="/"
+          title="ホームへ戻る"
+          className="ml-auto flex-none rounded-lg p-1 hover:bg-neutral-100"
+        >
+          <Image src="/mark.png" alt="神慈秀明会" width={36} height={36} className="flex-none" priority />
+        </Link>
       </header>
 
       {/* ヘッダー下：サイドバー＋メイン */}
       <div className="flex flex-1">
         {/* サイドバー（PC・紺色・折りたたみ可）。ロゴはヘッダーが担うのでメニューのみ。 */}
         <aside
-          className={`hidden flex-none flex-col border-r border-white/10 text-white md:sticky md:top-14 md:flex md:h-[calc(100vh-3.5rem)] ${SIDEBAR_BG} ${
+          className={`hidden flex-none flex-col border-r border-white/10 text-white md:sticky md:top-16 md:flex md:h-[calc(100vh-4rem)] ${SIDEBAR_BG} ${
             collapsed ? "w-16" : "w-60"
           }`}
         >
