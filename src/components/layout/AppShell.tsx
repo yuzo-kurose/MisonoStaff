@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, PanelLeft, House, ChevronDown } from "lucide-react";
+import { LogOut, PanelLeft, ChevronDown } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { navByRole, navGroupsByRole, type Role } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/client";
@@ -16,17 +16,16 @@ function isActive(pathname: string, href: string) {
 const COLLAPSE_KEY = "sidebar-collapsed";
 
 /**
- * 役割ごとの色分け。どの立場の画面かを一目で判別できるようにする。
- * 4役割をはっきり違う色相に割り当てる（青＝参加者／緑＝代表者／黒＝管理者／金＝受付）。
- * - bar : 画面上部のヘッダーバー背景（白文字、WCAG AA 合格の濃色トークン）
- * - pill: サイドバー等に置く小バッジ（淡色背景＋濃色文字）
- * 以前は参加者(primary)と代表者(info)がどちらも青で紛らわしかったため、代表者を緑(success)へ変更。
+ * 役割ごとの色分け。立場の判別は「サイドバー（メニュー）の色」で行う。
+ * 4役割をはっきり違う色相に割り当てる（藍＝参加者／深緑＝代表者／黒＝管理者／金＝受付）。
+ * - sidebar : サイドバー背景色（白文字で WCAG AA を満たす濃色）。スマホの上部バーにも流用。
+ * 文字・アイコン・選択状態は半透明白（white/xx）で表現するため、どの役割色でも破綻しない。
  */
-const roleTheme: Record<Role, { label: string; bar: string; pill: string }> = {
-  participant: { label: "参加者", bar: "bg-primary-700 text-neutral-white", pill: "bg-primary-100 text-primary-900" },
-  representative: { label: "代表者", bar: "bg-success-900 text-neutral-white", pill: "bg-success-100 text-success-900" },
-  admin: { label: "管理者", bar: "bg-neutral-900 text-neutral-white", pill: "bg-neutral-900 text-neutral-white" },
-  reception: { label: "受付", bar: "bg-warning-900 text-neutral-white", pill: "bg-warning-100 text-warning-900" },
+const roleTheme: Record<Role, { label: string; sidebar: string }> = {
+  participant: { label: "参加者", sidebar: "bg-primary-900" }, // 藍
+  representative: { label: "代表者", sidebar: "bg-[#14532D]" }, // 深緑
+  admin: { label: "管理者", sidebar: "bg-neutral-900" }, // 黒
+  reception: { label: "受付", sidebar: "bg-[#5A4508]" }, // 深い金
 };
 
 /**
@@ -69,27 +68,26 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
 
   return (
     <div className="min-h-screen bg-neutral-50 md:flex">
-      {/* サイドバー（PC）：ブランドの藍を縦の柱に。暗色背景＋淡色テキストで品格を出す。 */}
+      {/* サイドバー（PC）：役割カラーを縦の柱に。色＋最上部の役割名で立場を判別する。 */}
       <aside
-        className={`hidden flex-none flex-col border-r border-primary-800 bg-primary-900 text-white md:flex ${
-          collapsed ? "w-16" : "w-60"
-        }`}
+        className={`hidden flex-none flex-col border-r border-white/10 text-white md:flex ${
+          roleTheme[role].sidebar
+        } ${collapsed ? "w-16" : "w-60"}`}
       >
         <div
-          className={`border-b border-primary-800 ${
+          className={`border-b border-white/10 ${
             collapsed
               ? "flex flex-col items-center gap-1 px-2 py-2"
               : "flex h-16 items-center justify-between px-4"
           }`}
         >
-          <Link href="/" title="トップへ" className="flex items-center gap-2 rounded-lg hover:bg-white/10">
+          {/* ロゴ＝ホームへ戻る。役割名をメニュー最上部に明記する。 */}
+          <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg hover:bg-white/10">
             <Image src="/mark.png" alt="神慈秀明会" width={32} height={32} className="flex-none" priority />
             {!collapsed && (
               <div className="leading-tight">
-                <p className="text-label-md font-medium text-white">神苑スタッフ</p>
-                <span className="mt-0.5 inline-block rounded-full bg-white/10 px-2 py-0.5 text-label-sm font-medium text-white/90">
-                  {roleTheme[role].label}画面
-                </span>
+                <p className="text-label-sm text-white/70">神苑スタッフ</p>
+                <p className="text-heading-sm font-bold text-white">{roleTheme[role].label}</p>
               </div>
             )}
           </Link>
@@ -103,17 +101,6 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          <Link
-            href="/"
-            title={collapsed ? "ホーム" : undefined}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-white/80 transition-colors hover:bg-white/10 ${
-              collapsed ? "justify-center" : ""
-            }`}
-          >
-            <House size={20} className="text-white/70" />
-            {!collapsed && "ホーム"}
-          </Link>
-
           {collapsed
             ? /* 折りたたみ時：子項目をアイコンのみで平坦表示 */
               items.map((it) => {
@@ -183,7 +170,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
               })}
         </nav>
 
-        <div className="border-t border-primary-800 p-3">
+        <div className="border-t border-white/10 p-3">
           {who && !collapsed && (
             <div className="truncate px-3 pb-2 text-label-sm text-white/60" title={who}>
               {who}
@@ -202,20 +189,18 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
         </div>
       </aside>
 
-      {/* 役割カラーの上部ヘッダー（全サイズ共通・固定）。色で立場を一目判別する。 */}
+      {/* スマホ用の上部バー（サイドバーが無いため、役割カラー＋役割名で立場を示す）。
+          PCはサイドバーが役割色と役割名を担うので上部ヘッダーは置かない。 */}
       <div className="flex-1">
         <header
-          className={`sticky top-0 z-20 flex h-14 items-center gap-3 px-4 md:h-16 md:px-8 ${roleTheme[role].bar}`}
+          className={`sticky top-0 z-20 flex h-14 items-center gap-3 px-4 text-white md:hidden ${roleTheme[role].sidebar}`}
         >
-          {/* スマホはサイドバーが無いのでロゴを出す */}
-          <Link href="/" className="flex items-center gap-2 md:hidden" title="トップへ">
+          <Link href="/" className="flex items-center gap-2" title="ホームへ戻る">
             <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} />
           </Link>
-          <span className="text-heading-sm font-bold md:text-heading-md">
-            {roleTheme[role].label}画面
-          </span>
+          <span className="text-heading-sm font-bold">{roleTheme[role].label}</span>
           {who && (
-            <span className="ml-auto truncate text-label-sm opacity-90" title={who}>
+            <span className="ml-auto truncate text-label-sm text-white/80" title={who}>
               {who}
             </span>
           )}
