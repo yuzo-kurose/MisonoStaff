@@ -149,8 +149,10 @@ export default async function Home_() {
         <PublicSidebar />
 
         <main className="min-w-0 flex-1">
+          {/* 連絡事項＋ご利用の流れ：PCは2列 */}
+          <div className="mx-auto max-w-5xl space-y-6 px-4 pt-10 md:grid md:grid-cols-2 md:items-start md:gap-6 md:space-y-0 md:px-8 md:pt-12">
           {/* 連絡事項 */}
-          <section className="mx-auto max-w-5xl px-4 pt-10 md:px-8 md:pt-12">
+          <Card>
             <div className="flex items-center gap-2.5">
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-50 text-primary-900">
                 <Megaphone size={18} />
@@ -166,7 +168,7 @@ export default async function Home_() {
                 {announcements.map((a) => (
                   <li
                     key={a.id}
-                    className="rounded-xl border border-neutral-200 border-l-4 border-l-primary-700 bg-neutral-white p-4 shadow-sm transition-shadow hover:shadow-md md:p-5"
+                    className="rounded-lg border border-neutral-200 border-l-4 border-l-primary-700 p-4"
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`rounded-full px-2.5 py-0.5 text-label-sm font-medium ${levelMeta[a.level].tone}`}>
@@ -180,11 +182,10 @@ export default async function Home_() {
                 ))}
               </ul>
             )}
-          </section>
+          </Card>
 
-          {/* ご利用の流れ（時系列タイムライン）＝カードでまとめる */}
-          <section className="mx-auto max-w-5xl px-4 pt-10 md:px-8 md:pt-12">
-            <Card>
+          {/* ご利用の流れ（時系列タイムライン） */}
+          <Card>
             <div className="flex items-center gap-2.5">
               <span className="h-6 w-1.5 rounded-full bg-primary-700" />
               <h2 className="text-heading-md text-neutral-900">ご利用の流れ</h2>
@@ -225,8 +226,8 @@ export default async function Home_() {
                 );
               })}
             </ol>
-            </Card>
-          </section>
+          </Card>
+          </div>
 
           {/* 役割別の使い方＝カードでまとめる */}
           <section className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-12">
