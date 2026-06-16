@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, PanelLeft, ChevronDown } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { LogOut, ChevronDown } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { navByRole, navGroupsByRole, type Role } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -12,8 +12,6 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
-
-const COLLAPSE_KEY = "sidebar-collapsed";
 
 /**
  * 役割ごとの色分け。立場の判別は「サイドバー（メニュー）の色」で行う。
@@ -30,8 +28,9 @@ const roleTheme: Record<Role, { label: string; sidebar: string }> = {
 
 /**
  * ダッシュボード型の共通シェル。
- * - md以上：左サイドバー（折りたたみ可：アイコンのみ表示に切替、状態は localStorage 保存）
+ * - md以上：左サイドバー（常に同じフル表示。親カテゴリ単位でアコーディオン開閉できる）
  * - md未満：上部バー＋下部タブバー
+ * メニュー項目は role（権限）ごとに navGroupsByRole で出し分ける。
  */
 export function AppShell({ role, children }: { role: Role; children: ReactNode }) {
   const pathname = usePathname();
@@ -39,26 +38,13 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
   const items = navByRole[role];
   const groups = navGroupsByRole[role];
   const { who } = useAuthUser();
-  const [collapsed, setCollapsed] = useState(false);
-  // 2階層メニューの親カテゴリ開閉。既定は全て開く。
+  // 親カテゴリの開閉状態。既定は全て開く。
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(groups.map((g) => [g.label, true])),
   );
 
-  useEffect(() => {
-    setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
-  }, []);
-
   const toggleGroup = (label: string) =>
     setOpenGroups((s) => ({ ...s, [label]: !(s[label] ?? true) }));
-
-  const toggle = () => {
-    setCollapsed((c) => {
-      const next = !c;
-      localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
-      return next;
-    });
-  };
 
   async function logout() {
     await createClient().auth.signOut();
@@ -68,129 +54,88 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
 
   return (
     <div className="min-h-screen bg-neutral-50 md:flex">
-      {/* サイドバー（PC）：役割カラーを縦の柱に。色＋最上部の役割名で立場を判別する。 */}
+      {/* サイドバー（PC）：常に同じ表示。役割色＋最上部の役割名で立場を判別する。 */}
       <aside
-        className={`hidden flex-none flex-col border-r border-white/10 text-white md:flex ${
-          roleTheme[role].sidebar
-        } ${collapsed ? "w-16" : "w-60"}`}
+        className={`hidden w-60 flex-none flex-col border-r border-white/10 text-white md:flex ${roleTheme[role].sidebar}`}
       >
         {/* ヘッダー帯の背景は役割色で統一（白帯にすると浮くため）。白くするのはロゴだけ。 */}
-        <div
-          className={`border-b border-white/10 ${
-            collapsed
-              ? "flex flex-col items-center gap-1 px-2 py-2"
-              : "flex h-16 items-center justify-between px-4"
-          }`}
-        >
+        <div className="flex h-16 items-center gap-2 border-b border-white/10 px-4">
           {/* ロゴ＝ホームへ戻る。ロゴ(紺色)が暗い役割色に溶けないよう白タイルに乗せる。 */}
           <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg hover:bg-white/10">
             <span className="grid flex-none place-items-center rounded-lg bg-white p-1">
               <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} priority />
             </span>
-            {!collapsed && (
-              <p className="text-heading-sm font-bold text-white">神苑スタッフ</p>
-            )}
+            <p className="text-heading-sm font-bold text-white">神苑スタッフ</p>
           </Link>
-          <button
-            onClick={toggle}
-            title={collapsed ? "メニューを開く" : "折りたたむ"}
-            className="rounded-lg p-1.5 text-white/70 hover:bg-white/10"
-          >
-            <PanelLeft size={18} />
-          </button>
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {/* メニュー上部に役割名を明記（立場の判別）。「○○メニュー」表記。 */}
-          {!collapsed && (
-            <p className="px-3 pb-2 pt-1 text-heading-sm font-bold text-white">
-              {roleTheme[role].label}メニュー
-            </p>
-          )}
-          {collapsed
-            ? /* 折りたたみ時：子項目をアイコンのみで平坦表示 */
-              items.map((it) => {
-                const active = isActive(pathname, it.href);
-                const Icon = it.icon;
-                return (
-                  <Link
-                    key={it.href}
-                    href={it.href}
-                    title={it.label}
-                    className={`flex items-center justify-center rounded-lg px-3 py-2.5 transition-colors ${
-                      active
-                        ? "bg-white/15 text-white"
-                        : "text-white/80 hover:bg-white/10"
-                    }`}
-                  >
-                    <Icon size={20} className={active ? "text-white" : "text-white/70"} />
-                  </Link>
-                );
-              })
-            : /* 展開時：2階層（親カテゴリ → 子項目） */
-              groups.map((group) => {
-                const open = openGroups[group.label] ?? true;
-                const GroupIcon = group.icon;
-                return (
-                  <div key={group.label} className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => toggleGroup(group.label)}
-                      aria-expanded={open}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-label-sm font-medium text-white/50 transition-colors hover:text-white/90"
-                    >
-                      <GroupIcon size={16} className="flex-none text-white/50" />
-                      <span className="flex-1 text-left">{group.label}</span>
-                      <ChevronDown
-                        size={14}
-                        className={`flex-none transition-transform ${open ? "" : "-rotate-90"}`}
-                      />
-                    </button>
-                    {open && (
-                      <div className="mt-1 space-y-1">
-                        {group.items.map((it) => {
-                          const active = isActive(pathname, it.href);
-                          const Icon = it.icon;
-                          return (
-                            <Link
-                              key={it.href}
-                              href={it.href}
-                              className={`flex items-center gap-3 rounded-lg py-2.5 pl-9 pr-3 text-label-md transition-colors ${
-                                active
-                                  ? "bg-white/15 font-medium text-white"
-                                  : "text-white/80 hover:bg-white/10"
-                              }`}
-                            >
-                              <Icon
-                                size={18}
-                                className={active ? "text-white" : "text-white/70"}
-                              />
-                              {it.label}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
+          <p className="px-3 pb-2 pt-1 text-heading-sm font-bold text-white">
+            {roleTheme[role].label}メニュー
+          </p>
+
+          {/* 親カテゴリ → 子項目の2階層。各カテゴリは折りたたみ開閉できる。 */}
+          {groups.map((group) => {
+            const open = openGroups[group.label] ?? true;
+            const GroupIcon = group.icon;
+            return (
+              <div key={group.label} className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.label)}
+                  aria-expanded={open}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-label-sm font-medium text-white/50 transition-colors hover:text-white/90"
+                >
+                  <GroupIcon size={16} className="flex-none text-white/50" />
+                  <span className="flex-1 text-left">{group.label}</span>
+                  <ChevronDown
+                    size={14}
+                    className={`flex-none transition-transform ${open ? "" : "-rotate-90"}`}
+                  />
+                </button>
+                {open && (
+                  <div className="mt-1 space-y-1">
+                    {group.items.map((it) => {
+                      const active = isActive(pathname, it.href);
+                      const Icon = it.icon;
+                      return (
+                        <Link
+                          key={it.href}
+                          href={it.href}
+                          className={`flex items-center gap-3 rounded-lg py-2.5 pl-9 pr-3 text-label-md transition-colors ${
+                            active
+                              ? "bg-white/15 font-medium text-white"
+                              : "text-white/80 hover:bg-white/10"
+                          }`}
+                        >
+                          <Icon
+                            size={18}
+                            className={active ? "text-white" : "text-white/70"}
+                          />
+                          {it.label}
+                        </Link>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="border-t border-white/10 p-3">
-          {who && !collapsed && (
+          {who && (
             <div className="truncate px-3 pb-2 text-label-sm text-white/60" title={who}>
               {who}
             </div>
           )}
           <button
             onClick={logout}
-            title={collapsed ? "ログアウト" : undefined}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-white/80 hover:bg-white/10 ${
-              collapsed ? "justify-center" : ""
-            }`}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-white/80 hover:bg-white/10"
           >
             <LogOut size={20} className="text-white/70" />
-            {!collapsed && "ログアウト"}
+            ログアウト
           </button>
         </div>
       </aside>
