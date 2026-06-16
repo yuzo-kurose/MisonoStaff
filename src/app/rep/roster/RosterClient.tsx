@@ -12,8 +12,9 @@ import { Table, Th, Td } from "@/components/ui/Table";
 import { yen, jpDate } from "@/lib/format";
 import type { RosterGroup } from "@/lib/queries/roster";
 import { confirmApplication, removeParticipant } from "./actions";
+import { refundParticipant } from "@/app/admin/applications/actions";
 
-export function RosterClient({ groups }: { groups: RosterGroup[] }) {
+export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdmin: boolean }) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -37,11 +38,36 @@ export function RosterClient({ groups }: { groups: RosterGroup[] }) {
     });
   };
 
-  const remove = (participantId: string) => {
+  // 申込中／確定（未決済）のキャンセル。確定済みは確認ダイアログを出す。
+  const cancel = (participantId: string, status: string) => {
+    if (status === "confirmed" && !window.confirm("この参加者をキャンセルしますか？（未決済）")) return;
     setMsg(null);
     startTransition(async () => {
       const res = await removeParticipant(participantId);
-      if (!res.ok) setMsg({ ok: false, text: `除外に失敗：${res.error}` });
+      setMsg(
+        res.ok
+          ? { ok: true, text: "キャンセルしました。" }
+          : { ok: false, text: `キャンセルに失敗：${res.error}` },
+      );
+    });
+  };
+
+  // 決済済みのキャンセル＝Stripe全額返金＋キャンセル（管理者のみ実行可）。
+  const refund = (participantId: string) => {
+    if (
+      !window.confirm(
+        "決済済みです。Stripeで全額返金してキャンセルします。よろしいですか？\n（前日まで全額返金／開催当日以降は返金できません）",
+      )
+    )
+      return;
+    setMsg(null);
+    startTransition(async () => {
+      const res = await refundParticipant(participantId);
+      setMsg(
+        res.ok
+          ? { ok: true, text: "返金してキャンセルしました。" }
+          : { ok: false, text: `返金に失敗：${res.error}` },
+      );
     });
   };
 
@@ -116,9 +142,21 @@ export function RosterClient({ groups }: { groups: RosterGroup[] }) {
                       </Td>
                       <Td>
                         {m.status === "applying" ? (
-                          <Button variant="ghost" size="md" onClick={() => remove(m.participantId)}>
+                          <Button variant="ghost" size="md" onClick={() => cancel(m.participantId, m.status)}>
                             名簿から外す
                           </Button>
+                        ) : m.status === "confirmed" ? (
+                          <Button variant="ghost" size="md" onClick={() => cancel(m.participantId, m.status)}>
+                            キャンセル
+                          </Button>
+                        ) : m.status === "paid" ? (
+                          isAdmin ? (
+                            <Button variant="ghost" size="md" onClick={() => refund(m.participantId)}>
+                              キャンセル（返金）
+                            </Button>
+                          ) : (
+                            <span className="text-body-sm text-neutral-500">返金は管理者へ</span>
+                          )
                         ) : (
                           <span className="text-body-sm text-neutral-600">—</span>
                         )}

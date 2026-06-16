@@ -99,5 +99,7 @@ export async function refundParticipant(
     .eq("id", participantId);
 
   revalidatePath("/admin/applications");
+  revalidatePath("/rep/roster");
+  revalidatePath("/rep/payments");
   return { ok: true };
 }
