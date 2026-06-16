@@ -88,7 +88,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
               <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} priority />
             </span>
             {!collapsed && (
-              <p className="text-label-md font-medium text-white">神苑スタッフ</p>
+              <p className="text-heading-sm font-bold text-white">神苑スタッフ</p>
             )}
           </Link>
           <button
