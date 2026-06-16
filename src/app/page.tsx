@@ -148,32 +148,20 @@ export default async function Home_() {
         <PublicSidebar />
 
         <main className="min-w-0 flex-1">
-          {/* ヒーロー */}
-          <section className="relative isolate overflow-hidden border-b border-neutral-200">
-            <Image
-              src="/syuugou.jpeg"
-              alt="神苑スタッフ 集合写真"
-              fill
-              priority
-              sizes="100vw"
-              className="-z-10 object-cover object-center"
-            />
-            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-neutral-900/90 via-neutral-900/60 to-neutral-900/40" />
-
-            <div className="mx-auto flex min-h-[200px] max-w-5xl flex-col justify-end gap-5 px-4 py-6 md:min-h-[260px] md:px-8 md:py-8">
-              <div>
-                <p className="text-label-md font-medium text-primary-100">
-                  神苑スタッフ 参加管理システム
-                </p>
-                <h1 className="mt-2 max-w-2xl text-display-sm text-neutral-white">
-                  申込・事前決済・当日受付を、
-                  <br />
-                  ひとつのシステムで。
-                </h1>
-                <p className="mt-3 max-w-xl text-body-md text-neutral-100">
-                  スマホから参加申込・決済。運営は当日受付まで漏れなく管理できます。
-                </p>
-              </div>
+          {/* ヒーロー（画像なし・テキストのみ） */}
+          <section className="border-b border-neutral-200 bg-neutral-white">
+            <div className="mx-auto max-w-5xl px-4 py-8 md:px-8 md:py-10">
+              <p className="text-label-md font-medium text-primary-700">
+                神苑スタッフ 参加管理システム
+              </p>
+              <h1 className="mt-2 max-w-2xl text-display-sm text-neutral-900">
+                申込・事前決済・当日受付を、
+                <br />
+                ひとつのシステムで。
+              </h1>
+              <p className="mt-3 max-w-xl text-body-md text-neutral-700">
+                スマホから参加申込・決済。運営は当日受付まで漏れなく管理できます。
+              </p>
             </div>
           </section>
 
