@@ -22,24 +22,41 @@ const levelMeta: Record<AnnouncementLevel, { label: string; tone: string }> = {
   info: { label: "お知らせ", tone: "bg-info-100 text-info-900" },
 };
 
-const flowSteps: { icon: LucideIcon; tone: string; title: string; desc: string }[] = [
+// 利用の流れ（時系列タイムライン）。各段階に「担当する役割」を添える。
+const timelineSteps: {
+  icon: LucideIcon;
+  title: string;
+  role: string;
+  roleTone: string;
+  desc: string;
+}[] = [
   {
     icon: ClipboardList,
-    tone: "bg-primary-50 text-primary-900",
-    title: "1. 参加申込",
-    desc: "スマホから所属・参加イベントを選んで申込。代表者が拠点分をまとめて確定します。",
+    title: "参加申込",
+    role: "参加者",
+    roleTone: "bg-primary-100 text-primary-900",
+    desc: "スマホから所属・参加するイベントを選んで申し込みます。",
+  },
+  {
+    icon: Users,
+    title: "名簿・確定",
+    role: "代表者",
+    roleTone: "bg-success-100 text-success-900",
+    desc: "代表者が拠点メンバーの申込を取りまとめ、参加を確定します。",
   },
   {
     icon: CreditCard,
-    tone: "bg-info-100 text-info-900",
-    title: "2. 事前決済",
-    desc: "確定後、カードで事前にお支払い。複数イベントもまとめて1回で決済できます。",
+    title: "事前決済",
+    role: "参加者",
+    roleTone: "bg-primary-100 text-primary-900",
+    desc: "確定後、カードで事前にお支払い。複数イベントも1回でまとめて決済できます。",
   },
   {
     icon: QrCode,
-    tone: "bg-success-100 text-success-900",
-    title: "3. 当日受付",
-    desc: "マイページのQRを当日かざすだけ。参加する全イベントが一度に受付されます。",
+    title: "当日受付",
+    role: "受付",
+    roleTone: "bg-warning-100 text-warning-900",
+    desc: "当日はマイページのQRをかざすだけ。参加する全イベントが一度に受付されます。",
   },
 ];
 
@@ -185,31 +202,47 @@ export default async function Home_() {
             )}
           </section>
 
-          {/* ご利用の流れ */}
+          {/* ご利用の流れ（時系列タイムライン） */}
           <section className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-12">
             <div className="flex items-center gap-2.5">
               <span className="h-6 w-1.5 rounded-full bg-primary-700" />
               <h2 className="text-heading-md text-neutral-900">ご利用の流れ</h2>
             </div>
             <p className="mt-1 text-body-sm text-neutral-600">
-              申込から当日受付まで、3ステップで完結します。
+              申込から当日受付まで、時間の流れに沿って進みます。
             </p>
-            <ol className="mt-6 grid gap-4 md:grid-cols-3">
-              {flowSteps.map(({ icon: StepIcon, tone, title, desc }, i) => (
-                <li
-                  key={title}
-                  className="relative rounded-xl border border-neutral-200 bg-neutral-white p-5 shadow-sm transition-shadow hover:shadow-md"
-                >
-                  <span className="absolute right-4 top-4 text-heading-lg font-bold text-neutral-100">
-                    {i + 1}
-                  </span>
-                  <span className={`grid h-11 w-11 place-items-center rounded-lg ${tone}`}>
-                    <StepIcon size={22} />
-                  </span>
-                  <p className="mt-4 text-heading-sm text-neutral-900">{title}</p>
-                  <p className="mt-1.5 text-body-sm text-neutral-600">{desc}</p>
-                </li>
-              ))}
+            <ol className="mt-6">
+              {timelineSteps.map(({ icon: StepIcon, title, role, roleTone, desc }, i) => {
+                const last = i === timelineSteps.length - 1;
+                return (
+                  <li key={title} className="relative flex gap-4 pb-8 last:pb-0">
+                    {/* 段階をつなぐ縦線（最後の段階には引かない） */}
+                    {!last && (
+                      <span
+                        aria-hidden
+                        className="absolute left-[22px] top-11 h-[calc(100%-2.75rem)] w-px bg-neutral-200"
+                      />
+                    )}
+                    {/* ノード（アイコン） */}
+                    <span className="relative z-10 grid h-11 w-11 flex-none place-items-center rounded-full bg-primary-700 text-neutral-white shadow-sm">
+                      <StepIcon size={20} />
+                    </span>
+                    {/* 内容 */}
+                    <div className="pt-0.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-label-sm font-medium text-neutral-500">
+                          STEP {i + 1}
+                        </span>
+                        <span className={`rounded-full px-2.5 py-0.5 text-label-sm font-medium ${roleTone}`}>
+                          {role}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-heading-sm text-neutral-900">{title}</p>
+                      <p className="mt-1 text-body-sm text-neutral-600">{desc}</p>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           </section>
 
