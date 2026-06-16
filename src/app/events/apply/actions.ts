@@ -9,6 +9,7 @@ export type ApplyValue = {
   optionIds: string[]; // select_single/select_multiple
 };
 export type ApplyInput = {
+  branchId: string; // 申込時に選択する所属拠点
   events: { eventId: string; values: ApplyValue[] }[];
 };
 
@@ -36,16 +37,18 @@ export async function submitApplication(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "ログインが必要です。" };
 
-  // 所属拠点
-  const { data: profileData } = await supabase
-    .from("profiles")
-    .select("branch_id")
-    .eq("id", user.id)
-    .single();
-  const branchId = (profileData as { branch_id: string | null } | null)?.branch_id;
-  if (!branchId) return { ok: false, error: "所属拠点が設定されていません。" };
+  // 所属拠点（申込時に選択。実在する拠点かを service_role で検証する）
+  const branchId = input.branchId;
+  if (!branchId) return { ok: false, error: "所属（拠点）を選択してください。" };
 
   const admin = createAdminClient();
+  const { data: branchRow } = await admin
+    .from("branches")
+    .select("id")
+    .eq("id", branchId)
+    .maybeSingle();
+  if (!branchRow) return { ok: false, error: "選択した所属（拠点）が不正です。" };
+
   const eventIds = input.events.map((e) => e.eventId);
   if (eventIds.length === 0) return { ok: false, error: "イベントが選択されていません。" };
 

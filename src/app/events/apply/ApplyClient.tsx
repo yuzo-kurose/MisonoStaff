@@ -33,17 +33,20 @@ const isSelect = (t: string) => t === "select_single" || t === "select_multiple"
 export function ApplyClient({
   events,
   profileName,
-  branchName,
+  branches,
+  defaultBranchId,
 }: {
   events: ApplyEvent[];
   profileName: string;
-  branchName: string;
+  branches: { id: string; name: string }[];
+  defaultBranchId: string;
 }) {
   const router = useRouter();
   // key = `${eventId}:${fieldId}`
   const [text, setText] = useState<Record<string, string>>({});
   const [single, setSingle] = useState<Record<string, string>>({});
   const [multi, setMulti] = useState<Record<string, string[]>>({});
+  const [branchId, setBranchId] = useState(defaultBranchId);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -69,7 +72,12 @@ export function ApplyClient({
 
   const onSubmit = () => {
     setError(null);
+    if (!branchId) {
+      setError("所属（拠点）を選択してください。");
+      return;
+    }
     const input: ApplyInput = {
+      branchId,
       events: events.map((e) => ({
         eventId: e.id,
         values: e.fields.map((f) => {
@@ -103,13 +111,25 @@ export function ApplyClient({
       />
 
       <Card className="mb-6">
-        <CardTitle>申込者情報（登録済み）</CardTitle>
+        <CardTitle>申込者情報</CardTitle>
         <dl className="mt-3 grid grid-cols-2 gap-y-2 text-body-md">
           <dt className="text-neutral-600">氏名</dt>
           <dd className="text-neutral-900">{profileName}</dd>
-          <dt className="text-neutral-600">所属拠点</dt>
-          <dd className="text-neutral-900">{branchName}</dd>
         </dl>
+        <div className="mt-4 max-w-xs">
+          <Field label="所属（拠点）" required hint="この申込の所属を選択してください">
+            <Select value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
+              <option value="" disabled>
+                選択してください
+              </option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
       </Card>
 
       {error && (

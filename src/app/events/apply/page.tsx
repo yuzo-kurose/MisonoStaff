@@ -55,14 +55,12 @@ export default async function ApplyPage({
       })),
     }));
 
-  const branchName =
-    branches.find((b) => b.id === profile?.branch_id)?.name ?? "未設定";
-
   return (
     <ApplyClient
       events={events}
       profileName={profile?.name ?? ""}
-      branchName={branchName}
+      branches={branches.map((b) => ({ id: b.id, name: b.name }))}
+      defaultBranchId={profile?.branch_id ?? ""}
     />
   );
 }
