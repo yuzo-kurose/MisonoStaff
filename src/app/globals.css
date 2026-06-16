@@ -8,11 +8,12 @@
    ========================================================= */
 :root {
   /* color */
-  --color-primary-900: #003cb8;
-  --color-primary-800: #0050d0;
-  --color-primary-700: #0064e6;
-  --color-primary-100: #e8f1fe;
-  --color-primary-50: #f4f8ff;
+  /* プライマリ：藍／紺青（旧 #0064e6 から品格ある深い藍へ刷新） */
+  --color-primary-900: #18305e;
+  --color-primary-800: #213d75;
+  --color-primary-700: #2a4a8c;
+  --color-primary-100: #e1e8f5;
+  --color-primary-50: #f2f5fb;
 
   --color-neutral-900: #1a1a1c;
   --color-neutral-700: #474749;
@@ -30,11 +31,11 @@
   --color-warning-100: #fff6db;
   --color-error-900: #c52f24;
   --color-error-100: #fceae8;
-  --color-info-900: #0064e6;
-  --color-info-100: #e8f1fe;
+  --color-info-900: #2d5ba8;
+  --color-info-100: #e7edf8;
 
   --color-focus: #ffdb1a;
-  --color-link: #0064e6;
+  --color-link: #2a4a8c;
   --color-link-visited: #7b59c0;
 }
 
