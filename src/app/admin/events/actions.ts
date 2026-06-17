@@ -140,3 +140,28 @@ export async function deleteEvent(
   revalidatePath("/admin/events");
   return { ok: true };
 }
+
+/**
+ * 論理削除したイベントを復元する（deleted_at を null に戻す）。
+ * RLS（events_write_admin）により管理者のみ成功。
+ */
+export async function restoreEvent(
+  eventId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!eventId) return { ok: false, error: "対象が不明です。" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "ログインが必要です。" };
+
+  const { error } = await supabase
+    .from("events")
+    .update({ deleted_at: null } as never)
+    .eq("id", eventId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/events");
+  return { ok: true };
+}

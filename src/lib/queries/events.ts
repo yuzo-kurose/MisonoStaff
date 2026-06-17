@@ -47,6 +47,17 @@ export async function getAdminEvents(): Promise<EventListItem[]> {
   }));
 }
 
+/** 管理用：論理削除済みイベント（復元用）。削除日時の新しい順。 */
+export async function getDeletedEvents(): Promise<EventRow[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("events")
+    .select("*")
+    .not("deleted_at", "is", null)
+    .order("deleted_at", { ascending: false });
+  return (data ?? []) as unknown as EventRow[];
+}
+
 /** ダッシュボード統計（参加者・売上は participants/payments から） */
 export async function getEventStats() {
   const supabase = await createClient();

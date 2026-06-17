@@ -13,7 +13,7 @@ export function EventRowActions({ eventId, eventName }: { eventId: string; event
   const [pending, start] = useTransition();
 
   function onDelete() {
-    if (!window.confirm(`「${eventName}」を削除します。元に戻せません。よろしいですか？`)) return;
+    if (!window.confirm(`「${eventName}」を削除して一覧から非表示にします。よろしいですか？（後で復元できます）`)) return;
     start(async () => {
       const res = await deleteEvent(eventId);
       if (!res.ok) {
