@@ -12,14 +12,17 @@ import { Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, Th, Td } from "@/components/ui/Table";
-import { yen } from "@/lib/format";
+import { yen, jpDate } from "@/lib/format";
 import type { AppRow } from "@/lib/queries/applications";
 import { refundParticipant } from "./actions";
 
 export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [eventId, setEventId] = useState("");
+  // 既定で最初（日付が近い）のイベントを選択＝イベント単位で表示する。
+  const [eventId, setEventId] = useState(
+    () => rows.slice().sort((a, b) => a.eventDate.localeCompare(b.eventDate))[0]?.eventId ?? "",
+  );
   const [branchId, setBranchId] = useState("");
   const [department, setDepartment] = useState("");
   const [status, setStatus] = useState("");
@@ -33,9 +36,15 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
     setStatus("");
   };
 
-  const events = useMemo(
-    () => [...new Map(rows.map((r) => [r.eventId, r.eventName])).entries()],
-    [rows],
+  const events = useMemo(() => {
+    const m = new Map<string, { name: string; date: string }>();
+    for (const r of rows) if (!m.has(r.eventId)) m.set(r.eventId, { name: r.eventName, date: r.eventDate });
+    return [...m.entries()].sort((a, b) => a[1].date.localeCompare(b[1].date));
+  }, [rows]);
+  // 選択イベントの行（集計カード用）。未選択（すべて）なら全件。
+  const eventRows = useMemo(
+    () => (eventId ? rows.filter((r) => r.eventId === eventId) : rows),
+    [rows, eventId],
   );
   const branches = useMemo(
     () => [...new Map(rows.map((r) => [r.branchId, r.branchName])).entries()],
@@ -100,24 +109,37 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
         }
       />
 
+      {/* 上部：イベント選択。選んだイベント単位で集計カードと一覧を表示する。 */}
+      <Card className="mb-4">
+        <label className="mb-1 block text-label-sm text-neutral-600">イベントを選択</label>
+        <Select value={eventId} onChange={(e) => setEventId(e.target.value)} className="max-w-md">
+          <option value="">すべてのイベント</option>
+          {events.map(([id, ev]) => (
+            <option key={id} value={id}>
+              {ev.name}（{jpDate(ev.date)}）
+            </option>
+          ))}
+        </Select>
+      </Card>
+
       <StatGrid>
-        <StatCard icon={Users} label="申込総数" value={rows.length} variant="primary" />
+        <StatCard icon={Users} label="申込総数" value={eventRows.length} variant="primary" />
         <StatCard
           icon={CheckCircle2}
           label="支払済"
-          value={rows.filter((r) => r.status === "paid").length}
+          value={eventRows.filter((r) => r.status === "paid").length}
           variant="success"
         />
         <StatCard
           icon={Coins}
           label="売上"
-          value={yen(rows.filter((r) => r.status === "paid").reduce((s, r) => s + r.amount, 0))}
+          value={yen(eventRows.filter((r) => r.status === "paid").reduce((s, r) => s + r.amount, 0))}
           variant="warning"
         />
         <StatCard
           icon={XCircle}
           label="キャンセル"
-          value={rows.filter((r) => r.status === "cancelled").length}
+          value={eventRows.filter((r) => r.status === "cancelled").length}
           variant="neutral"
         />
       </StatGrid>
@@ -144,17 +166,6 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
                 className="pl-10"
               />
             </div>
-          </div>
-          <div className="w-52">
-            <label className="mb-1 block text-label-sm text-neutral-600">イベント</label>
-            <Select value={eventId} onChange={(e) => setEventId(e.target.value)}>
-              <option value="">すべて</option>
-              {events.map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </Select>
           </div>
           <div className="w-40">
             <label className="mb-1 block text-label-sm text-neutral-600">拠点</label>
