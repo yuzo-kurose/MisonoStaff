@@ -83,6 +83,7 @@ export interface EventRow {
   form_id: string;
   status: EventStatus;
   duplicated_from_event_id: string | null;
+  deleted_at: string | null; // 論理削除（null=有効）
   created_at: string;
   updated_at: string;
 }

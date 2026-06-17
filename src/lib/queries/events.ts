@@ -16,6 +16,7 @@ export async function getPublishedEvents(): Promise<EventRow[]> {
     .from("events")
     .select("*")
     .eq("status", "published")
+    .is("deleted_at", null)
     .order("event_date", { ascending: true });
 
   if (error) throw error;
@@ -31,7 +32,7 @@ export type EventListItem = EventRow & {
 export async function getAdminEvents(): Promise<EventListItem[]> {
   const supabase = await createClient();
   const [{ data: evs }, { data: forms }, { data: fields }] = await Promise.all([
-    supabase.from("events").select("*").order("event_date", { ascending: true }),
+    supabase.from("events").select("*").is("deleted_at", null).order("event_date", { ascending: true }),
     supabase.from("forms").select("id,name"),
     supabase.from("form_fields").select("id,form_id"),
   ]);
@@ -51,11 +52,12 @@ export async function getEventStats() {
   const supabase = await createClient();
   const [{ count: eventCount }, { count: publishedCount }, { count: participantCount }] =
     await Promise.all([
-      supabase.from("events").select("*", { count: "exact", head: true }),
+      supabase.from("events").select("*", { count: "exact", head: true }).is("deleted_at", null),
       supabase
         .from("events")
         .select("*", { count: "exact", head: true })
-        .eq("status", "published"),
+        .eq("status", "published")
+        .is("deleted_at", null),
       supabase.from("participants").select("*", { count: "exact", head: true }),
     ]);
   const { data: paid } = await supabase

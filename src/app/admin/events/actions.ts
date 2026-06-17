@@ -96,10 +96,10 @@ export async function duplicateEvent(formData: FormData): Promise<void> {
 }
 
 /**
- * イベントを削除する。
- * 申込者（participants）が1人でもいる場合は削除を拒否する＝決済・申込データの巻き添え削除を防ぐ
- * （events 削除は applications→participants→payments へ CASCADE するため）。
- * RLS（events_write_admin）により管理者のみ成功。
+ * イベントを削除する（論理削除：deleted_at を立てて一覧から非表示にする）。
+ * 物理削除は applications→participants→payments→refunds へ CASCADE し決済・返金履歴を
+ * 巻き添えにするため行わない。有効な申込（キャンセル以外）が残っている場合は拒否する
+ * ＝先に全申込をキャンセルすれば非表示化できる。RLS（events_write_admin）により管理者のみ成功。
  */
 export async function deleteEvent(
   eventId: string,
@@ -118,18 +118,23 @@ export async function deleteEvent(
     .eq("event_id", eventId);
   const appIds = ((apps ?? []) as unknown as { id: string }[]).map((a) => a.id);
   if (appIds.length) {
+    // キャンセル以外（申込中／確定／支払済）が残っていたら削除不可。
     const { count } = await supabase
       .from("participants")
       .select("id", { count: "exact", head: true })
-      .in("application_id", appIds);
+      .in("application_id", appIds)
+      .neq("status", "cancelled");
     if ((count ?? 0) > 0)
       return {
         ok: false,
-        error: "申込者がいるイベントは削除できません。先に申込を取り消してください。",
+        error: "有効な申込が残っています。先に全ての申込をキャンセルしてください。",
       };
   }
 
-  const { error } = await supabase.from("events").delete().eq("id", eventId);
+  const { error } = await supabase
+    .from("events")
+    .update({ deleted_at: new Date().toISOString() } as never)
+    .eq("id", eventId);
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/admin/events");
