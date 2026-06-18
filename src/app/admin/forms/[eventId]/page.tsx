@@ -2,6 +2,8 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { Alert } from "@/components/ui/Alert";
 import { getEventWithForm } from "@/lib/queries/events";
+import { getDepartmentNames } from "@/lib/queries/departments";
+import { getBranches } from "@/lib/queries/branches";
 import { FormBuilderClient, type ClientField } from "./FormBuilderClient";
 
 export default async function FormBuilderPage({
@@ -10,7 +12,12 @@ export default async function FormBuilderPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const event = await getEventWithForm(eventId);
+  const [event, departments, branchesRaw] = await Promise.all([
+    getEventWithForm(eventId),
+    getDepartmentNames(),
+    getBranches(),
+  ]);
+  const branchNames = branchesRaw.map((b) => b.name);
 
   if (!event) {
     return (
@@ -46,6 +53,8 @@ export default async function FormBuilderPage({
       formId={event.form_id}
       formName={event.formName}
       initialFields={initialFields}
+      departments={departments}
+      branchNames={branchNames}
     />
   );
 }

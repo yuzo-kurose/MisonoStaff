@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronUp, ChevronDown, Trash2, Plus, X } from "lucide-react";
+import { ChevronUp, ChevronDown, Trash2, Plus, X, GripVertical } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -42,14 +42,19 @@ export function FormBuilderClient({
   formId,
   formName: initialName,
   initialFields,
+  departments,
+  branchNames,
 }: {
   eventName: string;
   formId: string;
   formName: string;
   initialFields: ClientField[];
+  departments: string[];
+  branchNames: string[];
 }) {
   const router = useRouter();
   const [fields, setFields] = useState<ClientField[]>(initialFields);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [formName, setFormName] = useState(initialName);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
@@ -82,6 +87,39 @@ export function FormBuilderClient({
       [next[idx], next[j]] = [next[j], next[idx]];
       return next;
     });
+
+  // ドラッグ並び替え：from の項目を to の位置へ移動する。
+  const reorder = (from: number, to: number) =>
+    setFields((fs) => {
+      if (from === to || from < 0 || to < 0 || from >= fs.length || to >= fs.length) return fs;
+      const next = [...fs];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  const onDrop = (idx: number) => {
+    if (dragIdx !== null) reorder(dragIdx, idx);
+    setDragIdx(null);
+  };
+
+  // 選択肢をマスタ（部署/拠点）の内容で置き換える。
+  const fillOptionsFromMaster = (fieldId: string, names: string[]) => {
+    if (names.length === 0) return;
+    const f = fields.find((x) => x.id === fieldId);
+    if (
+      f &&
+      (f.options?.length ?? 0) > 0 &&
+      !window.confirm("既存の選択肢をマスタの内容で置き換えます。よろしいですか？")
+    )
+      return;
+    setFields((fs) =>
+      fs.map((x) =>
+        x.id === fieldId
+          ? { ...x, options: names.map((n) => ({ id: uid(), label: n, price: 0 })) }
+          : x,
+      ),
+    );
+  };
 
   const addOption = (fieldId: string) =>
     setFields((fs) =>
@@ -166,9 +204,27 @@ export function FormBuilderClient({
         {/* 編集パネル */}
         <div className="space-y-4">
           {fields.map((f, idx) => (
-            <Card key={f.id}>
+            <div
+              key={f.id}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => onDrop(idx)}
+              className={dragIdx === idx ? "opacity-50" : ""}
+            >
+            <Card>
               <div className="flex items-center justify-between">
-                <span className="text-label-sm text-neutral-600">項目 {idx + 1}</span>
+                <div className="flex items-center gap-2">
+                  <span
+                    draggable
+                    onDragStart={() => setDragIdx(idx)}
+                    onDragEnd={() => setDragIdx(null)}
+                    title="ドラッグで並び替え"
+                    aria-label="ドラッグで並び替え"
+                    className="cursor-grab text-neutral-400 hover:text-neutral-600 active:cursor-grabbing"
+                  >
+                    <GripVertical size={18} />
+                  </span>
+                  <span className="text-label-sm text-neutral-600">項目 {idx + 1}</span>
+                </div>
                 <div className="flex gap-1">
                   <Button
                     variant="ghost"
@@ -248,11 +304,31 @@ export function FormBuilderClient({
 
                 {(isSelect(f.fieldType) || f.priceCalc === "option_based") && (
                   <div className="rounded-lg bg-neutral-50 p-3">
-                    <div className="mb-2 flex items-center justify-between">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-1">
                       <span className="text-label-md text-neutral-700">選択肢</span>
-                      <Button variant="ghost" size="md" onClick={() => addOption(f.id)}>
-                        <Plus size={16} /> 追加
-                      </Button>
+                      <div className="flex flex-wrap gap-1">
+                        {departments.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="md"
+                            onClick={() => fillOptionsFromMaster(f.id, departments)}
+                          >
+                            部署マスタ
+                          </Button>
+                        )}
+                        {branchNames.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="md"
+                            onClick={() => fillOptionsFromMaster(f.id, branchNames)}
+                          >
+                            拠点マスタ
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="md" onClick={() => addOption(f.id)}>
+                          <Plus size={16} /> 追加
+                        </Button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       {(f.options ?? []).map((o) => (
@@ -290,6 +366,7 @@ export function FormBuilderClient({
                 )}
               </div>
             </Card>
+            </div>
           ))}
 
           <Button variant="secondary" fullWidth size="lg" onClick={addField}>
