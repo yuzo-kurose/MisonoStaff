@@ -5,20 +5,18 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import {
   EventForm,
+  newEventInitial,
   type EventBranchOption,
-  type EventFormInitial,
   type EventFormPayload,
 } from "../EventForm";
 import { createEvent } from "./actions";
 
-export function NewEventClient({
-  branches,
-  initial,
-}: {
-  branches: EventBranchOption[];
-  initial: EventFormInitial;
-}) {
+export function NewEventClient({ branches }: { branches: EventBranchOption[] }) {
   const router = useRouter();
+
+  // 既定で全拠点を選択（基本は全拠点から申込受付）。newEventInitial の参照・スプレッドは
+  // クライアント側で行う（サーバーから "use client" モジュールの値をスプレッドすると壊れるため）。
+  const initial = { ...newEventInitial, selectedBranchIds: branches.map((b) => b.id) };
 
   const onSubmit = async (payload: EventFormPayload) => {
     const res = await createEvent(payload);
