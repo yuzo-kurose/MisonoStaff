@@ -8,24 +8,22 @@ import {
   type EventBranchOption,
   type EventFormInitial,
   type EventFormPayload,
-} from "../../EventForm";
-import { updateEvent } from "./actions";
+} from "../EventForm";
+import { createEvent } from "./actions";
 
-export function EditEventClient({
-  eventId,
-  initial,
+export function NewEventClient({
   branches,
+  initial,
 }: {
-  eventId: string;
-  initial: EventFormInitial;
   branches: EventBranchOption[];
+  initial: EventFormInitial;
 }) {
   const router = useRouter();
 
   const onSubmit = async (payload: EventFormPayload) => {
-    const res = await updateEvent(eventId, payload);
-    if (res.ok) {
-      router.push("/admin/events");
+    const res = await createEvent(payload);
+    if (res.ok && res.eventId) {
+      router.push(`/admin/forms/${res.eventId}`);
       router.refresh();
     }
     return res;
@@ -34,15 +32,15 @@ export function EditEventClient({
   return (
     <AppShell role="admin">
       <PageHeader
-        title="イベントを編集"
-        description="開催情報・料金・交通手段・対象拠点を変更します。フォーム項目の追加はフォーム編集画面から行えます。"
+        title="イベントを作成"
+        description="ステップ 1 / 2 ・ 開催情報を設定 → 作成後に申込フォームを編集します。"
       />
       <EventForm
         initial={initial}
         branches={branches}
-        submitLabel="変更を保存"
-        pendingLabel="保存中…"
-        actionNote="保存後、イベント一覧に戻ります"
+        submitLabel="作成してフォームを編集へ"
+        pendingLabel="作成中…"
+        actionNote="作成後、このイベント専用の申込フォーム編集へ進みます"
         cancelHref="/admin/events"
         onSubmit={onSubmit}
       />

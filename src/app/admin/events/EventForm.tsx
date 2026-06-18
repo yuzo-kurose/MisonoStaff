@@ -8,7 +8,9 @@ import { Field, Fieldset, Input, Select, MoneyInput } from "@/components/ui/Fiel
 import { Alert } from "@/components/ui/Alert";
 import { StickyActionBar } from "@/components/ui/StickyActionBar";
 import { yen } from "@/lib/format";
-import { branches } from "@/lib/mock/data";
+
+/** 対象拠点の選択肢（拠点マスタ）。 */
+export type EventBranchOption = { id: string; name: string; region: string | null };
 
 /** 作成・編集で共通に使うイベント設定の入力値（サーバーアクションへ渡す形） */
 export type EventFormPayload = {
@@ -56,7 +58,8 @@ export const newEventInitial: EventFormInitial = {
   inFare: "",
   outbound: ["往路守山バス（17時便）", "往路南草津バス（19時便）", "往路個人車"],
   inbound: ["復路守山バス", "復路個人車"],
-  selectedBranchIds: branches.map((b) => b.id),
+  // 既定は全拠点選択だが、拠点は拠点マスタ（DB）から渡すため、新規ページ側で全件をセットする。
+  selectedBranchIds: [],
 };
 
 function defaultDeadline(endDate: string): string {
@@ -116,6 +119,7 @@ function OptionEditor({
  */
 export function EventForm({
   initial,
+  branches,
   submitLabel,
   pendingLabel,
   actionNote,
@@ -123,6 +127,7 @@ export function EventForm({
   onSubmit,
 }: {
   initial: EventFormInitial;
+  branches: EventBranchOption[];
   submitLabel: string;
   pendingLabel: string;
   actionNote?: string;
@@ -146,13 +151,24 @@ export function EventForm({
 
   const [selected, setSelected] = useState<Set<string>>(new Set(initial.selectedBranchIds));
   const [extraBranches, setExtraBranches] = useState<string[]>([]);
+  const [branchQuery, setBranchQuery] = useState("");
 
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const effectiveDeadline = deadlineTouched ? deadline : defaultDeadline(endDate);
   const maxFee = (Number(lodging) || 0) + (Number(outFare) || 0) + (Number(inFare) || 0);
-  const allSelected = selected.size === branches.length;
+  const allSelected = branches.length > 0 && selected.size === branches.length;
+  // 入力で拠点を絞り込み（名前・地域の部分一致）。選択状態は全拠点に対して保持する。
+  const bq = branchQuery.trim().toLowerCase();
+  const filteredBranches =
+    bq === ""
+      ? branches
+      : branches.filter(
+          (b) =>
+            b.name.toLowerCase().includes(bq) ||
+            (b.region ?? "").toLowerCase().includes(bq),
+        );
 
   const toggleBranch = (id: string) =>
     setSelected((s) => {
@@ -284,9 +300,9 @@ export function EventForm({
         <SectionCard
           step={4}
           title="対象拠点"
-          description="申込を受け付ける拠点を選択します。一覧に無い拠点は下から追加できます。"
+          description="拠点マスタの全拠点を表示します。基本は全拠点を受け付けます。入力で絞り込めます。一覧に無い拠点は下から追加できます。"
         >
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <span className="text-body-sm text-neutral-600">
               {selected.size} / {branches.length} 拠点を選択中
             </span>
@@ -294,32 +310,52 @@ export function EventForm({
               {allSelected ? "すべて解除" : "すべて選択"}
             </Button>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {branches.map((b) => {
-              const on = selected.has(b.id);
-              return (
-                <label
-                  key={b.id}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-body-md transition-colors ${
-                    on
-                      ? "border-primary-700 bg-primary-50 text-neutral-900"
-                      : "border-neutral-200 bg-neutral-white text-neutral-700 hover:bg-neutral-50"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 flex-none"
-                    checked={on}
-                    onChange={() => toggleBranch(b.id)}
-                  />
-                  <span className="truncate">
-                    {b.name}
-                    <span className="ml-1 text-body-sm text-neutral-600">（{b.region}）</span>
-                  </span>
-                </label>
-              );
-            })}
+          <div className="mb-3">
+            <Input
+              value={branchQuery}
+              onChange={(e) => setBranchQuery(e.target.value)}
+              placeholder="拠点名・地域で絞り込み"
+              aria-label="拠点を絞り込み"
+            />
           </div>
+          {branches.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-neutral-300 py-6 text-center text-body-sm text-neutral-500">
+              拠点マスタに拠点が登録されていません。
+            </p>
+          ) : filteredBranches.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-neutral-300 py-6 text-center text-body-sm text-neutral-500">
+              「{branchQuery}」に一致する拠点がありません。
+            </p>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredBranches.map((b) => {
+                const on = selected.has(b.id);
+                return (
+                  <label
+                    key={b.id}
+                    className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-body-md transition-colors ${
+                      on
+                        ? "border-primary-700 bg-primary-50 text-neutral-900"
+                        : "border-neutral-200 bg-neutral-white text-neutral-700 hover:bg-neutral-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 flex-none"
+                      checked={on}
+                      onChange={() => toggleBranch(b.id)}
+                    />
+                    <span className="truncate">
+                      {b.name}
+                      {b.region && (
+                        <span className="ml-1 text-body-sm text-neutral-600">（{b.region}）</span>
+                      )}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
 
           {extraBranches.length > 0 && (
             <div className="mt-3 space-y-2">

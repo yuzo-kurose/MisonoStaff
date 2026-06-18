@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { Alert } from "@/components/ui/Alert";
 import { getEventWithForm, getEventBranchIds } from "@/lib/queries/events";
+import { getBranches } from "@/lib/queries/branches";
 import { EditEventClient } from "./EditEventClient";
 import type { EventFormInitial } from "../../EventForm";
 
@@ -26,7 +27,8 @@ export default async function EditEventPage({
     );
   }
 
-  const branchIds = await getEventBranchIds(id);
+  const [branchIds, branchesRaw] = await Promise.all([getEventBranchIds(id), getBranches()]);
+  const branches = branchesRaw.map((b) => ({ id: b.id, name: b.name, region: b.region ?? null }));
 
   // DBのフォーム項目（料金・交通手段）→ 作成画面の入力値に逆変換する。
   // 料金/交通手段は createEvent が決め打ちのラベルで作る3項目に格納されている。
@@ -58,5 +60,5 @@ export default async function EditEventPage({
     selectedBranchIds: branchIds,
   };
 
-  return <EditEventClient eventId={id} initial={initial} />;
+  return <EditEventClient eventId={id} initial={initial} branches={branches} />;
 }

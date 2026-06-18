@@ -1,37 +1,12 @@
-"use client";
+import { getBranches } from "@/lib/queries/branches";
+import { newEventInitial } from "../EventForm";
+import { NewEventClient } from "./NewEventClient";
 
-import { useRouter } from "next/navigation";
-import { AppShell } from "@/components/layout/AppShell";
-import { PageHeader } from "@/components/ui/Card";
-import { EventForm, newEventInitial, type EventFormPayload } from "../EventForm";
-import { createEvent } from "./actions";
+export default async function NewEventPage() {
+  const branchesRaw = await getBranches();
+  const branches = branchesRaw.map((b) => ({ id: b.id, name: b.name, region: b.region ?? null }));
+  // 既定で全拠点を選択（基本は全拠点から申込受付）。
+  const initial = { ...newEventInitial, selectedBranchIds: branches.map((b) => b.id) };
 
-export default function NewEventPage() {
-  const router = useRouter();
-
-  const onSubmit = async (payload: EventFormPayload) => {
-    const res = await createEvent(payload);
-    if (res.ok && res.eventId) {
-      router.push(`/admin/forms/${res.eventId}`);
-      router.refresh();
-    }
-    return res;
-  };
-
-  return (
-    <AppShell role="admin">
-      <PageHeader
-        title="イベントを作成"
-        description="ステップ 1 / 2 ・ 開催情報を設定 → 作成後に申込フォームを編集します。"
-      />
-      <EventForm
-        initial={newEventInitial}
-        submitLabel="作成してフォームを編集へ"
-        pendingLabel="作成中…"
-        actionNote="作成後、このイベント専用の申込フォーム編集へ進みます"
-        cancelHref="/admin/events"
-        onSubmit={onSubmit}
-      />
-    </AppShell>
-  );
+  return <NewEventClient branches={branches} initial={initial} />;
 }
