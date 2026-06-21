@@ -73,7 +73,7 @@ export function Fieldset({
 // フォーカス・hover・無効・エラー状態を含む共通コントロールスタイル。
 // 業務での連続入力を想定し、フォーカスが必ず視認できるようリングを付与する。
 const control =
-  "w-full rounded-lg border border-neutral-500 bg-neutral-white px-3 py-2.5 text-body-md text-neutral-900 transition-colors placeholder:text-neutral-500 " +
+  "w-full rounded-lg border border-neutral-500 bg-neutral-white px-3 py-2.5 text-neutral-900 transition-colors placeholder:text-neutral-500 " +
   "hover:border-neutral-700 focus:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-100 " +
   "disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-500 " +
   "aria-[invalid=true]:border-error-900 aria-[invalid=true]:focus:ring-error-100";
@@ -81,15 +81,16 @@ const control =
 export function Input({ className = "", type, inputMode, ...props }: ComponentProps<"input">) {
   // 数値入力はスマホでテンキーを出す（明示指定があればそれを優先）。
   const mode = inputMode ?? (type === "number" ? "numeric" : undefined);
-  return <input type={type} inputMode={mode} className={`${control} ${className}`} {...props} />;
+  return <input type={type} inputMode={mode} className={`${control} text-body-md ${className}`} {...props} />;
 }
 
 export function Textarea({ className = "", ...props }: ComponentProps<"textarea">) {
-  return <textarea className={`${control} min-h-24 ${className}`} {...props} />;
+  return <textarea className={`${control} text-body-md min-h-24 ${className}`} {...props} />;
 }
 
 export function Select({ className = "", ...props }: ComponentProps<"select">) {
-  return <select className={`${control} ${className}`} {...props} />;
+  // ネイティブの選択肢が小さくなりがちなので、一段大きめ(text-body-lg)にして読みやすくする。
+  return <select className={`${control} text-body-lg ${className}`} {...props} />;
 }
 
 /**
@@ -106,7 +107,7 @@ export function MoneyInput({ className = "", ...props }: ComponentProps<"input">
         type="number"
         inputMode="numeric"
         min={0}
-        className={`${control} pl-9 text-right tabular-nums ${className}`}
+        className={`${control} text-body-md pl-9 text-right tabular-nums ${className}`}
         {...props}
       />
     </div>
