@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 
 export type RegisterInput = {
   name: string;
-  kana: string;
   email: string;
   password: string;
   branch_id: string;
@@ -28,8 +27,7 @@ export type RegisterInput = {
 export async function registerParticipant(
   input: RegisterInput,
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!input.name.trim() || !input.kana.trim())
-    return { ok: false, error: "氏名・読み仮名を入力してください。" };
+  if (!input.name.trim()) return { ok: false, error: "氏名を入力してください。" };
   if (!input.email.trim() || input.password.length < 8)
     return { ok: false, error: "メールとパスワード（8文字以上）を入力してください。" };
   if (!input.branch_id) return { ok: false, error: "所属（拠点）を選択してください。" };
@@ -45,7 +43,7 @@ export async function registerParticipant(
       // handle_new_user トリガがこのメタデータから profiles を作る
       data: {
         name: input.name.trim(),
-        kana: input.kana.trim(),
+        kana: "",
         branch_id: input.branch_id,
         division: input.division,
         department: input.department?.trim() || "",

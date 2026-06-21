@@ -12,7 +12,6 @@ import { updateMyProfile } from "./actions";
 
 type Props = {
   name: string;
-  kana: string;
   division: string;
   department: string;
   departmentOptions: string[];
@@ -22,10 +21,9 @@ type Props = {
 
 const divisionLabel = (v: string) => divisions.find((d) => d.value === v)?.label ?? "—";
 
-/** 登録情報の表示＋本人編集（氏名・読み仮名・部・部署）。所属/メールは表示のみ。 */
+/** 登録情報の表示＋本人編集（氏名・部・部署）。所属/メールは表示のみ。 */
 export function ProfileCard({
   name,
-  kana,
   division,
   department,
   departmentOptions,
@@ -34,7 +32,7 @@ export function ProfileCard({
 }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name, kana, division, department });
+  const [form, setForm] = useState({ name, division, department });
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,7 +55,7 @@ export function ProfileCard({
   }
 
   function onCancel() {
-    setForm({ name, kana, division, department });
+    setForm({ name, division, department });
     setError(null);
     setEditing(false);
   }
@@ -79,7 +77,6 @@ export function ProfileCard({
       {!editing ? (
         <dl className="divide-y divide-neutral-200">
           <Row label="氏名" value={name} />
-          <Row label="読み仮名" value={kana} />
           <Row label="部" value={divisionLabel(division)} />
           <Row label="部署（配置先）" value={department || "—"} />
           <Row label="所属（拠点）" value={branchName} hint="変更は管理者へ" />
@@ -90,9 +87,6 @@ export function ProfileCard({
           {error && <Alert variant="error">{error}</Alert>}
           <Field label="氏名" required>
             <Input value={form.name} onChange={(e) => set("name", e.target.value)} autoComplete="name" />
-          </Field>
-          <Field label="読み仮名" required hint="例：やまだ たろう">
-            <Input value={form.kana} onChange={(e) => set("kana", e.target.value)} />
           </Field>
           <Field label="部" required>
             <Select value={form.division} onChange={(e) => set("division", e.target.value)} required>

@@ -19,7 +19,6 @@ export function SignupForm({ departments }: { departments: string[] }) {
     division: "",
     department: "",
     name: "",
-    kana: "",
     email: "",
     password: "",
   });
@@ -30,7 +29,7 @@ export function SignupForm({ departments }: { departments: string[] }) {
 
   // 認証方法に関わらず必須のプロフィール項目
   const profileFilled =
-    Boolean(form.branch_id) && Boolean(form.division) && form.name.trim() !== "" && form.kana.trim() !== "";
+    Boolean(form.branch_id) && Boolean(form.division) && form.name.trim() !== "";
 
   async function onSubmitEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +51,7 @@ export function SignupForm({ departments }: { departments: string[] }) {
   function startLine() {
     setError(null);
     if (!profileFilled) {
-      setError("所属・部・氏名・読み仮名を入力してください。");
+      setError("所属・部・氏名を入力してください。");
       return;
     }
     const q = new URLSearchParams({
@@ -60,7 +59,6 @@ export function SignupForm({ departments }: { departments: string[] }) {
       division: form.division,
       department: form.department,
       name: form.name,
-      kana: form.kana,
     });
     window.location.href = `/auth/line/login?${q.toString()}`;
   }
@@ -146,14 +144,6 @@ export function SignupForm({ departments }: { departments: string[] }) {
               onChange={(e) => set("name", e.target.value)}
               placeholder="山田 太郎"
               autoComplete="name"
-            />
-          </Field>
-
-          <Field label="読み仮名" required hint="例：やまだ たろう">
-            <Input
-              value={form.kana}
-              onChange={(e) => set("kana", e.target.value)}
-              placeholder="やまだ たろう"
             />
           </Field>
 

@@ -7,7 +7,6 @@ import { requireRole } from "@/lib/auth/guard";
 export type ProxyMemberInput = {
   eventIds: string[];
   name: string;
-  kana: string;
   email: string;
   division: string;
   department?: string; // 配置先（任意）
@@ -29,8 +28,7 @@ function tempPassword(): string {
 export async function registerProxyMember(
   input: ProxyMemberInput,
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!input.name.trim() || !input.kana.trim())
-    return { ok: false, error: "氏名・読み仮名を入力してください。" };
+  if (!input.name.trim()) return { ok: false, error: "氏名を入力してください。" };
   if (!input.email.trim()) return { ok: false, error: "メールアドレスを入力してください。" };
   if (!input.division) return { ok: false, error: "部を選択してください。" };
   if (input.eventIds.length === 0)
@@ -74,7 +72,7 @@ export async function registerProxyMember(
     email_confirm: true,
     user_metadata: {
       name: input.name.trim(),
-      kana: input.kana.trim(),
+      kana: "",
       branch_id: branchId,
       division: input.division,
       department: input.department?.trim() || "",

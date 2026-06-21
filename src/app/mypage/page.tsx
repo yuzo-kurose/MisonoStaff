@@ -136,7 +136,6 @@ export default async function MyPage() {
 
           <ProfileCard
             name={profile?.name ?? ""}
-            kana={profile?.kana ?? ""}
             division={profile?.division ?? ""}
             department={profile?.department ?? ""}
             departmentOptions={departmentOptions}

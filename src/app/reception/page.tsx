@@ -193,10 +193,7 @@ export default function ReceptionPage() {
               <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200">
                 {hits.map((h) => (
                   <li key={h.id} className="flex items-center justify-between px-3 py-2">
-                    <span>
-                      <span className="text-body-md text-neutral-900">{h.name}</span>{" "}
-                      <span className="text-body-sm text-neutral-600">{h.kana}</span>
-                    </span>
+                    <span className="text-body-md text-neutral-900">{h.name}</span>
                     <Button size="md" onClick={() => loadCandidates(h.checkin_token, h.name)}>
                       呼び出す
                     </Button>

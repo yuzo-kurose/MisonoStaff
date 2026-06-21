@@ -24,7 +24,6 @@ export function ProxyClient({
 }) {
   const [eventIds, setEventIds] = useState<string[]>([]);
   const [name, setName] = useState("");
-  const [kana, setKana] = useState("");
   const [email, setEmail] = useState("");
   const [division, setDivision] = useState("");
   const [department, setDepartment] = useState("");
@@ -38,11 +37,10 @@ export function ProxyClient({
   const addOne = () => {
     setMsg(null);
     startTransition(async () => {
-      const res = await registerProxyMember({ eventIds, name, kana, email, division, department });
+      const res = await registerProxyMember({ eventIds, name, email, division, department });
       if (res.ok) {
         setMsg({ ok: true, text: `${name} さんを登録しました。続けて入力できます。` });
         setName("");
-        setKana("");
         setEmail("");
         // eventIds・division・department は連続入力のため保持
       } else {
@@ -51,7 +49,7 @@ export function ProxyClient({
     });
   };
 
-  // CSV: 氏名,読み仮名,メール,部(値),部署(任意),イベントID(；区切り・省略時は画面選択)
+  // CSV: 氏名,メール,部(値),部署(任意),イベントID(；区切り・省略時は画面選択)
   const onCsv = (file: File) => {
     setMsg(null);
     startTransition(async () => {
@@ -64,14 +62,13 @@ export function ProxyClient({
       const errs: string[] = [];
       for (const line of rows) {
         const cols = line.split(",").map((c) => c.replace(/^"|"$/g, "").trim());
-        const [cName, cKana, cEmail, cDivision, cDepartment, cEvents] = cols;
+        const [cName, cEmail, cDivision, cDepartment, cEvents] = cols;
         const ids = cEvents
           ? cEvents.split(/[;；]/).map((s) => s.trim()).filter(Boolean)
           : eventIds;
         const res = await registerProxyMember({
           eventIds: ids,
           name: cName ?? "",
-          kana: cKana ?? "",
           email: cEmail ?? "",
           division: cDivision ?? "",
           department: cDepartment ?? "",
@@ -161,9 +158,6 @@ export function ProxyClient({
               <Field label="氏名" required>
                 <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="田中 花子" />
               </Field>
-              <Field label="読み仮名" required>
-                <Input value={kana} onChange={(e) => setKana(e.target.value)} placeholder="たなか はなこ" />
-              </Field>
               <Field label="メールアドレス" required>
                 <Input
                   type="email"
@@ -200,7 +194,7 @@ export function ProxyClient({
 
         <SectionCard
           title="CSVで一括取り込み"
-          description="列: 氏名, 読み仮名, メール, 部(値), 部署(任意), イベントID(；区切り・省略時は上で選択中のイベント)。1行目が見出しなら自動でスキップします。"
+          description="列: 氏名, メール, 部(値), 部署(任意), イベントID(；区切り・省略時は上で選択中のイベント)。1行目が見出しなら自動でスキップします。"
         >
           <input
             ref={fileRef}
