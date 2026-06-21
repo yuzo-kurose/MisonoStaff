@@ -3,22 +3,15 @@
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
-import {
-  EventForm,
-  type EventBranchOption,
-  type EventFormInitial,
-  type EventFormPayload,
-} from "../../EventForm";
+import { EventForm, type EventFormInitial, type EventFormPayload } from "../../EventForm";
 import { updateEvent } from "./actions";
 
 export function EditEventClient({
   eventId,
   initial,
-  branches,
 }: {
   eventId: string;
   initial: EventFormInitial;
-  branches: EventBranchOption[];
 }) {
   const router = useRouter();
 
@@ -39,7 +32,6 @@ export function EditEventClient({
       />
       <EventForm
         initial={initial}
-        branches={branches}
         submitLabel="変更を保存"
         pendingLabel="保存中…"
         actionNote="保存後、イベント一覧に戻ります"

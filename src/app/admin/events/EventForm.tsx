@@ -1,16 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Trash2, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { SectionCard } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { Field, Fieldset, Input, Select, MoneyInput } from "@/components/ui/Field";
+import { Field, Fieldset, Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { StickyActionBar } from "@/components/ui/StickyActionBar";
-import { yen } from "@/lib/format";
-
-/** 対象拠点の選択肢（拠点マスタ）。 */
-export type EventBranchOption = { id: string; name: string; region: string | null };
 
 /** 作成・編集で共通に使うイベント設定の入力値（サーバーアクションへ渡す形） */
 export type EventFormPayload = {
@@ -20,13 +16,6 @@ export type EventFormPayload = {
   deadline: string;
   capacity: number | null;
   status: "draft" | "published";
-  lodgingFee: number;
-  outboundFare: number;
-  inboundFare: number;
-  outboundOptions: string[];
-  inboundOptions: string[];
-  existingBranchIds: string[];
-  newBranchNames: string[];
 };
 
 /** フォームの初期表示値（入力欄に合わせ数値も文字列で保持） */
@@ -37,15 +26,9 @@ export type EventFormInitial = {
   deadline: string;
   capacity: string;
   status: "draft" | "published";
-  lodging: string;
-  outFare: string;
-  inFare: string;
-  outbound: string[];
-  inbound: string[];
-  selectedBranchIds: string[];
 };
 
-/** 新規作成時の初期値（作成・編集で同一UIにするための既定セット） */
+/** 新規作成時の初期値 */
 export const newEventInitial: EventFormInitial = {
   name: "",
   startDate: "",
@@ -53,13 +36,6 @@ export const newEventInitial: EventFormInitial = {
   deadline: "",
   capacity: "",
   status: "draft",
-  lodging: "",
-  outFare: "",
-  inFare: "",
-  outbound: ["往路守山バス（17時便）", "往路南草津バス（19時便）", "往路個人車"],
-  inbound: ["復路守山バス", "復路個人車"],
-  // 既定は全拠点選択だが、拠点は拠点マスタ（DB）から渡すため、新規ページ側で全件をセットする。
-  selectedBranchIds: [],
 };
 
 function defaultDeadline(endDate: string): string {
@@ -69,57 +45,12 @@ function defaultDeadline(endDate: string): string {
   return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}-25`;
 }
 
-function OptionEditor({
-  label,
-  items,
-  onChange,
-}: {
-  label: string;
-  items: string[];
-  onChange: (next: string[]) => void;
-}) {
-  return (
-    <div>
-      <p className="text-label-md text-neutral-900">{label}</p>
-      <div className="mt-2 space-y-2">
-        {items.map((it, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Input
-              value={it}
-              aria-label={`${label}の選択肢 ${i + 1}`}
-              onChange={(e) => {
-                const next = [...items];
-                next[i] = e.target.value;
-                onChange(next);
-              }}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="md"
-              aria-label="この選択肢を削除"
-              onClick={() => onChange(items.filter((_, j) => j !== i))}
-            >
-              <Trash2 size={16} />
-            </Button>
-          </div>
-        ))}
-        <Button type="button" variant="ghost" size="md" onClick={() => onChange([...items, "新しい選択肢"])}>
-          <Plus size={16} /> 選択肢を追加
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 /**
- * イベント設定の入力フォーム本体。新規作成・編集で共有する。
- * 送信処理・遷移は親が onSubmit で受け取り（作成はフォーム編集へ、編集は一覧へ等）、
- * このコンポーネントは入力・バリデーション表示・pending 管理のみを担う。
+ * イベントの基本情報を入力するフォーム。新規作成・編集で共有する。
+ * 料金・交通手段・拠点などの明細は申込フォーム（/admin/forms/[eventId]）で項目として作成する。
  */
 export function EventForm({
   initial,
-  branches,
   submitLabel,
   pendingLabel,
   actionNote,
@@ -127,7 +58,6 @@ export function EventForm({
   onSubmit,
 }: {
   initial: EventFormInitial;
-  branches: EventBranchOption[];
   submitLabel: string;
   pendingLabel: string;
   actionNote?: string;
@@ -142,44 +72,10 @@ export function EventForm({
   const [capacity, setCapacity] = useState(initial.capacity);
   const [status, setStatus] = useState<"draft" | "published">(initial.status);
 
-  const [lodging, setLodging] = useState(initial.lodging);
-  const [outFare, setOutFare] = useState(initial.outFare);
-  const [inFare, setInFare] = useState(initial.inFare);
-
-  const [outbound, setOutbound] = useState<string[]>(initial.outbound);
-  const [inbound, setInbound] = useState<string[]>(initial.inbound);
-
-  const [selected, setSelected] = useState<Set<string>>(new Set(initial.selectedBranchIds));
-  const [extraBranches, setExtraBranches] = useState<string[]>([]);
-  const [branchQuery, setBranchQuery] = useState("");
-
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const effectiveDeadline = deadlineTouched ? deadline : defaultDeadline(endDate);
-  const maxFee = (Number(lodging) || 0) + (Number(outFare) || 0) + (Number(inFare) || 0);
-  const allSelected = branches.length > 0 && selected.size === branches.length;
-  // 入力で拠点を絞り込み（名前・地域の部分一致）。選択状態は全拠点に対して保持する。
-  const bq = branchQuery.trim().toLowerCase();
-  const filteredBranches =
-    bq === ""
-      ? branches
-      : branches.filter(
-          (b) =>
-            b.name.toLowerCase().includes(bq) ||
-            (b.region ?? "").toLowerCase().includes(bq),
-        );
-
-  const toggleBranch = (id: string) =>
-    setSelected((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
-
-  const toggleAll = () =>
-    setSelected(allSelected ? new Set() : new Set(branches.map((b) => b.id)));
 
   const submit = () => {
     setError(null);
@@ -191,13 +87,6 @@ export function EventForm({
         deadline: effectiveDeadline,
         capacity: capacity ? Number(capacity) : null,
         status,
-        lodgingFee: Number(lodging) || 0,
-        outboundFare: Number(outFare) || 0,
-        inboundFare: Number(inFare) || 0,
-        outboundOptions: outbound,
-        inboundOptions: inbound,
-        existingBranchIds: [...selected],
-        newBranchNames: extraBranches,
       });
       if (!res.ok) setError(res.error ?? "保存に失敗しました。");
     });
@@ -262,141 +151,7 @@ export function EventForm({
           </div>
         </SectionCard>
 
-        <SectionCard
-          step={2}
-          title="料金"
-          description="参加者が申込時に負担する金額。交通手段ごとの加算額は次のセクションで設定します。"
-        >
-          <div className="space-y-4">
-            <Field label="スタッフ宿泊費" required>
-              <MoneyInput value={lodging} onChange={(e) => setLodging(e.target.value)} placeholder="3000" />
-            </Field>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="往路バス代">
-                <MoneyInput value={outFare} onChange={(e) => setOutFare(e.target.value)} placeholder="1000" />
-              </Field>
-              <Field label="復路バス代">
-                <MoneyInput value={inFare} onChange={(e) => setInFare(e.target.value)} placeholder="1000" />
-              </Field>
-            </div>
-            <div className="flex items-baseline justify-between rounded-lg bg-neutral-50 px-4 py-3">
-              <span className="text-body-sm text-neutral-600">想定最大徴収額（宿泊＋往復バス）</span>
-              <span className="text-heading-sm tabular-nums text-neutral-900">{yen(maxFee)}</span>
-            </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          step={3}
-          title="交通手段"
-          description="参加者が申込時に選ぶ選択肢です。「バス」を含む選択肢にバス代が、それ以外は0円が設定されます。"
-        >
-          <div className="grid gap-6 md:grid-cols-2">
-            <OptionEditor label="往路" items={outbound} onChange={setOutbound} />
-            <OptionEditor label="復路" items={inbound} onChange={setInbound} />
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          step={4}
-          title="対象拠点"
-          description="拠点マスタの全拠点を表示します。基本は全拠点を受け付けます。入力で絞り込めます。一覧に無い拠点は下から追加できます。"
-        >
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-body-sm text-neutral-600">
-              {selected.size} / {branches.length} 拠点を選択中
-            </span>
-            <Button type="button" variant="ghost" size="md" onClick={toggleAll}>
-              {allSelected ? "すべて解除" : "すべて選択"}
-            </Button>
-          </div>
-          <div className="mb-3">
-            <Input
-              value={branchQuery}
-              onChange={(e) => setBranchQuery(e.target.value)}
-              placeholder="拠点名・地域で絞り込み"
-              aria-label="拠点を絞り込み"
-            />
-          </div>
-          {branches.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-neutral-300 py-6 text-center text-body-sm text-neutral-500">
-              拠点マスタに拠点が登録されていません。
-            </p>
-          ) : filteredBranches.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-neutral-300 py-6 text-center text-body-sm text-neutral-500">
-              「{branchQuery}」に一致する拠点がありません。
-            </p>
-          ) : (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredBranches.map((b) => {
-                const on = selected.has(b.id);
-                return (
-                  <label
-                    key={b.id}
-                    className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-body-md transition-colors ${
-                      on
-                        ? "border-primary-700 bg-primary-50 text-neutral-900"
-                        : "border-neutral-200 bg-neutral-white text-neutral-700 hover:bg-neutral-50"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 flex-none"
-                      checked={on}
-                      onChange={() => toggleBranch(b.id)}
-                    />
-                    <span className="truncate">
-                      {b.name}
-                      {b.region && (
-                        <span className="ml-1 text-body-sm text-neutral-600">（{b.region}）</span>
-                      )}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          )}
-
-          {extraBranches.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {extraBranches.map((b, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Input
-                    value={b}
-                    placeholder="新しい拠点名"
-                    aria-label={`追加する拠点 ${i + 1}`}
-                    onChange={(e) => {
-                      const next = [...extraBranches];
-                      next[i] = e.target.value;
-                      setExtraBranches(next);
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="md"
-                    aria-label="この拠点を削除"
-                    onClick={() => setExtraBranches(extraBranches.filter((_, j) => j !== i))}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="mt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="md"
-              onClick={() => setExtraBranches([...extraBranches, ""])}
-            >
-              <Plus size={16} /> 拠点を追加
-            </Button>
-          </div>
-        </SectionCard>
-
-        <SectionCard step={5} title="公開設定">
+        <SectionCard step={2} title="公開設定">
           <Field label="状態" hint="下書きは管理者のみ閲覧可。公開すると参加者の申込が始まります。">
             <Select
               className="max-w-xs"

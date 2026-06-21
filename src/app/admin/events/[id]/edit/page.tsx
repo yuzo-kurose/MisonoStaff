@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { Alert } from "@/components/ui/Alert";
-import { getEventWithForm, getEventBranchIds } from "@/lib/queries/events";
-import { getBranches } from "@/lib/queries/branches";
+import { getEventWithForm } from "@/lib/queries/events";
 import { EditEventClient } from "./EditEventClient";
 import type { EventFormInitial } from "../../EventForm";
 
@@ -27,23 +26,6 @@ export default async function EditEventPage({
     );
   }
 
-  const [branchIds, branchesRaw] = await Promise.all([getEventBranchIds(id), getBranches()]);
-  const branches = branchesRaw.map((b) => ({ id: b.id, name: b.name, region: b.region ?? null }));
-
-  // DBのフォーム項目（料金・交通手段）→ 作成画面の入力値に逆変換する。
-  // 料金/交通手段は createEvent が決め打ちのラベルで作る3項目に格納されている。
-  const field = (label: string) => event.fields.find((f) => f.label === label);
-  const maxPrice = (opts: { price?: number | null }[]) =>
-    opts.reduce((m, o) => Math.max(m, o.price ?? 0), 0);
-
-  const lodgingField = field("スタッフ宿泊費");
-  const outField = field("往路（交通手段）");
-  const inField = field("復路（交通手段）");
-
-  const lodgingFee =
-    lodgingField?.options.find((o) => o.label === "宿泊する")?.price ??
-    maxPrice(lodgingField?.options ?? []);
-
   const initial: EventFormInitial = {
     name: event.name,
     startDate: event.start_date ?? "",
@@ -52,13 +34,7 @@ export default async function EditEventPage({
     capacity: event.capacity != null ? String(event.capacity) : "",
     // 編集フォームの状態は下書き／公開のみ。締切(closed)は公開として表示する。
     status: event.status === "closed" ? "published" : event.status,
-    lodging: String(lodgingFee),
-    outFare: String(maxPrice(outField?.options ?? [])),
-    inFare: String(maxPrice(inField?.options ?? [])),
-    outbound: outField?.options.map((o) => o.label) ?? [],
-    inbound: inField?.options.map((o) => o.label) ?? [],
-    selectedBranchIds: branchIds,
   };
 
-  return <EditEventClient eventId={id} initial={initial} branches={branches} />;
+  return <EditEventClient eventId={id} initial={initial} />;
 }
