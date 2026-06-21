@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Noto_Sans_JP } from "next/font/google";
+import { Zen_Maru_Gothic } from "next/font/google";
 import "./globals.css";
 import { RouteProgress } from "@/components/layout/RouteProgress";
 
-// DADS 標準フォント
-const notoSansJP = Noto_Sans_JP({
+// Zen丸ゴシック（やわらかい丸ゴシック）
+const zenMaruGothic = Zen_Maru_Gothic({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
-  variable: "--font-noto-sans-jp",
+  variable: "--font-zen-maru-gothic",
   display: "swap",
 });
 
@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={notoSansJP.variable}>
+    <html lang="ja" className={zenMaruGothic.variable}>
       <body className="font-sans text-body-md antialiased">
         <RouteProgress />
         {children}

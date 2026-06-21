@@ -128,13 +128,17 @@ export default async function Home_() {
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50">
       {/* 全幅トップヘッダー（白）。アプリ画面と同様、中央にブランド・右端にロゴ。 */}
-      <header className="sticky top-0 z-30 flex h-16 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-3 md:px-4">
+      <header className="sticky top-0 z-30 flex h-16 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-3 md:px-4 relative">
         {/* モバイル：ドロワーを開くハンバーガー */}
         <PublicMobileNav />
-        {/* 左：ロゴ＋ブランド＝ホームへ戻る */}
-        <Link href="/" title="ホームへ戻る" className="flex items-center gap-2 rounded-lg p-1 hover:bg-neutral-100">
-          <Image src="/mark.png" alt="神慈秀明会" width={36} height={36} className="flex-none" priority />
-          <span className="text-heading-md font-bold text-neutral-900 sm:text-heading-lg">神苑スタッフ</span>
+        {/* 中央：マーク＋ブランド（マークの下に小さく） */}
+        <Link
+          href="/"
+          title="ホームへ戻る"
+          className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5 rounded-lg px-2 py-1 leading-none hover:bg-neutral-100"
+        >
+          <Image src="/mark.png" alt="神慈秀明会" width={26} height={26} className="flex-none" priority />
+          <span className="text-label-sm font-bold text-neutral-900">神苑スタッフ</span>
         </Link>
 
         {/* 右：アカウント（ログイン／ユーザーアイコン） */}

@@ -47,7 +47,7 @@ const config: Config = {
         focus: "#FFDB1A",
       },
       fontFamily: {
-        sans: ["var(--font-noto-sans-jp)", "Noto Sans JP", "sans-serif"],
+        sans: ["var(--font-zen-maru-gothic)", "Zen Maru Gothic", "sans-serif"],
       },
       // [fontSize, { lineHeight, fontWeight }]
       fontSize: {
