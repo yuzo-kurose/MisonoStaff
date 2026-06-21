@@ -2,12 +2,11 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Users, CheckCircle2, Coins, XCircle, Search, RotateCcw, Inbox } from "lucide-react";
+import { Search, RotateCcw, Inbox } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
-import { StatCard, StatGrid } from "@/components/ui/StatCard";
 import { Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -42,11 +41,6 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
     for (const r of rows) if (!m.has(r.eventId)) m.set(r.eventId, { name: r.eventName, date: r.eventDate });
     return [...m.entries()].sort((a, b) => a[1].date.localeCompare(b[1].date));
   }, [rows]);
-  // 選択イベントの行（集計カード用）。未選択（すべて）なら全件。
-  const eventRows = useMemo(
-    () => (eventId ? rows.filter((r) => r.eventId === eventId) : rows),
-    [rows, eventId],
-  );
   const branches = useMemo(
     () => [...new Map(rows.map((r) => [r.branchId, r.branchName])).entries()],
     [rows],
@@ -140,28 +134,6 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
           ))}
         </Select>
       </Card>
-
-      <StatGrid>
-        <StatCard icon={Users} label="申込総数" value={eventRows.length} variant="primary" />
-        <StatCard
-          icon={CheckCircle2}
-          label="支払済"
-          value={eventRows.filter((r) => r.status === "paid").length}
-          variant="success"
-        />
-        <StatCard
-          icon={Coins}
-          label="売上"
-          value={yen(eventRows.filter((r) => r.status === "paid").reduce((s, r) => s + r.amount, 0))}
-          variant="warning"
-        />
-        <StatCard
-          icon={XCircle}
-          label="キャンセル"
-          value={eventRows.filter((r) => r.status === "cancelled").length}
-          variant="neutral"
-        />
-      </StatGrid>
 
       {msg && (
         <div className="mb-4">
