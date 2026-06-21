@@ -6,7 +6,6 @@ import {
   CreditCard,
   Calendar,
   Building2,
-  FileText,
   ListChecks,
   QrCode,
   Megaphone,
@@ -69,7 +68,6 @@ export const navGroupsByRole: Record<Role, NavGroup[]> = {
       items: [
         { href: "/admin/applications", label: "申込一覧", icon: ListChecks },
         { href: "/admin/events", label: "イベント管理", icon: Calendar },
-        { href: "/admin/forms", label: "フォーム管理", icon: FileText },
         { href: "/admin/announcements", label: "連絡事項管理", icon: Megaphone },
         { href: "/admin/branches", label: "拠点マスタ", icon: Building2 },
         { href: "/admin/departments", label: "部署マスタ", icon: Tags },

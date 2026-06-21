@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Copy, Trash2 } from "lucide-react";
+import { Pencil, Copy, Trash2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { duplicateEvent, deleteEvent } from "./actions";
 
@@ -30,6 +30,12 @@ export function EventRowActions({ eventId, eventName }: { eventId: string; event
         <Button variant="ghost">
           <Pencil size={15} />
           編集
+        </Button>
+      </Link>
+      <Link href={`/admin/forms/${eventId}`}>
+        <Button variant="ghost">
+          <FileText size={15} />
+          フォーム
         </Button>
       </Link>
       <form action={duplicateEvent}>
