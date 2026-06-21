@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, Th, Td } from "@/components/ui/Table";
+import { MobileRecord } from "@/components/ui/MobileRecord";
 import { jpDate } from "@/lib/format";
 import { getAdminEvents } from "@/lib/queries/events";
 
@@ -36,35 +37,62 @@ export default async function FormsListPage() {
           }
         />
       ) : (
-        <Table
-          head={
-            <tr>
-              <Th>イベント</Th>
-              <Th>開催日</Th>
-              <Th>フォーム名</Th>
-              <Th>項目数</Th>
-              <Th>操作</Th>
-            </tr>
-          }
-        >
-          {events.map((e) => (
-            <tr key={e.id}>
-              <Td>{e.name}</Td>
-              <Td>{jpDate(e.event_date)}</Td>
-              <Td>{e.formName}</Td>
-              <Td>
-                <Badge variant="info">{e.fieldCount} 項目</Badge>
-              </Td>
-              <Td>
-                <Link href={`/admin/forms/${e.id}`}>
-                  <Button variant="ghost" size="md">
-                    <Pencil size={15} /> フォームを編集
-                  </Button>
-                </Link>
-              </Td>
-            </tr>
-          ))}
-        </Table>
+        <>
+          {/* スマホ：カード表示 */}
+          <div className="space-y-2 md:hidden">
+            {events.map((e) => (
+              <MobileRecord
+                key={e.id}
+                title={e.name}
+                badge={<Badge variant="info">{e.fieldCount} 項目</Badge>}
+                rows={[
+                  { label: "開催日", value: jpDate(e.event_date) },
+                  { label: "フォーム名", value: e.formName },
+                ]}
+                action={
+                  <Link href={`/admin/forms/${e.id}`}>
+                    <Button variant="ghost" size="md">
+                      <Pencil size={15} /> フォームを編集
+                    </Button>
+                  </Link>
+                }
+              />
+            ))}
+          </div>
+
+          {/* PC：テーブル表示 */}
+          <div className="hidden md:block">
+            <Table
+              head={
+                <tr>
+                  <Th>イベント</Th>
+                  <Th>開催日</Th>
+                  <Th>フォーム名</Th>
+                  <Th>項目数</Th>
+                  <Th>操作</Th>
+                </tr>
+              }
+            >
+              {events.map((e) => (
+                <tr key={e.id}>
+                  <Td>{e.name}</Td>
+                  <Td>{jpDate(e.event_date)}</Td>
+                  <Td>{e.formName}</Td>
+                  <Td>
+                    <Badge variant="info">{e.fieldCount} 項目</Badge>
+                  </Td>
+                  <Td>
+                    <Link href={`/admin/forms/${e.id}`}>
+                      <Button variant="ghost" size="md">
+                        <Pencil size={15} /> フォームを編集
+                      </Button>
+                    </Link>
+                  </Td>
+                </tr>
+              ))}
+            </Table>
+          </div>
+        </>
       )}
     </AppShell>
   );
