@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, PanelLeft, ChevronDown } from "lucide-react";
+import { LogOut, PanelLeft, ChevronDown, Menu, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { allNavGroups, allNavItems, roleLabels, type Role } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/client";
@@ -19,10 +19,9 @@ const SIDEBAR_BG = "bg-primary-900";
 
 /**
  * ダッシュボード型の共通シェル。
- * - 全幅の白いトップヘッダー（左：ロゴ＋ブランド／右：役割・ユーザー名・ログアウト）。
+ * - 全幅の白いトップヘッダー（左：メニュー操作＋ロゴ／右：役割・ユーザー名・ログアウト）。
  * - md以上：ヘッダー下の左に紺色サイドバー（折りたたみ可。状態は localStorage 保存）。
- *   展開時は「○○メニュー」グループをアコーディオンで開閉できる。
- * - md未満：トップヘッダー＋下部タブバー（サイドバーは出さない）。
+ * - md未満：ヘッダーのハンバーガーから左スライドのドロワーでメニュー全表示（下部タブは廃止）。
  * メニューは役割でフィルタせず、全ユーザー・全画面で全メニュー（4グループ）を表示する。
  */
 export function AppShell({ role, children }: { role: Role; children: ReactNode }) {
@@ -33,6 +32,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
   const groups = allNavGroups;
   const { who } = useAuthUser();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   // 親カテゴリ（○○メニュー）の開閉状態。既定は「現在のページを含むグループのみ開く」。
   const activeGroupsState = () =>
     Object.fromEntries(
@@ -44,9 +44,10 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
     setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
   }, []);
 
-  // ページ遷移時、現在のページのグループだけ開いた状態に戻す（既定）。
+  // ページ遷移時：現在のページのグループだけ開いた状態に戻し、モバイルのドロワーは閉じる。
   useEffect(() => {
     setOpenGroups(activeGroupsState());
+    setMobileNavOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
@@ -67,11 +68,64 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
     router.refresh();
   }
 
+  // 「○○メニュー」グループのアコーディオン。PCサイドバー(展開時)とモバイルドロワーで共用。
+  const renderGroups = (onNavigate?: () => void) =>
+    groups.map((group) => {
+      const open = openGroups[group.label] ?? true;
+      const GroupIcon = group.icon;
+      return (
+        <div key={group.label} className="pt-1">
+          <button
+            type="button"
+            onClick={() => toggleGroup(group.label)}
+            aria-expanded={open}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-label-lg font-bold text-white transition-colors hover:bg-white/10"
+          >
+            <GroupIcon size={18} className="flex-none text-white/80" />
+            <span className="flex-1 text-left">{group.label}</span>
+            <ChevronDown
+              size={16}
+              className={`flex-none transition-transform ${open ? "" : "-rotate-90"}`}
+            />
+          </button>
+          {open && (
+            <div className="mt-1 space-y-1">
+              {group.items.map((it) => {
+                const active = isActive(pathname, it.href);
+                const Icon = it.icon;
+                return (
+                  <Link
+                    key={it.href}
+                    href={it.href}
+                    onClick={onNavigate}
+                    className={`flex items-center gap-3 rounded-lg py-2.5 pl-9 pr-3 text-label-md transition-colors ${
+                      active ? "bg-white/15 font-medium text-white" : "text-white/80 hover:bg-white/10"
+                    }`}
+                  >
+                    <Icon size={18} className={active ? "text-white" : "text-white/70"} />
+                    {it.label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    });
+
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50">
-      {/* 全幅トップヘッダー（白）。左＝トグル＋ロゴ／中央＝ブランド／右＝アカウント。 */}
+      {/* 全幅トップヘッダー（白）。左＝メニュー操作＋ロゴ／右＝アカウント。 */}
       <header className="sticky top-0 z-30 flex h-16 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-3 md:px-4">
-        {/* 左：サイドバー折りたたみトグル（PCのみ）＋ロゴ */}
+        {/* モバイル：ドロワーを開くハンバーガー */}
+        <button
+          onClick={() => setMobileNavOpen(true)}
+          aria-label="メニューを開く"
+          className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100 md:hidden"
+        >
+          <Menu size={22} />
+        </button>
+        {/* PC：サイドバー折りたたみトグル */}
         <button
           onClick={toggle}
           title={collapsed ? "メニューを開く" : "メニューを折りたたむ"}
@@ -85,7 +139,9 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
           className="flex items-center gap-2 rounded-lg p-1 hover:bg-neutral-100"
         >
           <Image src="/mark.png" alt="神慈秀明会" width={36} height={36} className="flex-none" priority />
-          <span className="text-heading-lg font-bold text-neutral-900">神苑スタッフ</span>
+          <span className="text-heading-md font-bold text-neutral-900 sm:text-heading-lg">
+            神苑スタッフ
+          </span>
         </Link>
 
         {/* 右：役割・ユーザー名・ログアウト */}
@@ -108,6 +164,32 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
           </button>
         </div>
       </header>
+
+      {/* モバイル：左スライドのナビゲーションドロワー */}
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div
+            className="absolute inset-0 bg-neutral-900/50"
+            onClick={() => setMobileNavOpen(false)}
+            aria-hidden
+          />
+          <div className={`absolute inset-y-0 left-0 flex w-72 max-w-[85%] flex-col text-white shadow-xl ${SIDEBAR_BG}`}>
+            <div className="flex h-16 flex-none items-center justify-between border-b border-white/10 px-4">
+              <span className="text-heading-sm font-bold text-white">{roleLabels[role]}メニュー</span>
+              <button
+                onClick={() => setMobileNavOpen(false)}
+                aria-label="メニューを閉じる"
+                className="rounded-lg p-1.5 text-white/80 hover:bg-white/10"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+              {renderGroups(() => setMobileNavOpen(false))}
+            </nav>
+          </div>
+        </div>
+      )}
 
       {/* ヘッダー下：サイドバー＋メイン */}
       <div className="flex flex-1">
@@ -136,80 +218,18 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
                     </Link>
                   );
                 })
-              : /* 展開時：「○○メニュー」グループ → 子項目。グループ見出しで折りたたみ開閉。 */
-                groups.map((group) => {
-                  const open = openGroups[group.label] ?? true;
-                  const GroupIcon = group.icon;
-                  return (
-                    <div key={group.label} className="pt-1">
-                      <button
-                        type="button"
-                        onClick={() => toggleGroup(group.label)}
-                        aria-expanded={open}
-                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-label-lg font-bold text-white transition-colors hover:bg-white/10"
-                      >
-                        <GroupIcon size={18} className="flex-none text-white/80" />
-                        <span className="flex-1 text-left">{group.label}</span>
-                        <ChevronDown
-                          size={16}
-                          className={`flex-none transition-transform ${open ? "" : "-rotate-90"}`}
-                        />
-                      </button>
-                      {open && (
-                        <div className="mt-1 space-y-1">
-                          {group.items.map((it) => {
-                            const active = isActive(pathname, it.href);
-                            const Icon = it.icon;
-                            return (
-                              <Link
-                                key={it.href}
-                                href={it.href}
-                                className={`flex items-center gap-3 rounded-lg py-2.5 pl-9 pr-3 text-label-md transition-colors ${
-                                  active
-                                    ? "bg-white/15 font-medium text-white"
-                                    : "text-white/80 hover:bg-white/10"
-                                }`}
-                              >
-                                <Icon size={18} className={active ? "text-white" : "text-white/70"} />
-                                {it.label}
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              : /* 展開時：「○○メニュー」グループのアコーディオン */
+                renderGroups()}
           </nav>
         </aside>
 
         {/* メイン */}
         <main className="min-w-0 flex-1">
-          <div className="mx-auto max-w-6xl px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
+          <div className="mx-auto max-w-6xl px-4 py-6 pb-10 md:px-8 md:py-8">
             {children}
           </div>
         </main>
       </div>
-
-      {/* 下部タブバー（スマホ）。全項目を表示するため横スクロール可。 */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex overflow-x-auto border-t border-neutral-200 bg-neutral-white md:hidden">
-        {items.map((it) => {
-          const active = isActive(pathname, it.href);
-          const Icon = it.icon;
-          return (
-            <Link
-              key={it.href}
-              href={it.href}
-              className={`flex w-[4.5rem] flex-none flex-col items-center gap-0.5 py-2 text-label-sm ${
-                active ? "text-primary-900" : "text-neutral-600"
-              }`}
-            >
-              <Icon size={22} />
-              <span className="max-w-full truncate px-1">{it.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
     </div>
   );
 }
