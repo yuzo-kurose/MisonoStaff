@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
-import { Zen_Maru_Gothic } from "next/font/google";
 import "./globals.css";
 import { RouteProgress } from "@/components/layout/RouteProgress";
 
-// Zen丸ゴシック（やわらかい丸ゴシック）
-const zenMaruGothic = Zen_Maru_Gothic({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-zen-maru-gothic",
-  display: "swap",
-});
+// フォントは游ゴシック体（システムフォント）。tailwind の font-sans でスタック指定。
 
 export const metadata: Metadata = {
   title: "神苑スタッフ 参加申込システム",
@@ -22,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={zenMaruGothic.variable}>
+    <html lang="ja">
       <body className="font-sans text-body-md antialiased">
         <RouteProgress />
         {children}

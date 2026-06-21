@@ -47,7 +47,17 @@ const config: Config = {
         focus: "#FFDB1A",
       },
       fontFamily: {
-        sans: ["var(--font-zen-maru-gothic)", "Zen Maru Gothic", "sans-serif"],
+        // 游ゴシック体（システムフォント）優先。Win→Mac→モバイルのフォールバック。
+        sans: [
+          "游ゴシック体",
+          "YuGothic",
+          "Yu Gothic",
+          "ヒラギノ角ゴ ProN",
+          "Hiragino Kaku Gothic ProN",
+          "メイリオ",
+          "Meiryo",
+          "sans-serif",
+        ],
       },
       // [fontSize, { lineHeight, fontWeight }]
       fontSize: {
