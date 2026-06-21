@@ -9,6 +9,7 @@ import { StatusBadge, Badge } from "@/components/ui/Badge";
 import { StatCard, StatGrid } from "@/components/ui/StatCard";
 import { Alert } from "@/components/ui/Alert";
 import { Table, Th, Td } from "@/components/ui/Table";
+import { MobileRecord } from "@/components/ui/MobileRecord";
 import { yen, jpDate } from "@/lib/format";
 import type { RosterGroup } from "@/lib/queries/roster";
 import { confirmApplication, removeParticipant } from "./actions";
@@ -71,6 +72,31 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
     });
   };
 
+  // 1メンバーの操作ボタン（表・スマホカードで共用）。
+  const memberAction = (m: RosterGroup["members"][number]) => {
+    if (m.status === "applying")
+      return (
+        <Button variant="ghost" size="md" onClick={() => cancel(m.participantId, m.status)}>
+          名簿から外す
+        </Button>
+      );
+    if (m.status === "confirmed")
+      return (
+        <Button variant="ghost" size="md" onClick={() => cancel(m.participantId, m.status)}>
+          キャンセル
+        </Button>
+      );
+    if (m.status === "paid")
+      return isAdmin ? (
+        <Button variant="ghost" size="md" onClick={() => refund(m.participantId)}>
+          キャンセル（返金）
+        </Button>
+      ) : (
+        <span className="text-body-sm text-neutral-500">返金は管理者へ</span>
+      );
+    return null;
+  };
+
   return (
     <AppShell role="representative">
       <PageHeader
@@ -123,47 +149,43 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                     </Button>
                   </div>
                 </div>
-                <Table
-                  head={
-                    <tr>
-                      <Th>氏名</Th>
-                      <Th>金額</Th>
-                      <Th>状態</Th>
-                      <Th>操作</Th>
-                    </tr>
-                  }
-                >
+                {/* スマホ：カード表示 */}
+                <div className="space-y-2 md:hidden">
                   {g.members.map((m) => (
-                    <tr key={m.participantId}>
-                      <Td>{m.name}</Td>
-                      <Td>{yen(m.amount)}</Td>
-                      <Td>
-                        <StatusBadge status={m.status} />
-                      </Td>
-                      <Td>
-                        {m.status === "applying" ? (
-                          <Button variant="ghost" size="md" onClick={() => cancel(m.participantId, m.status)}>
-                            名簿から外す
-                          </Button>
-                        ) : m.status === "confirmed" ? (
-                          <Button variant="ghost" size="md" onClick={() => cancel(m.participantId, m.status)}>
-                            キャンセル
-                          </Button>
-                        ) : m.status === "paid" ? (
-                          isAdmin ? (
-                            <Button variant="ghost" size="md" onClick={() => refund(m.participantId)}>
-                              キャンセル（返金）
-                            </Button>
-                          ) : (
-                            <span className="text-body-sm text-neutral-500">返金は管理者へ</span>
-                          )
-                        ) : (
-                          <span className="text-body-sm text-neutral-600">—</span>
-                        )}
-                      </Td>
-                    </tr>
+                    <MobileRecord
+                      key={m.participantId}
+                      title={m.name}
+                      badge={<StatusBadge status={m.status} />}
+                      rows={[{ label: "金額", value: yen(m.amount) }]}
+                      action={memberAction(m) ?? undefined}
+                    />
                   ))}
-                </Table>
+                </div>
+
+                {/* PC：テーブル表示 */}
+                <div className="hidden md:block">
+                  <Table
+                    head={
+                      <tr>
+                        <Th>氏名</Th>
+                        <Th>金額</Th>
+                        <Th>状態</Th>
+                        <Th>操作</Th>
+                      </tr>
+                    }
+                  >
+                    {g.members.map((m) => (
+                      <tr key={m.participantId}>
+                        <Td>{m.name}</Td>
+                        <Td>{yen(m.amount)}</Td>
+                        <Td>
+                          <StatusBadge status={m.status} />
+                        </Td>
+                        <Td>{memberAction(m) ?? <span className="text-body-sm text-neutral-600">—</span>}</Td>
+                      </tr>
+                    ))}
+                  </Table>
+                </div>
               </Card>
             );
           })}

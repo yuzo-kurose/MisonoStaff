@@ -12,6 +12,7 @@ import { Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, Th, Td } from "@/components/ui/Table";
+import { MobileRecord } from "@/components/ui/MobileRecord";
 import { yen, jpDate } from "@/lib/format";
 import type { AppRow } from "@/lib/queries/applications";
 import { refundParticipant } from "./actions";
@@ -96,6 +97,24 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
       }
     });
   };
+
+  // 1行の操作（返金）。表・スマホカードで共用。
+  const rowAction = (r: AppRow) =>
+    r.status === "paid" ? (
+      r.refundable ? (
+        <Button
+          variant="ghost"
+          disabled={pending}
+          onClick={() => refund(r.participantId, r.name)}
+          className="text-error-900 hover:bg-error-100"
+        >
+          <RotateCcw size={15} />
+          返金
+        </Button>
+      ) : (
+        <span className="text-body-sm text-neutral-500">返金不可（当日以降）</span>
+      )
+    ) : null;
 
   return (
     <AppShell role="admin">
@@ -221,59 +240,58 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
           description="検索条件や絞り込みを変更してお試しください。"
         />
       ) : (
-      <Table
-        head={
-          <tr>
-            <Th>氏名</Th>
-            <Th>部署</Th>
-            <Th>イベント</Th>
-            <Th>拠点</Th>
-            <Th>金額</Th>
-            <Th>状態</Th>
-            <Th>操作</Th>
-          </tr>
-        }
-      >
-        {filtered.map((r) => (
-          <tr key={r.participantId}>
-            <Td>{r.name}</Td>
-            <Td>
-              {r.department ? (
-                r.department
-              ) : (
-                <span className="text-neutral-400">—</span>
-              )}
-            </Td>
-            <Td>{r.eventName}</Td>
-            <Td>{r.branchName}</Td>
-            <Td>
-              <span className="tabular-nums">{yen(r.amount)}</span>
-            </Td>
-            <Td>
-              <StatusBadge status={r.status} />
-            </Td>
-            <Td>
-              {r.status === "paid" ? (
-                r.refundable ? (
-                  <Button
-                    variant="ghost"
-                    disabled={pending}
-                    onClick={() => refund(r.participantId, r.name)}
-                    className="text-error-900 hover:bg-error-100"
-                  >
-                    <RotateCcw size={15} />
-                    返金
-                  </Button>
-                ) : (
-                  <span className="text-body-sm text-neutral-500">返金不可（当日以降）</span>
-                )
-              ) : (
-                <span className="text-neutral-400">—</span>
-              )}
-            </Td>
-          </tr>
-        ))}
-      </Table>
+        <>
+          {/* スマホ：カード表示 */}
+          <div className="space-y-2 md:hidden">
+            {filtered.map((r) => (
+              <MobileRecord
+                key={r.participantId}
+                title={r.name}
+                badge={<StatusBadge status={r.status} />}
+                rows={[
+                  { label: "イベント", value: r.eventName },
+                  { label: "拠点", value: r.branchName },
+                  { label: "部署", value: r.department || "—" },
+                  { label: "金額", value: <span className="tabular-nums">{yen(r.amount)}</span> },
+                ]}
+                action={rowAction(r) ?? undefined}
+              />
+            ))}
+          </div>
+
+          {/* PC：テーブル表示 */}
+          <div className="hidden md:block">
+            <Table
+              head={
+                <tr>
+                  <Th>氏名</Th>
+                  <Th>部署</Th>
+                  <Th>イベント</Th>
+                  <Th>拠点</Th>
+                  <Th>金額</Th>
+                  <Th>状態</Th>
+                  <Th>操作</Th>
+                </tr>
+              }
+            >
+              {filtered.map((r) => (
+                <tr key={r.participantId}>
+                  <Td>{r.name}</Td>
+                  <Td>{r.department ? r.department : <span className="text-neutral-400">—</span>}</Td>
+                  <Td>{r.eventName}</Td>
+                  <Td>{r.branchName}</Td>
+                  <Td>
+                    <span className="tabular-nums">{yen(r.amount)}</span>
+                  </Td>
+                  <Td>
+                    <StatusBadge status={r.status} />
+                  </Td>
+                  <Td>{rowAction(r) ?? <span className="text-neutral-400">—</span>}</Td>
+                </tr>
+              ))}
+            </Table>
+          </div>
+        </>
       )}
     </AppShell>
   );

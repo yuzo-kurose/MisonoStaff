@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { Table, Th, Td } from "@/components/ui/Table";
+import { MobileRecord } from "@/components/ui/MobileRecord";
 import { yen } from "@/lib/format";
 import type { ParticipantStatus } from "@/types/database";
 
@@ -48,41 +49,72 @@ export function RepPaymentsClient({ rows }: { rows: PayRow[] }) {
       {rows.length === 0 ? (
         <Alert variant="info">確定済みの参加者がいません。先に名簿を確定してください。</Alert>
       ) : (
-        <Table
-          head={
-            <tr>
-              <Th>氏名</Th>
-              <Th>イベント</Th>
-              <Th>金額</Th>
-              <Th>状態</Th>
-              <Th>操作</Th>
-            </tr>
-          }
-        >
-          {rows.map((m) => (
-            <tr key={m.participantId}>
-              <Td>{m.name}</Td>
-              <Td>{m.eventName}</Td>
-              <Td>{yen(m.amount)}</Td>
-              <Td>
-                <StatusBadge status={m.status} />
-              </Td>
-              <Td>
-                {m.status === "confirmed" ? (
-                  <Button
-                    variant="ghost"
-                    size="md"
-                    onClick={() => setMsg(`${m.name} さんへリマインドを送信しました。`)}
-                  >
-                    リマインド
-                  </Button>
-                ) : (
-                  <span className="text-body-sm text-neutral-600">—</span>
-                )}
-              </Td>
-            </tr>
-          ))}
-        </Table>
+        <>
+          {/* スマホ：カード表示 */}
+          <div className="space-y-2 md:hidden">
+            {rows.map((m) => (
+              <MobileRecord
+                key={m.participantId}
+                title={m.name}
+                badge={<StatusBadge status={m.status} />}
+                rows={[
+                  { label: "イベント", value: m.eventName },
+                  { label: "金額", value: yen(m.amount) },
+                ]}
+                action={
+                  m.status === "confirmed" ? (
+                    <Button
+                      variant="ghost"
+                      size="md"
+                      onClick={() => setMsg(`${m.name} さんへリマインドを送信しました。`)}
+                    >
+                      リマインド
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ))}
+          </div>
+
+          {/* PC：テーブル表示 */}
+          <div className="hidden md:block">
+            <Table
+              head={
+                <tr>
+                  <Th>氏名</Th>
+                  <Th>イベント</Th>
+                  <Th>金額</Th>
+                  <Th>状態</Th>
+                  <Th>操作</Th>
+                </tr>
+              }
+            >
+              {rows.map((m) => (
+                <tr key={m.participantId}>
+                  <Td>{m.name}</Td>
+                  <Td>{m.eventName}</Td>
+                  <Td>{yen(m.amount)}</Td>
+                  <Td>
+                    <StatusBadge status={m.status} />
+                  </Td>
+                  <Td>
+                    {m.status === "confirmed" ? (
+                      <Button
+                        variant="ghost"
+                        size="md"
+                        onClick={() => setMsg(`${m.name} さんへリマインドを送信しました。`)}
+                      >
+                        リマインド
+                      </Button>
+                    ) : (
+                      <span className="text-body-sm text-neutral-600">—</span>
+                    )}
+                  </Td>
+                </tr>
+              ))}
+            </Table>
+          </div>
+        </>
       )}
     </AppShell>
   );
