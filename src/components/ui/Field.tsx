@@ -78,8 +78,10 @@ const control =
   "disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-500 " +
   "aria-[invalid=true]:border-error-900 aria-[invalid=true]:focus:ring-error-100";
 
-export function Input({ className = "", ...props }: ComponentProps<"input">) {
-  return <input className={`${control} ${className}`} {...props} />;
+export function Input({ className = "", type, inputMode, ...props }: ComponentProps<"input">) {
+  // 数値入力はスマホでテンキーを出す（明示指定があればそれを優先）。
+  const mode = inputMode ?? (type === "number" ? "numeric" : undefined);
+  return <input type={type} inputMode={mode} className={`${control} ${className}`} {...props} />;
 }
 
 export function Textarea({ className = "", ...props }: ComponentProps<"textarea">) {
