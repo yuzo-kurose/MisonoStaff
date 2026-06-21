@@ -72,3 +72,35 @@ export async function saveForm(
   revalidatePath(`/admin/forms/${formId}`);
   return { ok: true };
 }
+
+export type FormTemplate = { id: string; name: string; fields: BuilderField[] };
+
+/** フォームテンプレート一覧（管理者）。テーブル未作成等は空扱いにしてビルダーを壊さない。 */
+export async function getFormTemplates(): Promise<FormTemplate[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("form_templates")
+    .select("id,name,fields")
+    .order("created_at", { ascending: false });
+  if (error) return [];
+  return (data ?? []) as unknown as FormTemplate[];
+}
+
+/** 現在のフォーム項目を名前付きテンプレートとして保存する（管理者のみ／RLS）。 */
+export async function saveFormTemplate(
+  name: string,
+  fields: BuilderField[],
+): Promise<{ ok: boolean; error?: string }> {
+  if (!name.trim()) return { ok: false, error: "テンプレート名を入力してください。" };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "ログインが必要です。" };
+
+  const { error } = await supabase
+    .from("form_templates")
+    .insert({ name: name.trim(), fields, created_by: user.id } as never);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}

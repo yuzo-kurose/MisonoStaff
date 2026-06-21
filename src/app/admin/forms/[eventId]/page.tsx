@@ -4,6 +4,7 @@ import { Alert } from "@/components/ui/Alert";
 import { getEventWithForm } from "@/lib/queries/events";
 import { getDepartmentNames } from "@/lib/queries/departments";
 import { getBranches } from "@/lib/queries/branches";
+import { getFormTemplates } from "./actions";
 import { FormBuilderClient, type ClientField } from "./FormBuilderClient";
 
 export default async function FormBuilderPage({
@@ -12,10 +13,11 @@ export default async function FormBuilderPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const [event, departments, branchesRaw] = await Promise.all([
+  const [event, departments, branchesRaw, templates] = await Promise.all([
     getEventWithForm(eventId),
     getDepartmentNames(),
     getBranches(),
+    getFormTemplates(),
   ]);
   const branchNames = branchesRaw.map((b) => b.name);
 
@@ -55,6 +57,7 @@ export default async function FormBuilderPage({
       initialFields={initialFields}
       departments={departments}
       branchNames={branchNames}
+      templates={templates}
     />
   );
 }

@@ -12,7 +12,7 @@ import { StickyActionBar } from "@/components/ui/StickyActionBar";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { yen } from "@/lib/format";
 import type { FieldType } from "@/lib/mock/data";
-import { saveForm } from "./actions";
+import { saveForm, saveFormTemplate, type FormTemplate } from "./actions";
 
 export type ClientOption = { id: string; label: string; price?: number };
 export type ClientField = {
@@ -44,6 +44,7 @@ export function FormBuilderClient({
   initialFields,
   departments,
   branchNames,
+  templates,
 }: {
   eventName: string;
   formId: string;
@@ -51,6 +52,7 @@ export function FormBuilderClient({
   initialFields: ClientField[];
   departments: string[];
   branchNames: string[];
+  templates: FormTemplate[];
 }) {
   const router = useRouter();
   const [fields, setFields] = useState<ClientField[]>(initialFields);
@@ -157,21 +159,64 @@ export function FormBuilderClient({
     router.push("/admin/events");
   };
 
+  // 保存・テンプレートで共用する項目ペイロード。
+  const fieldsPayload = () =>
+    fields.map((f) => ({
+      label: f.label,
+      fieldType: f.fieldType,
+      required: f.required,
+      priceCalc: f.priceCalc,
+      unitPrice: f.unitPrice,
+      options: f.options?.map((o) => ({ label: o.label, price: o.price })),
+    }));
+
+  // 現在の項目を名前付きテンプレートとして保存。
+  const onSaveTemplate = () => {
+    if (fields.length === 0) {
+      setMsg({ ok: false, text: "保存する項目がありません。" });
+      return;
+    }
+    const name = window.prompt("テンプレート名を入力してください。", formName);
+    if (name === null) return;
+    if (!name.trim()) {
+      setMsg({ ok: false, text: "テンプレート名を入力してください。" });
+      return;
+    }
+    setMsg(null);
+    startTransition(async () => {
+      const res = await saveFormTemplate(name, fieldsPayload());
+      if (res.ok) {
+        setMsg({ ok: true, text: `テンプレート「${name.trim()}」を保存しました。` });
+        router.refresh();
+      } else {
+        setMsg({ ok: false, text: `テンプレート保存に失敗：${res.error ?? "不明なエラー"}` });
+      }
+    });
+  };
+
+  // テンプレートを現在のフォームに読み込む（既存項目を置き換え。新しいIDを採番）。
+  const onLoadTemplate = (templateId: string) => {
+    const tpl = templates.find((t) => t.id === templateId);
+    if (!tpl) return;
+    if (fields.length > 0 && !window.confirm(`現在の項目を「${tpl.name}」の内容で置き換えます。よろしいですか？`)) return;
+    setFields(
+      tpl.fields.map((f) => ({
+        id: uid(),
+        label: f.label,
+        fieldType: f.fieldType as ClientField["fieldType"],
+        required: f.required,
+        priceCalc: f.priceCalc,
+        unitPrice: f.unitPrice,
+        options: f.options?.map((o) => ({ id: uid(), label: o.label, price: o.price })),
+      })),
+    );
+    setMsg({ ok: true, text: `テンプレート「${tpl.name}」を読み込みました。保存するには「保存」を押してください。` });
+  };
+
   const onSave = () => {
     setMsg(null);
     startTransition(async () => {
-      const res = await saveForm(
-        formId,
-        formName,
-        fields.map((f) => ({
-          label: f.label,
-          fieldType: f.fieldType,
-          required: f.required,
-          priceCalc: f.priceCalc,
-          unitPrice: f.unitPrice,
-          options: f.options?.map((o) => ({ label: o.label, price: o.price })),
-        })),
-      );
+      const res = await saveForm(formId, formName, fieldsPayload());
       if (res.ok) {
         setSavedSnapshot(JSON.stringify({ formName, fields }));
         setMsg({ ok: true, text: "フォームを保存しました。" });
@@ -199,6 +244,35 @@ export function FormBuilderClient({
           <Input value={formName} onChange={(e) => setFormName(e.target.value)} />
         </Field>
       </div>
+
+      {/* テンプレート：保存・読込 */}
+      <Card className="mb-6">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[220px] flex-1">
+            <label className="mb-1 block text-label-sm text-neutral-600">テンプレートから読み込む</label>
+            <Select
+              value=""
+              onChange={(e) => {
+                if (e.target.value) onLoadTemplate(e.target.value);
+                e.currentTarget.value = "";
+              }}
+              disabled={templates.length === 0}
+            >
+              <option value="">
+                {templates.length === 0 ? "保存済みテンプレートなし" : "テンプレートを選択…"}
+              </option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}（{t.fields.length}項目）
+                </option>
+              ))}
+            </Select>
+          </div>
+          <Button type="button" variant="secondary" onClick={onSaveTemplate} disabled={pending}>
+            現在の内容をテンプレート保存
+          </Button>
+        </div>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* 編集パネル */}
