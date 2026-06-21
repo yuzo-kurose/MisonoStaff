@@ -1,14 +1,12 @@
 import Link from "next/link";
-import { Calendar, CheckCircle2, Users, Coins } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { StatCard, StatGrid } from "@/components/ui/StatCard";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { MobileRecord } from "@/components/ui/MobileRecord";
-import { yen, jpDate, eventPeriod } from "@/lib/format";
-import { getAdminEvents, getDeletedEvents, getEventStats } from "@/lib/queries/events";
+import { jpDate, eventPeriod } from "@/lib/format";
+import { getAdminEvents, getDeletedEvents, type EventListItem } from "@/lib/queries/events";
 import { EventRowActions } from "./EventRowActions";
 import { RestoreEventButton } from "./RestoreEventButton";
 
@@ -18,35 +16,13 @@ const statusBadge: Record<string, React.ReactNode> = {
   closed: <Badge variant="warning">締切</Badge>,
 };
 
-export default async function AdminEventsPage() {
-  const [events, deletedEvents, stats] = await Promise.all([
-    getAdminEvents(),
-    getDeletedEvents(),
-    getEventStats(),
-  ]);
-
+/** 有効イベント一覧（スマホ＝カード／PC＝テーブル）。 */
+function ActiveEventList({ list }: { list: EventListItem[] }) {
   return (
-    <AppShell role="admin">
-      <PageHeader
-        title="イベント管理"
-        description="イベントの作成・編集・コピー・削除、締切・対象拠点・定員を管理します。"
-        action={
-          <Link href="/admin/events/new">
-            <Button>＋ イベントを作成</Button>
-          </Link>
-        }
-      />
-
-      <StatGrid>
-        <StatCard icon={Calendar} label="イベント数" value={stats.eventCount} variant="primary" />
-        <StatCard icon={CheckCircle2} label="公開中" value={stats.publishedCount} variant="success" />
-        <StatCard icon={Users} label="申込総数" value={stats.participantCount} variant="info" />
-        <StatCard icon={Coins} label="売上（支払済）" value={yen(stats.revenue)} variant="warning" />
-      </StatGrid>
-
+    <>
       {/* スマホ：カード表示 */}
       <div className="space-y-2 md:hidden">
-        {events.map((e) => (
+        {list.map((e) => (
           <MobileRecord
             key={e.id}
             title={e.name}
@@ -75,7 +51,7 @@ export default async function AdminEventsPage() {
             </tr>
           }
         >
-          {events.map((e) => (
+          {list.map((e) => (
             <tr key={e.id}>
               <Td>{e.name}</Td>
               <Td>{eventPeriod(e.start_date, e.event_date)}</Td>
@@ -89,53 +65,102 @@ export default async function AdminEventsPage() {
           ))}
         </Table>
       </div>
+    </>
+  );
+}
 
-      {deletedEvents.length > 0 && (
-        <div className="mt-10">
-          <h2 className="mb-3 text-heading-md text-neutral-900">削除済みイベント</h2>
-          <p className="mb-3 text-body-sm text-neutral-600">
-            一覧から非表示のイベントです。復元すると元の状態に戻ります（申込・決済データは保持されています）。
+export default async function AdminEventsPage() {
+  const [events, deletedEvents] = await Promise.all([getAdminEvents(), getDeletedEvents()]);
+  const published = events.filter((e) => e.status !== "draft"); // 公開中・締切
+  const drafts = events.filter((e) => e.status === "draft"); // 公開前（下書き）
+
+  return (
+    <AppShell role="admin">
+      <PageHeader
+        title="イベント管理"
+        description="イベントの作成・編集・コピー・削除、締切・対象拠点・定員を管理します。"
+        action={
+          <Link href="/admin/events/new">
+            <Button>＋ イベントを作成</Button>
+          </Link>
+        }
+      />
+
+      {/* 公開中イベント */}
+      <section>
+        <h2 className="mb-3 text-heading-md text-neutral-900">公開中イベント</h2>
+        {published.length > 0 ? (
+          <ActiveEventList list={published} />
+        ) : (
+          <p className="rounded-xl border border-dashed border-neutral-300 bg-neutral-white py-8 text-center text-body-sm text-neutral-500">
+            公開中のイベントはありません。
           </p>
-          <div className="space-y-2 md:hidden">
-            {deletedEvents.map((e) => (
-              <MobileRecord
-                key={e.id}
-                title={e.name}
-                badge={statusBadge[e.status]}
-                rows={[
-                  { label: "開催期間", value: eventPeriod(e.start_date, e.event_date) },
-                  { label: "締切", value: jpDate(e.application_deadline) },
-                ]}
-                action={<RestoreEventButton eventId={e.id} eventName={e.name} />}
-              />
-            ))}
-          </div>
-          <div className="hidden md:block">
-            <Table
-              head={
-                <tr>
-                  <Th>イベント名</Th>
-                  <Th>開催期間</Th>
-                  <Th>締切</Th>
-                  <Th>状態</Th>
-                  <Th>操作</Th>
-                </tr>
-              }
-            >
+        )}
+      </section>
+
+      {/* 下書きイベント（公開前） */}
+      <section className="mt-8">
+        <h2 className="mb-3 text-heading-md text-neutral-900">下書きイベント</h2>
+        {drafts.length > 0 ? (
+          <ActiveEventList list={drafts} />
+        ) : (
+          <p className="rounded-xl border border-dashed border-neutral-300 bg-neutral-white py-8 text-center text-body-sm text-neutral-500">
+            下書きのイベントはありません。
+          </p>
+        )}
+      </section>
+
+      {/* 削除済みイベント（折りたたみ・既定は閉じる） */}
+      {deletedEvents.length > 0 && (
+        <details className="mt-8 rounded-xl border border-neutral-200 bg-neutral-white">
+          <summary className="cursor-pointer px-4 py-3 text-heading-sm text-neutral-900">
+            削除済みイベント（{deletedEvents.length}）
+          </summary>
+          <div className="border-t border-neutral-200 p-4">
+            <p className="mb-3 text-body-sm text-neutral-600">
+              一覧から非表示のイベントです。復元すると元の状態に戻ります（申込・決済データは保持されています）。
+            </p>
+            <div className="space-y-2 md:hidden">
               {deletedEvents.map((e) => (
-                <tr key={e.id}>
-                  <Td>{e.name}</Td>
-                  <Td>{eventPeriod(e.start_date, e.event_date)}</Td>
-                  <Td>{jpDate(e.application_deadline)}</Td>
-                  <Td>{statusBadge[e.status]}</Td>
-                  <Td>
-                    <RestoreEventButton eventId={e.id} eventName={e.name} />
-                  </Td>
-                </tr>
+                <MobileRecord
+                  key={e.id}
+                  title={e.name}
+                  badge={statusBadge[e.status]}
+                  rows={[
+                    { label: "開催期間", value: eventPeriod(e.start_date, e.event_date) },
+                    { label: "締切", value: jpDate(e.application_deadline) },
+                  ]}
+                  action={<RestoreEventButton eventId={e.id} eventName={e.name} />}
+                />
               ))}
-            </Table>
+            </div>
+            <div className="hidden md:block">
+              <Table
+                head={
+                  <tr>
+                    <Th>イベント名</Th>
+                    <Th>開催期間</Th>
+                    <Th>締切</Th>
+                    <Th>状態</Th>
+                    <Th>操作</Th>
+                  </tr>
+                }
+              >
+                {deletedEvents.map((e) => (
+                  <tr key={e.id}>
+                    <Td>{e.name}</Td>
+                    <Td>{eventPeriod(e.start_date, e.event_date)}</Td>
+                    <Td>{jpDate(e.application_deadline)}</Td>
+                    <Td>{statusBadge[e.status]}</Td>
+                    <Td>
+                      <RestoreEventButton eventId={e.id} eventName={e.name} />
+                    </Td>
+                  </tr>
+                ))}
+              </Table>
+            </div>
           </div>
-        </div>
+        </details>
       )}
     </AppShell>
   );
