@@ -222,8 +222,8 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                   <Table
                     head={
                       <tr>
-                        <Th>氏名</Th>
                         <Th>所属</Th>
+                        <Th>氏名</Th>
                         <Th>金額</Th>
                         <Th>状態</Th>
                         <Th>操作</Th>
@@ -232,11 +232,11 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                   >
                     {flat.map((m) => (
                       <tr key={m.participantId}>
+                        <Td>{m.branchName || <span className="text-neutral-400">—</span>}</Td>
                         <Td>
                           {m.name}
                           {m.request && <div className="mt-1">{reqInfo(m)}</div>}
                         </Td>
-                        <Td>{m.branchName || <span className="text-neutral-400">—</span>}</Td>
                         <Td>{yen(m.amount)}</Td>
                         <Td>
                           <StatusBadge status={m.status} />
