@@ -42,14 +42,20 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
     return [...m.values()].sort((a, b) => a.eventDate.localeCompare(b.eventDate));
   })();
 
-  const confirm = (applicationId: string) => {
+  // イベント内の未確定を含む application をまとめて確定する。
+  const confirmAll = (applicationIds: string[]) => {
+    if (applicationIds.length === 0) return;
     setMsg(null);
     startTransition(async () => {
-      const res = await confirmApplication(applicationId);
+      let err = "";
+      for (const id of applicationIds) {
+        const res = await confirmApplication(id);
+        if (!res.ok) err = res.error ?? "不明なエラー";
+      }
       setMsg(
-        res.ok
-          ? { ok: true, text: "名簿を確定しました。確定者へ決済依頼が可能です。" }
-          : { ok: false, text: `確定に失敗：${res.error}` },
+        err
+          ? { ok: false, text: `確定に失敗：${err}` }
+          : { ok: true, text: "未確定の名簿を確定しました。確定者へ決済依頼が可能です。" },
       );
     });
   };
@@ -164,87 +170,85 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
         <Alert variant="info">対象の名簿がありません。</Alert>
       ) : (
         <div className="space-y-8">
-          {byEvent.map((ev) => (
-            <Card key={ev.eventId}>
-              <div className="mb-4">
-                <CardTitle>{ev.eventName}</CardTitle>
-                <p className="text-body-sm text-neutral-600">{jpDate(ev.eventDate)}</p>
-              </div>
+          {byEvent.map((ev) => {
+            // イベント内の全メンバーを所属付きで1リストに統合（所属→氏名でソート）。
+            const flat = ev.apps
+              .flatMap((g) => g.members.map((m) => ({ ...m, branchName: g.branchName })))
+              .sort((a, b) => a.branchName.localeCompare(b.branchName, "ja") || a.name.localeCompare(b.name, "ja"));
+            const pendingAppIds = ev.apps
+              .filter((g) => g.members.some((m) => m.status === "applying"))
+              .map((g) => g.applicationId);
+            const applyingCount = flat.filter((m) => m.status === "applying").length;
+            return (
+              <Card key={ev.eventId}>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <CardTitle>{ev.eventName}</CardTitle>
+                    <p className="text-body-sm text-neutral-600">{jpDate(ev.eventDate)}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-body-sm text-neutral-600">
+                      {flat.length}名（未確定 {applyingCount}名）
+                    </span>
+                    <Button
+                      size="md"
+                      disabled={pending || pendingAppIds.length === 0}
+                      onClick={() => confirmAll(pendingAppIds)}
+                    >
+                      未確定をまとめて確定する
+                    </Button>
+                  </div>
+                </div>
 
-              <div className="space-y-5">
-                {ev.apps.map((g) => {
-                  const applying = g.members.filter((m) => m.status === "applying").length;
-                  return (
-                    <div key={g.applicationId} className="rounded-lg border border-neutral-200 p-3 md:p-4">
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-heading-sm text-neutral-900">{g.branchName}</p>
-                        <div className="flex items-center gap-3">
-                          {g.applicationStatus === "confirmed" ? (
-                            <Badge variant="success">確定済み</Badge>
-                          ) : (
-                            <span className="text-body-sm text-neutral-600">
-                              {g.members.length}名（未確定 {applying}名）
-                            </span>
-                          )}
-                          <Button
-                            size="md"
-                            disabled={pending || applying === 0}
-                            onClick={() => confirm(g.applicationId)}
-                          >
-                            未確定を確定する
-                          </Button>
-                        </div>
-                      </div>
+                {/* スマホ：カード表示 */}
+                <div className="space-y-2 md:hidden">
+                  {flat.map((m) => (
+                    <MobileRecord
+                      key={m.participantId}
+                      title={m.name}
+                      badge={<StatusBadge status={m.status} />}
+                      rows={[
+                        { label: "所属", value: m.branchName || "—" },
+                        { label: "金額", value: yen(m.amount) },
+                        ...(m.request ? [{ label: "依頼", value: reqInfo(m) }] : []),
+                      ]}
+                      action={memberAction(m) ?? undefined}
+                    />
+                  ))}
+                </div>
 
-                      {/* スマホ：カード表示 */}
-                      <div className="space-y-2 md:hidden">
-                        {g.members.map((m) => (
-                          <MobileRecord
-                            key={m.participantId}
-                            title={m.name}
-                            badge={<StatusBadge status={m.status} />}
-                            rows={[
-                              { label: "金額", value: yen(m.amount) },
-                              ...(m.request ? [{ label: "依頼", value: reqInfo(m) }] : []),
-                            ]}
-                            action={memberAction(m) ?? undefined}
-                          />
-                        ))}
-                      </div>
-
-                      {/* PC：テーブル表示 */}
-                      <div className="hidden md:block">
-                        <Table
-                          head={
-                            <tr>
-                              <Th>氏名</Th>
-                              <Th>金額</Th>
-                              <Th>状態</Th>
-                              <Th>操作</Th>
-                            </tr>
-                          }
-                        >
-                          {g.members.map((m) => (
-                            <tr key={m.participantId}>
-                              <Td>
-                                {m.name}
-                                {m.request && <div className="mt-1">{reqInfo(m)}</div>}
-                              </Td>
-                              <Td>{yen(m.amount)}</Td>
-                              <Td>
-                                <StatusBadge status={m.status} />
-                              </Td>
-                              <Td>{memberAction(m) ?? <span className="text-body-sm text-neutral-600">—</span>}</Td>
-                            </tr>
-                          ))}
-                        </Table>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-          ))}
+                {/* PC：テーブル表示 */}
+                <div className="hidden md:block">
+                  <Table
+                    head={
+                      <tr>
+                        <Th>氏名</Th>
+                        <Th>所属</Th>
+                        <Th>金額</Th>
+                        <Th>状態</Th>
+                        <Th>操作</Th>
+                      </tr>
+                    }
+                  >
+                    {flat.map((m) => (
+                      <tr key={m.participantId}>
+                        <Td>
+                          {m.name}
+                          {m.request && <div className="mt-1">{reqInfo(m)}</div>}
+                        </Td>
+                        <Td>{m.branchName || <span className="text-neutral-400">—</span>}</Td>
+                        <Td>{yen(m.amount)}</Td>
+                        <Td>
+                          <StatusBadge status={m.status} />
+                        </Td>
+                        <Td>{memberAction(m) ?? <span className="text-body-sm text-neutral-600">—</span>}</Td>
+                      </tr>
+                    ))}
+                  </Table>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </AppShell>
