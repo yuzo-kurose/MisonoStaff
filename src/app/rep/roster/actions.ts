@@ -112,3 +112,18 @@ export async function removeParticipant(
   revalidatePath("/rep/roster");
   return { ok: true };
 }
+
+/** 参加者の未対応の変更依頼（編集/キャンセル）を対応済みにする。代表者(自拠点)・管理者のみ（RLS）。 */
+export async function resolveChangeRequest(
+  participantId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("change_requests")
+    .update({ status: "done", resolved_at: new Date().toISOString() } as never)
+    .eq("participant_id", participantId)
+    .eq("status", "open");
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/rep/roster");
+  return { ok: true };
+}

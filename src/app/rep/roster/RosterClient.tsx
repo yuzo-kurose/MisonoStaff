@@ -12,7 +12,7 @@ import { Table, Th, Td } from "@/components/ui/Table";
 import { MobileRecord } from "@/components/ui/MobileRecord";
 import { yen, jpDate } from "@/lib/format";
 import type { RosterGroup } from "@/lib/queries/roster";
-import { confirmApplication, removeParticipant } from "./actions";
+import { confirmApplication, removeParticipant, resolveChangeRequest } from "./actions";
 import { refundParticipant } from "@/app/admin/applications/actions";
 
 export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdmin: boolean }) {
@@ -86,6 +86,34 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
       );
     });
   };
+
+  const resolve = (participantId: string) => {
+    setMsg(null);
+    startTransition(async () => {
+      const res = await resolveChangeRequest(participantId);
+      setMsg(
+        res.ok
+          ? { ok: true, text: "依頼を対応済みにしました。" }
+          : { ok: false, text: `更新に失敗：${res.error}` },
+      );
+    });
+  };
+
+  // 変更依頼（編集/キャンセル）の表示＋対応済みボタン。
+  const reqInfo = (m: RosterGroup["members"][number]) =>
+    m.request ? (
+      <span className="inline-flex flex-wrap items-center gap-2">
+        <Badge variant="warning">
+          {m.request.type === "cancel" ? "キャンセル依頼" : "編集依頼"}
+        </Badge>
+        {m.request.message && (
+          <span className="text-body-sm text-neutral-600">{m.request.message}</span>
+        )}
+        <Button variant="ghost" size="md" onClick={() => resolve(m.participantId)}>
+          対応済み
+        </Button>
+      </span>
+    ) : null;
 
   // 1メンバーの操作ボタン（表・スマホカードで共用）。
   const memberAction = (m: RosterGroup["members"][number]) => {
@@ -175,7 +203,10 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                             key={m.participantId}
                             title={m.name}
                             badge={<StatusBadge status={m.status} />}
-                            rows={[{ label: "金額", value: yen(m.amount) }]}
+                            rows={[
+                              { label: "金額", value: yen(m.amount) },
+                              ...(m.request ? [{ label: "依頼", value: reqInfo(m) }] : []),
+                            ]}
                             action={memberAction(m) ?? undefined}
                           />
                         ))}
@@ -195,7 +226,10 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                         >
                           {g.members.map((m) => (
                             <tr key={m.participantId}>
-                              <Td>{m.name}</Td>
+                              <Td>
+                                {m.name}
+                                {m.request && <div className="mt-1">{reqInfo(m)}</div>}
+                              </Td>
                               <Td>{yen(m.amount)}</Td>
                               <Td>
                                 <StatusBadge status={m.status} />

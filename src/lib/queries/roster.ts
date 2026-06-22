@@ -6,6 +6,7 @@ export type RosterMember = {
   name: string;
   status: ParticipantStatus;
   amount: number;
+  request?: { type: "edit" | "cancel"; message: string | null } | null;
 };
 export type RosterGroup = {
   applicationId: string;
@@ -80,6 +81,25 @@ export async function getRoster(): Promise<RosterGroup[]> {
   const events = (evs ?? []) as unknown as { id: string; name: string; event_date: string }[];
   const branches = (brs ?? []) as unknown as { id: string; name: string }[];
 
+  // 未対応の変更依頼（編集/キャンセル）。テーブル未作成等は無視。
+  const reqMap = new Map<string, { type: "edit" | "cancel"; message: string | null }>();
+  if (participants.length) {
+    const { data: reqs, error: reqErr } = await supabase
+      .from("change_requests")
+      .select("participant_id,type,message,status")
+      .in("participant_id", participants.map((p) => p.id))
+      .eq("status", "open");
+    if (!reqErr) {
+      for (const r of (reqs ?? []) as unknown as {
+        participant_id: string;
+        type: "edit" | "cancel";
+        message: string | null;
+      }[]) {
+        if (!reqMap.has(r.participant_id)) reqMap.set(r.participant_id, { type: r.type, message: r.message });
+      }
+    }
+  }
+
   return apps
     .map((a) => {
       const ev = events.find((e) => e.id === a.event_id);
@@ -90,6 +110,7 @@ export async function getRoster(): Promise<RosterGroup[]> {
           name: names.find((n) => n.id === p.user_id)?.name ?? "（不明）",
           status: p.status,
           amount: p.total_amount,
+          request: reqMap.get(p.id) ?? null,
         }));
       return {
         applicationId: a.id,

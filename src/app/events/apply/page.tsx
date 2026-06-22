@@ -4,6 +4,7 @@ import { Alert } from "@/components/ui/Alert";
 import { getEventWithForm } from "@/lib/queries/events";
 import { getMyProfile } from "@/lib/queries/me";
 import { getBranches } from "@/lib/queries/branches";
+import { getMyExistingApplications } from "./actions";
 import { ApplyClient, type ApplyEvent } from "./ApplyClient";
 
 export default async function ApplyPage({
@@ -27,11 +28,14 @@ export default async function ApplyPage({
     );
   }
 
-  const [profile, branches, ...eventsRaw] = await Promise.all([
+  const [profile, branches, existing, ...eventsRaw] = await Promise.all([
     getMyProfile(),
     getBranches(),
+    getMyExistingApplications(eventIds),
     ...eventIds.map((id) => getEventWithForm(id)),
   ]);
+  // 既存申込があればその拠点を初期選択（編集時に拠点を保つ）。
+  const existingBranchId = Object.values(existing)[0]?.branchId;
 
   const events: ApplyEvent[] = eventsRaw
     .filter((e): e is NonNullable<typeof e> => !!e)
@@ -60,7 +64,8 @@ export default async function ApplyPage({
       events={events}
       profileName={profile?.name ?? ""}
       branches={branches.map((b) => ({ id: b.id, name: b.name }))}
-      defaultBranchId={profile?.branch_id ?? ""}
+      defaultBranchId={existingBranchId ?? profile?.branch_id ?? ""}
+      existing={existing}
     />
   );
 }

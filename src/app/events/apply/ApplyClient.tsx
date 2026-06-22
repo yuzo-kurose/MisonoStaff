@@ -8,8 +8,14 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { StickyActionBar } from "@/components/ui/StickyActionBar";
+import { Badge } from "@/components/ui/Badge";
 import { yen, jpDate } from "@/lib/format";
-import { submitApplication, type ApplyInput } from "./actions";
+import {
+  submitApplication,
+  requestChange,
+  type ApplyInput,
+  type ExistingApplication,
+} from "./actions";
 
 export type ApplyField = {
   id: string;
@@ -35,22 +41,67 @@ export function ApplyClient({
   profileName,
   branches,
   defaultBranchId,
+  existing,
 }: {
   events: ApplyEvent[];
   profileName: string;
   branches: { id: string; name: string }[];
   defaultBranchId: string;
+  existing: Record<string, ExistingApplication>;
 }) {
   const router = useRouter();
+  const k = (eid: string, fid: string) => `${eid}:${fid}`;
+
+  // 既存申込の入力値をフォーム初期値にプリフィルする。
+  const initial = () => {
+    const t: Record<string, string> = {};
+    const s: Record<string, string> = {};
+    const m: Record<string, string[]> = {};
+    for (const e of events) {
+      const ex = existing[e.id];
+      if (!ex) continue;
+      for (const f of e.fields) {
+        const v = ex.values[f.id];
+        if (!v) continue;
+        const key = k(e.id, f.id);
+        if (f.fieldType === "select_multiple") m[key] = v.optionIds;
+        else if (f.fieldType === "select_single") s[key] = v.optionIds[0] ?? "";
+        else t[key] = v.value ?? "";
+      }
+    }
+    return { t, s, m };
+  };
+  const seed = initial();
+
   // key = `${eventId}:${fieldId}`
-  const [text, setText] = useState<Record<string, string>>({});
-  const [single, setSingle] = useState<Record<string, string>>({});
-  const [multi, setMulti] = useState<Record<string, string[]>>({});
+  const [text, setText] = useState<Record<string, string>>(seed.t);
+  const [single, setSingle] = useState<Record<string, string>>(seed.s);
+  const [multi, setMulti] = useState<Record<string, string[]>>(seed.m);
   const [branchId, setBranchId] = useState(defaultBranchId);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const k = (eid: string, fid: string) => `${eid}:${fid}`;
+  // 確定済み(編集不可)のイベント：本人は代表者へ依頼する。
+  const locked = (eid: string) => {
+    const st = existing[eid]?.status;
+    return st === "confirmed" || st === "paid";
+  };
+
+  const sendRequest = (eid: string, type: "edit" | "cancel") => {
+    const ex = existing[eid];
+    if (!ex) return;
+    const label = type === "edit" ? "編集" : "キャンセル";
+    const message = window.prompt(`代表者への${label}依頼の内容（任意）を入力してください。`, "");
+    if (message === null) return;
+    setError(null);
+    setNotice(null);
+    startTransition(async () => {
+      const res = await requestChange(ex.participantId, type, message);
+      setNotice(res.ok ? `${label}依頼を送信しました。代表者の対応をお待ちください。` : null);
+      if (!res.ok) setError(`${label}依頼の送信に失敗：${res.error}`);
+    });
+  };
 
   const fieldAmount = (eid: string, f: ApplyField): number => {
     const key = k(eid, f.id);
@@ -137,15 +188,32 @@ export function ApplyClient({
           <Alert variant="error">{error}</Alert>
         </div>
       )}
+      {notice && (
+        <div className="mb-4">
+          <Alert variant="success">{notice}</Alert>
+        </div>
+      )}
 
       <div className="space-y-6">
-        {events.map((e) => (
+        {events.map((e) => {
+          const ex = existing[e.id];
+          const isLocked = locked(e.id);
+          return (
           <Card key={e.id}>
-            <div className="flex items-center justify-between">
-              <CardTitle>{e.name}</CardTitle>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <CardTitle>{e.name}</CardTitle>
+                {ex?.status === "applying" && <Badge variant="warning">申込中（編集できます）</Badge>}
+                {isLocked && <Badge variant="success">確定済み</Badge>}
+              </div>
               <span className="text-body-sm text-neutral-600">{jpDate(e.eventDate)}</span>
             </div>
-            <div className="mt-4 space-y-4">
+            {isLocked && (
+              <p className="mt-3 rounded-lg bg-neutral-50 px-3 py-2 text-body-sm text-neutral-600">
+                確定済みのため直接編集できません。変更・取消は下のボタンから代表者へ依頼してください。
+              </p>
+            )}
+            <fieldset disabled={isLocked} className="mt-4 space-y-4 disabled:opacity-70">
               {e.fields.map((f) => {
                 const key = k(e.id, f.id);
                 if (f.fieldType === "number") {
@@ -233,12 +301,37 @@ export function ApplyClient({
                   </Field>
                 );
               })}
-            </div>
-            <p className="mt-4 text-right text-label-lg text-neutral-900">
-              小計：{yen(eventTotal(e))}
-            </p>
+            </fieldset>
+            {isLocked ? (
+              <div className="mt-4 flex flex-wrap justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="md"
+                  disabled={pending}
+                  onClick={() => sendRequest(e.id, "edit")}
+                >
+                  代表者に編集を依頼
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="md"
+                  disabled={pending}
+                  onClick={() => sendRequest(e.id, "cancel")}
+                  className="text-error-900"
+                >
+                  キャンセルを依頼
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-4 text-right text-label-lg text-neutral-900">
+                小計：{yen(eventTotal(e))}
+              </p>
+            )}
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       <StickyActionBar
