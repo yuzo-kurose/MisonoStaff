@@ -29,7 +29,7 @@ export function ProxyClient({
   branches: { id: string; name: string }[];
 }) {
   const [month, setMonth] = useState("");
-  const [eventIds, setEventIds] = useState<string[]>([]);
+  const [eventId, setEventId] = useState("");
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
   const [division, setDivision] = useState("");
   const [rows, setRows] = useState<Row[]>(initialRows());
@@ -42,17 +42,17 @@ export function ProxyClient({
   // 選択イベントのフォーム項目を取得し、一覧表の列として展開する。
   useEffect(() => {
     let active = true;
-    if (eventIds.length === 0) {
+    if (!eventId) {
       setFields([]);
       return;
     }
-    getProxyFields(eventIds).then((fs) => {
+    getProxyFields([eventId]).then((fs) => {
       if (active) setFields(fs);
     });
     return () => {
       active = false;
     };
-  }, [eventIds]);
+  }, [eventId]);
 
   // 対象月の選択肢（イベント開催月の重複なし・昇順）。
   const monthOptions = useMemo(() => {
@@ -71,11 +71,8 @@ export function ProxyClient({
 
   const changeMonth = (ym: string) => {
     setMonth(ym);
-    setEventIds([]); // 対象月を変えたら選択をリセット
+    setEventId(""); // 対象月を変えたら選択をリセット
   };
-
-  const toggleEvent = (id: string) =>
-    setEventIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   // 一覧表の行操作
   const setRow = (i: number, patch: Partial<Row>) =>
@@ -155,8 +152,8 @@ export function ProxyClient({
       setMsg({ ok: false, text: "部を選択してください。" });
       return;
     }
-    if (eventIds.length === 0) {
-      setMsg({ ok: false, text: "参加イベントを1つ以上選択してください。" });
+    if (!eventId) {
+      setMsg({ ok: false, text: "参加イベントを選択してください。" });
       return;
     }
     if (filledRows.length === 0) {
@@ -169,7 +166,7 @@ export function ProxyClient({
       const errs: string[] = [];
       for (const r of filledRows) {
         const res = await registerProxyMember({
-          eventIds,
+          eventIds: [eventId],
           branchId,
           name: r.name,
           email: r.email,
@@ -196,9 +193,13 @@ export function ProxyClient({
     });
   };
 
-  // CSV: 氏名,メール,部(値),部署(任意),イベントID(；区切り・省略時は画面選択)
+  // CSV: 氏名,メール,部署(任意)。拠点・部・イベントは画面の登録条件を使用する。
   const runCsv = (file: File) => {
     setMsg(null);
+    if (!branchId || !division || !eventId) {
+      setMsg({ ok: false, text: "先に登録条件（拠点・部・対象月・参加イベント）を選択してください。" });
+      return;
+    }
     startTransition(async () => {
       const text = await file.text();
       const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
@@ -209,16 +210,13 @@ export function ProxyClient({
       const errs: string[] = [];
       for (const line of data) {
         const cols = line.split(",").map((c) => c.replace(/^"|"$/g, "").trim());
-        const [cName, cEmail, cDivision, cDepartment, cEvents] = cols;
-        const ids = cEvents
-          ? cEvents.split(/[;；]/).map((s) => s.trim()).filter(Boolean)
-          : eventIds;
+        const [cName, cEmail, cDepartment] = cols;
         const res = await registerProxyMember({
-          eventIds: ids,
+          eventIds: [eventId],
           branchId,
           name: cName ?? "",
           email: cEmail ?? "",
-          division: cDivision || division,
+          division,
           department: cDepartment ?? "",
         });
         if (res.ok) ok++;
@@ -267,7 +265,7 @@ export function ProxyClient({
         {/* 共通条件：登録先拠点・対象月・参加イベント（表の全行に適用） */}
         <SectionCard
           title="登録条件"
-          description="ここで選んだ拠点・イベントが、下の表のすべてのメンバーに適用されます。"
+          description="ここで選んだ拠点・部・イベントが、下の表のすべてのメンバーに適用されます。イベントごとに登録します。"
         >
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-3">
@@ -317,7 +315,7 @@ export function ProxyClient({
               </Field>
             </div>
 
-            <Fieldset label="参加イベント" required hint="複数選択可（同日分はまとめて受付されます）">
+            <Fieldset label="参加イベント" required hint="1イベントを選択（イベントごとに登録します）">
               {month === "" ? (
                 <p className="text-body-sm text-neutral-600">先に対象月を選択してください。</p>
               ) : monthEvents.length === 0 ? (
@@ -325,7 +323,7 @@ export function ProxyClient({
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {monthEvents.map((e) => {
-                    const on = eventIds.includes(e.id);
+                    const on = eventId === e.id;
                     return (
                       <label
                         key={e.id}
@@ -336,10 +334,11 @@ export function ProxyClient({
                         }`}
                       >
                         <input
-                          type="checkbox"
+                          type="radio"
+                          name="proxy-event"
                           className="h-4 w-4 flex-none"
                           checked={on}
-                          onChange={() => toggleEvent(e.id)}
+                          onChange={() => setEventId(e.id)}
                         />
                         <span className="truncate">
                           {e.name}
@@ -441,7 +440,7 @@ export function ProxyClient({
 
         <SectionCard
           title="CSVで一括取り込み"
-          description="列: 氏名, メール, 部(値), 部署(任意), イベントID(；区切り・省略時は上で選択中のイベント)。1行目が見出しなら自動でスキップします。"
+          description="列: 氏名, メール, 部署(任意)。拠点・部・イベントは上の登録条件を使用します。1行目が見出しなら自動でスキップします。"
         >
           <input
             ref={fileRef}
