@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import { UserPlus, Upload, X } from "lucide-react";
+import { UserPlus, Upload, Plus, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -11,6 +11,10 @@ import { registerProxyMember } from "./actions";
 
 type EventOpt = { id: string; name: string; venue: string | null; date: string };
 type DivisionOpt = { value: string; label: string };
+
+type Row = { division: string; name: string; email: string; department: string };
+const emptyRow = (): Row => ({ division: "", name: "", email: "", department: "" });
+const initialRows = (): Row[] => [emptyRow(), emptyRow(), emptyRow()];
 
 export function ProxyClient({
   events,
@@ -26,10 +30,7 @@ export function ProxyClient({
   const [month, setMonth] = useState("");
   const [eventIds, setEventIds] = useState<string[]>([]);
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [division, setDivision] = useState("");
-  const [department, setDepartment] = useState("");
+  const [rows, setRows] = useState<Row[]>(initialRows());
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
@@ -58,30 +59,56 @@ export function ProxyClient({
   const toggleEvent = (id: string) =>
     setEventIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
-  const clearForm = () => {
-    setName("");
-    setEmail("");
-    setDivision("");
-    setDepartment("");
-    setMsg(null);
-  };
+  // 一覧表の行操作
+  const setRow = (i: number, patch: Partial<Row>) =>
+    setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const addRow = () => setRows((rs) => [...rs, emptyRow()]);
+  const removeRow = (i: number) =>
+    setRows((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs));
 
-  const addOne = () => {
+  // 入力済み（氏名 or メールがある）行のみ登録対象とする。
+  const filledRows = rows.filter((r) => r.name.trim() || r.email.trim());
+
+  const submitAll = () => {
     setMsg(null);
     if (!branchId) {
       setMsg({ ok: false, text: "登録先拠点を選択してください。" });
       return;
     }
+    if (eventIds.length === 0) {
+      setMsg({ ok: false, text: "参加イベントを1つ以上選択してください。" });
+      return;
+    }
+    if (filledRows.length === 0) {
+      setMsg({ ok: false, text: "登録するメンバーを1行以上入力してください。" });
+      return;
+    }
     startTransition(async () => {
-      const res = await registerProxyMember({ eventIds, branchId, name, email, division, department });
-      if (res.ok) {
-        setMsg({ ok: true, text: `${name} さんを登録しました。続けて入力できます。` });
-        setName("");
-        setEmail("");
-        // eventIds・division・department は連続入力のため保持
-      } else {
-        setMsg({ ok: false, text: res.error ?? "登録に失敗しました。" });
+      let ok = 0;
+      let ng = 0;
+      const errs: string[] = [];
+      for (const r of filledRows) {
+        const res = await registerProxyMember({
+          eventIds,
+          branchId,
+          name: r.name,
+          email: r.email,
+          division: r.division,
+          department: r.department,
+        });
+        if (res.ok) ok++;
+        else {
+          ng++;
+          if (errs.length < 3) errs.push(`${r.name || r.email || "?"}：${res.error ?? "失敗"}`);
+        }
       }
+      setMsg({
+        ok: ng === 0,
+        text: `登録完了：成功 ${ok} 件 / 失敗 ${ng} 件${
+          errs.length ? `（例: ${errs.join(" / ")}）` : ""
+        }`,
+      });
+      if (ng === 0) setRows(initialRows());
     });
   };
 
@@ -91,12 +118,12 @@ export function ProxyClient({
     startTransition(async () => {
       const text = await file.text();
       const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-      const rows =
+      const data =
         lines[0] && /氏名|name|メール|email/i.test(lines[0]) ? lines.slice(1) : lines;
       let ok = 0;
       let ng = 0;
       const errs: string[] = [];
-      for (const line of rows) {
+      for (const line of data) {
         const cols = line.split(",").map((c) => c.replace(/^"|"$/g, "").trim());
         const [cName, cEmail, cDivision, cDepartment, cEvents] = cols;
         const ids = cEvents
@@ -147,15 +174,16 @@ export function ProxyClient({
       )}
 
       <form
-        className="mx-auto max-w-2xl space-y-6"
+        className="space-y-6"
         onSubmit={(e) => {
           e.preventDefault();
-          addOne();
+          submitAll();
         }}
       >
+        {/* 共通条件：登録先拠点・対象月・参加イベント（表の全行に適用） */}
         <SectionCard
-          title="メンバーを追加"
-          description="1名分を入力して追加すると、続けて次のメンバーを入力できます。"
+          title="登録条件"
+          description="ここで選んだ拠点・イベントが、下の表のすべてのメンバーに適用されます。"
         >
           <div className="space-y-4">
             <Field label="登録先拠点" required hint="この拠点の名簿に登録されます">
@@ -164,11 +192,7 @@ export function ProxyClient({
                   担当拠点がありません。管理者に拠点マスタでの代表設定を依頼してください。
                 </p>
               ) : (
-                <Select
-                  value={branchId}
-                  onChange={(e) => setBranchId(e.target.value)}
-                  required
-                >
+                <Select value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
                   <option value="" disabled>
                     選択してください
                   </option>
@@ -230,50 +254,89 @@ export function ProxyClient({
                 </div>
               )}
             </Fieldset>
+          </div>
+        </SectionCard>
 
-            {/* 入力項目は縦並び：部 → 氏名 → メールアドレス → 部署 */}
-            <Field label="部" required>
-              <Select value={division} onChange={(e) => setDivision(e.target.value)}>
-                <option value="" disabled>
-                  選択してください
-                </option>
-                {divisions.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
+        {/* メンバー一覧表：1行＝1名。行ごとに 部／氏名／メール／部署 を入力 */}
+        <SectionCard
+          title="メンバー一覧"
+          description="1行に1名分を入力します。行を追加して複数名をまとめて登録できます。氏名またはメールが空の行は登録されません。"
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] border-separate border-spacing-0 text-body-sm">
+              <thead>
+                <tr className="text-left text-label-sm text-neutral-600">
+                  <th className="w-10 px-2 pb-2 font-medium">#</th>
+                  <th className="px-2 pb-2 font-medium">部 *</th>
+                  <th className="px-2 pb-2 font-medium">氏名 *</th>
+                  <th className="px-2 pb-2 font-medium">メールアドレス *</th>
+                  <th className="px-2 pb-2 font-medium">部署</th>
+                  <th className="w-12 px-2 pb-2 font-medium">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i} className="align-top">
+                    <td className="px-2 py-1.5 text-neutral-500">{i + 1}</td>
+                    <td className="px-2 py-1.5">
+                      <Select value={r.division} onChange={(e) => setRow(i, { division: e.target.value })}>
+                        <option value="">選択</option>
+                        {divisions.map((d) => (
+                          <option key={d.value} value={d.value}>
+                            {d.label}
+                          </option>
+                        ))}
+                      </Select>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <Input
+                        value={r.name}
+                        onChange={(e) => setRow(i, { name: e.target.value })}
+                        placeholder="田中 花子"
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <Input
+                        type="email"
+                        value={r.email}
+                        onChange={(e) => setRow(i, { email: e.target.value })}
+                        placeholder="hanako@example.com"
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <Select value={r.department} onChange={(e) => setRow(i, { department: e.target.value })}>
+                        <option value="">未選択</option>
+                        {departments.map((d) => (
+                          <option key={d} value={d}>
+                            {d}
+                          </option>
+                        ))}
+                      </Select>
+                    </td>
+                    <td className="px-2 py-1.5 text-center">
+                      <button
+                        type="button"
+                        onClick={() => removeRow(i)}
+                        disabled={pending || rows.length <= 1}
+                        aria-label={`${i + 1}行目を削除`}
+                        className="rounded p-2 text-neutral-500 transition-colors hover:bg-error-50 hover:text-error-900 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-              </Select>
-            </Field>
-            <Field label="氏名" required>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="田中 花子" />
-            </Field>
-            <Field label="メールアドレス" required>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="hanako@example.com"
-              />
-            </Field>
-            <Field label="部署（配置先）" hint="任意">
-              <Select value={department} onChange={(e) => setDepartment(e.target.value)}>
-                <option value="">未選択</option>
-                {departments.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+              </tbody>
+            </table>
+          </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-neutral-200 pt-4">
-              <Button type="button" variant="secondary" disabled={pending} onClick={clearForm}>
-                <X size={18} /> キャンセル
-              </Button>
-              <Button type="submit" disabled={pending}>
-                <UserPlus size={18} /> {pending ? "処理中…" : "追加"}
-              </Button>
-            </div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-200 pt-4">
+            <Button type="button" variant="secondary" disabled={pending} onClick={addRow}>
+              <Plus size={18} /> 行を追加
+            </Button>
+            <Button type="submit" disabled={pending}>
+              <UserPlus size={18} /> {pending ? "登録中…" : `${filledRows.length}名を登録`}
+            </Button>
           </div>
         </SectionCard>
 
@@ -298,11 +361,7 @@ export function ProxyClient({
               <Upload size={18} /> CSVファイルを選択
             </Button>
             {csvFile && <span className="text-body-sm text-neutral-700">{csvFile.name}</span>}
-            <Button
-              type="button"
-              disabled={pending || !csvFile}
-              onClick={() => csvFile && runCsv(csvFile)}
-            >
+            <Button type="button" disabled={pending || !csvFile} onClick={() => csvFile && runCsv(csvFile)}>
               {pending ? "取り込み中…" : "反映"}
             </Button>
           </div>
