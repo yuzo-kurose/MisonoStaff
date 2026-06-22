@@ -198,7 +198,7 @@ export function ProxyClient({
                     担当拠点がありません。管理者に拠点マスタでの代表設定を依頼してください。
                   </p>
                 ) : (
-                  <Select value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
+                  <Select className="max-w-[14rem]" value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
                     <option value="" disabled>
                       選択してください
                     </option>
@@ -212,7 +212,7 @@ export function ProxyClient({
               </Field>
 
               <Field label="部" required hint="この部として全メンバーを登録します">
-                <Select value={division} onChange={(e) => setDivision(e.target.value)}>
+                <Select className="max-w-[11rem]" value={division} onChange={(e) => setDivision(e.target.value)}>
                   <option value="" disabled>
                     選択してください
                   </option>
@@ -226,7 +226,7 @@ export function ProxyClient({
             </div>
 
             <Field label="対象月" required hint="対象月を選ぶと、その月のイベントが表示されます">
-              <Select value={month} onChange={(e) => changeMonth(e.target.value)}>
+              <Select className="max-w-[11rem]" value={month} onChange={(e) => changeMonth(e.target.value)}>
                 <option value="" disabled>
                   選択してください
                 </option>
