@@ -12,8 +12,8 @@ import { registerProxyMember } from "./actions";
 type EventOpt = { id: string; name: string; venue: string | null; date: string };
 type DivisionOpt = { value: string; label: string };
 
-type Row = { division: string; name: string; email: string; department: string };
-const emptyRow = (): Row => ({ division: "", name: "", email: "", department: "" });
+type Row = { name: string; email: string; department: string };
+const emptyRow = (): Row => ({ name: "", email: "", department: "" });
 const initialRows = (): Row[] => [emptyRow(), emptyRow(), emptyRow()];
 
 export function ProxyClient({
@@ -30,6 +30,7 @@ export function ProxyClient({
   const [month, setMonth] = useState("");
   const [eventIds, setEventIds] = useState<string[]>([]);
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
+  const [division, setDivision] = useState("");
   const [rows, setRows] = useState<Row[]>(initialRows());
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -75,6 +76,10 @@ export function ProxyClient({
       setMsg({ ok: false, text: "登録先拠点を選択してください。" });
       return;
     }
+    if (!division) {
+      setMsg({ ok: false, text: "部を選択してください。" });
+      return;
+    }
     if (eventIds.length === 0) {
       setMsg({ ok: false, text: "参加イベントを1つ以上選択してください。" });
       return;
@@ -93,7 +98,7 @@ export function ProxyClient({
           branchId,
           name: r.name,
           email: r.email,
-          division: r.division,
+          division,
           department: r.department,
         });
         if (res.ok) ok++;
@@ -134,7 +139,7 @@ export function ProxyClient({
           branchId,
           name: cName ?? "",
           email: cEmail ?? "",
-          division: cDivision ?? "",
+          division: cDivision || division,
           department: cDepartment ?? "",
         });
         if (res.ok) ok++;
@@ -186,24 +191,39 @@ export function ProxyClient({
           description="ここで選んだ拠点・イベントが、下の表のすべてのメンバーに適用されます。"
         >
           <div className="space-y-4">
-            <Field label="登録先拠点" required hint="この拠点の名簿に登録されます">
-              {branches.length === 0 ? (
-                <p className="text-body-sm text-error-900">
-                  担当拠点がありません。管理者に拠点マスタでの代表設定を依頼してください。
-                </p>
-              ) : (
-                <Select value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="登録先拠点" required hint="この拠点の名簿に登録されます">
+                {branches.length === 0 ? (
+                  <p className="text-body-sm text-error-900">
+                    担当拠点がありません。管理者に拠点マスタでの代表設定を依頼してください。
+                  </p>
+                ) : (
+                  <Select value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
+                    <option value="" disabled>
+                      選択してください
+                    </option>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+
+              <Field label="部" required hint="この部として全メンバーを登録します">
+                <Select value={division} onChange={(e) => setDivision(e.target.value)}>
                   <option value="" disabled>
                     選択してください
                   </option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
+                  {divisions.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
                     </option>
                   ))}
                 </Select>
-              )}
-            </Field>
+              </Field>
+            </div>
 
             <Field label="対象月" required hint="対象月を選ぶと、その月のイベントが表示されます">
               <Select value={month} onChange={(e) => changeMonth(e.target.value)}>
@@ -263,11 +283,10 @@ export function ProxyClient({
           description="1行に1名分を入力します。行を追加して複数名をまとめて登録できます。氏名またはメールが空の行は登録されません。"
         >
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px] border-separate border-spacing-0 text-body-sm">
+            <table className="w-full min-w-[560px] border-separate border-spacing-0 text-body-sm">
               <thead>
                 <tr className="text-left text-label-sm text-neutral-600">
                   <th className="w-10 px-2 pb-2 font-medium">#</th>
-                  <th className="px-2 pb-2 font-medium">部 *</th>
                   <th className="px-2 pb-2 font-medium">氏名 *</th>
                   <th className="px-2 pb-2 font-medium">メールアドレス *</th>
                   <th className="px-2 pb-2 font-medium">部署</th>
@@ -278,16 +297,6 @@ export function ProxyClient({
                 {rows.map((r, i) => (
                   <tr key={i} className="align-top">
                     <td className="px-2 py-1.5 text-neutral-500">{i + 1}</td>
-                    <td className="px-2 py-1.5">
-                      <Select value={r.division} onChange={(e) => setRow(i, { division: e.target.value })}>
-                        <option value="">選択</option>
-                        {divisions.map((d) => (
-                          <option key={d.value} value={d.value}>
-                            {d.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </td>
                     <td className="px-2 py-1.5">
                       <Input
                         value={r.name}
