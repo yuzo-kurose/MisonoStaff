@@ -29,7 +29,7 @@ export default async function ProxyPage() {
 
   return (
     <ProxyClient
-      events={events.map((e) => ({ id: e.id, name: e.name, venue: e.venue }))}
+      events={events.map((e) => ({ id: e.id, name: e.name, venue: e.venue, date: e.event_date }))}
       divisions={divisions.map((d) => ({ value: d.value, label: d.label }))}
       departments={departments}
       branches={branches}

@@ -1,16 +1,15 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
-import { UserPlus, Upload } from "lucide-react";
+import { useMemo, useRef, useState, useTransition } from "react";
+import { UserPlus, Upload, X } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Fieldset, Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
-import { StickyActionBar } from "@/components/ui/StickyActionBar";
 import { registerProxyMember } from "./actions";
 
-type EventOpt = { id: string; name: string; venue: string | null };
+type EventOpt = { id: string; name: string; venue: string | null; date: string };
 type DivisionOpt = { value: string; label: string };
 
 export function ProxyClient({
@@ -24,18 +23,48 @@ export function ProxyClient({
   departments: string[];
   branches: { id: string; name: string }[];
 }) {
+  const [month, setMonth] = useState("");
   const [eventIds, setEventIds] = useState<string[]>([]);
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [division, setDivision] = useState("");
   const [department, setDepartment] = useState("");
+  const [csvFile, setCsvFile] = useState<File | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // 対象月の選択肢（イベント開催月の重複なし・昇順）。
+  const monthOptions = useMemo(() => {
+    const set = new Set(events.map((e) => (e.date ?? "").slice(0, 7)).filter(Boolean));
+    return [...set].sort().map((ym) => {
+      const [y, m] = ym.split("-");
+      return { value: ym, label: `${y}年${Number(m)}月` };
+    });
+  }, [events]);
+
+  // 選択中の対象月のイベントのみ表示する。
+  const monthEvents = useMemo(
+    () => (month ? events.filter((e) => (e.date ?? "").slice(0, 7) === month) : []),
+    [events, month],
+  );
+
+  const changeMonth = (ym: string) => {
+    setMonth(ym);
+    setEventIds([]); // 対象月を変えたら選択をリセット
+  };
+
   const toggleEvent = (id: string) =>
     setEventIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  const clearForm = () => {
+    setName("");
+    setEmail("");
+    setDivision("");
+    setDepartment("");
+    setMsg(null);
+  };
 
   const addOne = () => {
     setMsg(null);
@@ -57,7 +86,7 @@ export function ProxyClient({
   };
 
   // CSV: 氏名,メール,部(値),部署(任意),イベントID(；区切り・省略時は画面選択)
-  const onCsv = (file: File) => {
+  const runCsv = (file: File) => {
     setMsg(null);
     startTransition(async () => {
       const text = await file.text();
@@ -93,6 +122,7 @@ export function ProxyClient({
           errs.length ? `（例: ${errs.join(" / ")}）` : ""
         }`,
       });
+      setCsvFile(null);
       if (fileRef.current) fileRef.current.value = "";
     });
   };
@@ -151,12 +181,28 @@ export function ProxyClient({
                 </Select>
               )}
             </Field>
+
+            <Field label="対象月" required hint="対象月を選ぶと、その月のイベントが表示されます">
+              <Select className="max-w-sm" value={month} onChange={(e) => changeMonth(e.target.value)}>
+                <option value="" disabled>
+                  選択してください
+                </option>
+                {monthOptions.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
             <Fieldset label="参加イベント" required hint="複数選択可（同日分はまとめて受付されます）">
-              {events.length === 0 ? (
-                <p className="text-body-sm text-neutral-600">公開中のイベントがありません。</p>
+              {month === "" ? (
+                <p className="text-body-sm text-neutral-600">先に対象月を選択してください。</p>
+              ) : monthEvents.length === 0 ? (
+                <p className="text-body-sm text-neutral-600">この月の公開中イベントはありません。</p>
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {events.map((e) => {
+                  {monthEvents.map((e) => {
                     const on = eventIds.includes(e.id);
                     return (
                       <label
@@ -185,40 +231,49 @@ export function ProxyClient({
                 </div>
               )}
             </Fieldset>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="氏名" required>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="田中 花子" />
-              </Field>
-              <Field label="メールアドレス" required>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="hanako@example.com"
-                />
-              </Field>
-              <Field label="部" required>
-                <Select value={division} onChange={(e) => setDivision(e.target.value)}>
-                  <option value="" disabled>
-                    選択してください
+
+            {/* 入力項目は縦並び：部 → 氏名 → メールアドレス → 部署 */}
+            <Field label="部" required>
+              <Select className="max-w-sm" value={division} onChange={(e) => setDivision(e.target.value)}>
+                <option value="" disabled>
+                  選択してください
+                </option>
+                {divisions.map((d) => (
+                  <option key={d.value} value={d.value}>
+                    {d.label}
                   </option>
-                  {divisions.map((d) => (
-                    <option key={d.value} value={d.value}>
-                      {d.label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field label="部署（配置先）" hint="任意">
-                <Select value={department} onChange={(e) => setDepartment(e.target.value)}>
-                  <option value="">未選択</option>
-                  {departments.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
+                ))}
+              </Select>
+            </Field>
+            <Field label="氏名" required>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="田中 花子" />
+            </Field>
+            <Field label="メールアドレス" required>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="hanako@example.com"
+              />
+            </Field>
+            <Field label="部署（配置先）" hint="任意">
+              <Select className="max-w-sm" value={department} onChange={(e) => setDepartment(e.target.value)}>
+                <option value="">未選択</option>
+                {departments.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-neutral-200 pt-4">
+              <Button type="button" variant="secondary" disabled={pending} onClick={clearForm}>
+                <X size={18} /> キャンセル
+              </Button>
+              <Button type="submit" disabled={pending}>
+                <UserPlus size={18} /> {pending ? "処理中…" : "追加"}
+              </Button>
             </div>
           </div>
         </SectionCard>
@@ -232,29 +287,33 @@ export function ProxyClient({
             type="file"
             accept=".csv,text/csv"
             className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onCsv(f);
-            }}
+            onChange={(e) => setCsvFile(e.target.files?.[0] ?? null)}
           />
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={pending}
-            onClick={() => fileRef.current?.click()}
-          >
-            <Upload size={18} /> CSVファイルを選択して取り込み
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={pending}
+              onClick={() => fileRef.current?.click()}
+            >
+              <Upload size={18} /> CSVファイルを選択
+            </Button>
+            {csvFile && <span className="text-body-sm text-neutral-700">{csvFile.name}</span>}
+            <Button
+              type="button"
+              disabled={pending || !csvFile}
+              onClick={() => csvFile && runCsv(csvFile)}
+            >
+              {pending ? "取り込み中…" : "反映"}
+            </Button>
+          </div>
         </SectionCard>
 
-        <StickyActionBar left={<span>入力した内容は本人のアカウントとして発行されます</span>}>
-          <ButtonLink href="/rep/roster" variant="secondary" size="lg">
-            キャンセル
+        <div className="flex justify-end">
+          <ButtonLink href="/rep/roster" variant="ghost">
+            名簿に戻る
           </ButtonLink>
-          <Button type="submit" size="lg" disabled={pending}>
-            <UserPlus size={18} /> {pending ? "処理中…" : "追加して続けて入力"}
-          </Button>
-        </StickyActionBar>
+        </div>
       </form>
     </AppShell>
   );
