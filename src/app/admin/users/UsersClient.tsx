@@ -11,7 +11,7 @@ import { Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { MobileRecord } from "@/components/ui/MobileRecord";
-import { setUserRole, type AdminUserRow } from "./actions";
+import { setUserRole, setUserDivision, type AdminUserRow } from "./actions";
 
 const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "participant", label: "ユーザー" },
@@ -19,7 +19,13 @@ const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "admin", label: "管理者" },
   { value: "reception", label: "受付" },
 ];
-const roleLabel = (r: string) => ROLE_OPTIONS.find((o) => o.value === r)?.label ?? r;
+const DIVISION_OPTIONS: { value: string; label: string }[] = [
+  { value: "student", label: "学生部" },
+  { value: "university", label: "大学生部" },
+  { value: "adult", label: "成人部" },
+  { value: "mens", label: "男子部" },
+  { value: "general", label: "一般" },
+];
 
 export function UsersClient({ users }: { users: AdminUserRow[] }) {
   const router = useRouter();
@@ -33,7 +39,10 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
       q === ""
         ? users
         : users.filter(
-            (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
+            (u) =>
+              u.name.toLowerCase().includes(q) ||
+              u.email.toLowerCase().includes(q) ||
+              u.id.toLowerCase().includes(q),
           ),
     [users, q],
   );
@@ -54,6 +63,19 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
     });
   };
 
+  const changeDivision = (userId: string, division: string) => {
+    setMsg(null);
+    startTransition(async () => {
+      const res = await setUserDivision(userId, division);
+      if (res.ok) {
+        setMsg({ ok: true, text: "部を変更しました。" });
+        router.refresh();
+      } else {
+        setMsg({ ok: false, text: `変更に失敗：${res.error}` });
+      }
+    });
+  };
+
   const roleSelect = (u: AdminUserRow) => (
     <Select
       value={u.role}
@@ -67,6 +89,27 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
         </option>
       ))}
     </Select>
+  );
+
+  const divisionSelect = (u: AdminUserRow) => (
+    <Select
+      value={u.division}
+      disabled={pending}
+      onChange={(e) => changeDivision(u.id, e.target.value)}
+      className="max-w-[9rem]"
+    >
+      {DIVISION_OPTIONS.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </Select>
+  );
+
+  const idCell = (u: AdminUserRow) => (
+    <span className="font-mono text-label-sm text-neutral-500" title={u.id}>
+      {u.id.slice(0, 8)}
+    </span>
   );
 
   const historyButton = (u: AdminUserRow) => (
@@ -91,10 +134,10 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
       )}
 
       <div className="mb-4 max-w-md">
-        <label className="mb-1 block text-label-sm text-neutral-600">氏名・メールで検索</label>
+        <label className="mb-1 block text-label-sm text-neutral-600">ID・氏名・メールで検索</label>
         <div className="relative">
           <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="氏名 / メール" className="pl-10" />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ID / 氏名 / メール" className="pl-10" />
         </div>
       </div>
 
@@ -109,7 +152,9 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
             key={u.id}
             title={u.name}
             rows={[
+              { label: "ID", value: idCell(u) },
               { label: "メール", value: u.email || "—" },
+              { label: "部", value: divisionSelect(u) },
               { label: "所属", value: u.branchName ?? "—" },
               { label: "権限", value: roleSelect(u) },
             ]}
@@ -123,8 +168,10 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
         <Table
           head={
             <tr>
+              <Th>ID</Th>
               <Th>氏名</Th>
               <Th>メール</Th>
+              <Th>部</Th>
               <Th>所属</Th>
               <Th>権限</Th>
               <Th>操作</Th>
@@ -133,8 +180,10 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
         >
           {filtered.map((u) => (
             <tr key={u.id}>
+              <Td>{idCell(u)}</Td>
               <Td>{u.name}</Td>
               <Td>{u.email || <span className="text-neutral-400">—</span>}</Td>
+              <Td>{divisionSelect(u)}</Td>
               <Td>{u.branchName ?? <span className="text-neutral-400">—</span>}</Td>
               <Td>{roleSelect(u)}</Td>
               <Td>{historyButton(u)}</Td>

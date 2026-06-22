@@ -10,6 +10,7 @@ export type AdminUserRow = {
   name: string;
   email: string;
   role: string;
+  division: string;
   branchName: string | null;
   status: string;
 };
@@ -21,13 +22,17 @@ export async function getAllUsers(): Promise<AdminUserRow[]> {
   const admin = createAdminClient();
 
   const [{ data: profs }, { data: brs }] = await Promise.all([
-    admin.from("profiles").select("id,name,role,branch_id,status").order("name", { ascending: true }),
+    admin
+      .from("profiles")
+      .select("id,name,role,division,branch_id,status")
+      .order("name", { ascending: true }),
     admin.from("branches").select("id,name"),
   ]);
   const profiles = (profs ?? []) as unknown as {
     id: string;
     name: string;
     role: string;
+    division: string;
     branch_id: string | null;
     status: string;
   }[];
@@ -46,9 +51,27 @@ export async function getAllUsers(): Promise<AdminUserRow[]> {
     name: p.name,
     email: emails.get(p.id) ?? "",
     role: p.role,
+    division: p.division,
     branchName: branches.find((b) => b.id === p.branch_id)?.name ?? null,
     status: p.status,
   }));
+}
+
+/** ユーザーの部(division)を変更（管理者のみ）。部の異動に対応。 */
+export async function setUserDivision(
+  userId: string,
+  division: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return { ok: false, error: auth.error };
+  const valid = ["student", "university", "adult", "mens", "general"];
+  if (!valid.includes(division)) return { ok: false, error: "不正な部です。" };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("profiles").update({ division } as never).eq("id", userId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/users");
+  return { ok: true };
 }
 
 /** ユーザーの権限ロールを変更（管理者のみ）。profiles.role を更新→トリガで app_metadata 同期。 */
