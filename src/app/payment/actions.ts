@@ -1,5 +1,6 @@
 "use server";
 
+import type Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe";
@@ -85,7 +86,8 @@ export async function createCheckout(): Promise<{ url?: string; error?: string }
     const stripe = getStripe();
     session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"], // PayPay 有効化後に "paypay" を追加
+      // カード／PayPay を提示。stripe-node の型に paypay が無いためキャスト（API は対応済み）。
+      payment_method_types: ["card", "paypay"] as unknown as Stripe.Checkout.SessionCreateParams["payment_method_types"],
       line_items: participants.map((p) => ({
         quantity: 1,
         price_data: {

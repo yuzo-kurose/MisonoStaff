@@ -36,14 +36,25 @@ export async function POST(req: NextRequest) {
     const session = event.data.object as {
       id: string;
       payment_intent: string | null;
-      payment_method_types?: string[];
       metadata?: { payment_group_id?: string };
     };
     const groupId = session.metadata?.payment_group_id;
     if (!groupId) return NextResponse.json({ received: true });
 
-    const method =
-      session.payment_method_types?.[0] === "paypay" ? "paypay" : "credit_card";
+    // 実際に使われた支払い方法を PaymentIntent の charge から判定（types[0] は提示順で不正確）。
+    let method: "paypay" | "credit_card" = "credit_card";
+    if (session.payment_intent) {
+      try {
+        const pi = (await getStripe().paymentIntents.retrieve(session.payment_intent, {
+          expand: ["latest_charge"],
+        })) as unknown as {
+          latest_charge?: { payment_method_details?: { type?: string } } | null;
+        };
+        if (pi.latest_charge?.payment_method_details?.type === "paypay") method = "paypay";
+      } catch {
+        // 取得失敗時は credit_card のまま（記録用の補助情報のため致命的でない）。
+      }
+    }
     const paidAt = new Date().toISOString();
 
     // payment_group 更新
