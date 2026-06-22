@@ -191,7 +191,7 @@ export function ProxyClient({
           description="ここで選んだ拠点・イベントが、下の表のすべてのメンバーに適用されます。"
         >
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <Field label="登録先拠点" required hint="この拠点の名簿に登録されます">
                 {branches.length === 0 ? (
                   <p className="text-body-sm text-error-900">
@@ -212,7 +212,7 @@ export function ProxyClient({
               </Field>
 
               <Field label="部" required hint="この部として全メンバーを登録します">
-                <Select className="max-w-[11rem]" value={division} onChange={(e) => setDivision(e.target.value)}>
+                <Select className="max-w-[14rem]" value={division} onChange={(e) => setDivision(e.target.value)}>
                   <option value="" disabled>
                     選択してください
                   </option>
@@ -223,20 +223,20 @@ export function ProxyClient({
                   ))}
                 </Select>
               </Field>
-            </div>
 
-            <Field label="対象月" required hint="対象月を選ぶと、その月のイベントが表示されます">
-              <Select className="max-w-[11rem]" value={month} onChange={(e) => changeMonth(e.target.value)}>
-                <option value="" disabled>
-                  選択してください
-                </option>
-                {monthOptions.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
+              <Field label="対象月" required hint="対象月を選ぶと、その月のイベントが表示されます">
+                <Select className="max-w-[14rem]" value={month} onChange={(e) => changeMonth(e.target.value)}>
+                  <option value="" disabled>
+                    選択してください
                   </option>
-                ))}
-              </Select>
-            </Field>
+                  {monthOptions.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
 
             <Fieldset label="参加イベント" required hint="複数選択可（同日分はまとめて受付されます）">
               {month === "" ? (
