@@ -17,12 +17,15 @@ export function ProxyClient({
   events,
   divisions,
   departments,
+  branches,
 }: {
   events: EventOpt[];
   divisions: DivisionOpt[];
   departments: string[];
+  branches: { id: string; name: string }[];
 }) {
   const [eventIds, setEventIds] = useState<string[]>([]);
+  const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [division, setDivision] = useState("");
@@ -36,8 +39,12 @@ export function ProxyClient({
 
   const addOne = () => {
     setMsg(null);
+    if (!branchId) {
+      setMsg({ ok: false, text: "登録先拠点を選択してください。" });
+      return;
+    }
     startTransition(async () => {
-      const res = await registerProxyMember({ eventIds, name, email, division, department });
+      const res = await registerProxyMember({ eventIds, branchId, name, email, division, department });
       if (res.ok) {
         setMsg({ ok: true, text: `${name} さんを登録しました。続けて入力できます。` });
         setName("");
@@ -68,6 +75,7 @@ export function ProxyClient({
           : eventIds;
         const res = await registerProxyMember({
           eventIds: ids,
+          branchId,
           name: cName ?? "",
           email: cEmail ?? "",
           division: cDivision ?? "",
@@ -120,6 +128,29 @@ export function ProxyClient({
           description="1名分を入力して追加すると、続けて次のメンバーを入力できます。"
         >
           <div className="space-y-4">
+            <Field label="登録先拠点" required hint="この拠点の名簿に登録されます">
+              {branches.length === 0 ? (
+                <p className="text-body-sm text-error-900">
+                  担当拠点がありません。管理者に拠点マスタでの代表設定を依頼してください。
+                </p>
+              ) : (
+                <Select
+                  className="max-w-sm"
+                  value={branchId}
+                  onChange={(e) => setBranchId(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>
+                    選択してください
+                  </option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
             <Fieldset label="参加イベント" required hint="複数選択可（同日分はまとめて受付されます）">
               {events.length === 0 ? (
                 <p className="text-body-sm text-neutral-600">公開中のイベントがありません。</p>

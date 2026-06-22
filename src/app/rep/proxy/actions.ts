@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/auth/guard";
 
 export type ProxyMemberInput = {
   eventIds: string[];
+  branchId: string; // 登録先拠点（代表者＝担当拠点／管理者＝任意の拠点）
   name: string;
   email: string;
   division: string;
@@ -38,21 +39,21 @@ export async function registerProxyMember(
   const auth = await requireRole(["admin", "representative"]);
   if (!auth.ok) return { ok: false, error: auth.error };
 
-  const supabase = await createClient();
-  const { data: repRow } = await supabase
-    .from("profiles")
-    .select("id,branch_id")
-    .eq("id", auth.userId)
-    .single();
-  const rep = repRow as { id: string; branch_id: string | null } | null;
-  if (!rep?.branch_id)
-    return { ok: false, error: "代表者の所属拠点が未設定です。拠点マスタで設定してください。" };
-  const branchId = rep.branch_id;
+  const branchId = input.branchId;
+  if (!branchId) return { ok: false, error: "登録先拠点を選択してください。" };
 
-  // 代表者は「自分が代表を務める拠点」にしか代行登録できない。
-  // 代表者かどうかは branches.representative_user_id が authoritative（RLS の is_rep_of_branch と同じ判定）。
-  // role だけだと「representative ロールだが別拠点」のケースを許してしまうため、拠点との対応も確認する。
-  if (auth.role !== "admin") {
+  const supabase = await createClient();
+  if (auth.role === "admin") {
+    // 管理者：実在する拠点なら任意に登録できる。
+    const { data: b } = await supabase
+      .from("branches")
+      .select("id")
+      .eq("id", branchId)
+      .maybeSingle();
+    if (!b) return { ok: false, error: "選択した拠点が不正です。" };
+  } else {
+    // 代表者：自分が代表を務める拠点（branches.representative_user_id）にのみ登録できる。
+    // 個人の所属(profiles.branch_id)ではなく担当拠点で判定する。
     const { data: ownBranch } = await supabase
       .from("branches")
       .select("id")
@@ -114,7 +115,7 @@ export async function registerProxyMember(
       status: "applying",
       total_amount: 0,
       entered_via: "proxy",
-      entered_by_user_id: rep.id,
+      entered_by_user_id: auth.userId,
     } as never);
     if (pErr) return { ok: false, error: pErr.message };
   }
