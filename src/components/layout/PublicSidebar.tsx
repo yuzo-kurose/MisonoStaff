@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Home, LogIn, LogOut, UserPlus, PanelLeft, ChevronDown, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser } from "@/hooks/useAuthUser";
-import { allNavGroups, allNavItems } from "@/lib/nav";
+import { visibleNavGroups, visibleNavItems } from "@/lib/nav";
 
 const COLLAPSE_KEY = "sidebar-collapsed";
 
@@ -21,12 +21,14 @@ function isActive(pathname: string, href: string) {
 export function PublicSidebar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { who, authed } = useAuthUser();
+  const { who, authed, role } = useAuthUser();
+  const groups = visibleNavGroups(role);
+  const items = visibleNavItems(role);
   const [collapsed, setCollapsed] = useState(false);
   // 既定は「現在のページを含むグループのみ開く」。
   const activeGroupsState = () =>
     Object.fromEntries(
-      allNavGroups.map((g) => [g.label, g.items.some((it) => isActive(pathname, it.href))]),
+      groups.map((g) => [g.label, g.items.some((it) => isActive(pathname, it.href))]),
     );
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(activeGroupsState);
 
@@ -106,7 +108,7 @@ export function PublicSidebar() {
 
         {collapsed
           ? /* 折りたたみ時：全項目をアイコンのみで平坦表示 */
-            allNavItems.map((it) => {
+            items.map((it) => {
               const Icon = it.icon;
               const active = isActive(pathname, it.href);
               return (
@@ -123,7 +125,7 @@ export function PublicSidebar() {
               );
             })
           : /* 展開時：「○○メニュー」グループ → 子項目（アコーディオン） */
-            allNavGroups.map((group) => {
+            groups.map((group) => {
               const open = openGroups[group.label] ?? true;
               const GroupIcon = group.icon;
               return (

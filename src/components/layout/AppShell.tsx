@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, PanelLeft, ChevronDown, Menu, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { allNavGroups, allNavItems, roleLabels, type Role } from "@/lib/nav";
+import { visibleNavGroups, visibleNavItems, roleLabels, type Role } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser } from "@/hooks/useAuthUser";
 
@@ -27,10 +27,11 @@ const SIDEBAR_BG = "bg-primary-900";
 export function AppShell({ role, children }: { role: Role; children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  // 役割でフィルタせず、全ユーザー・全画面で全メニューを表示する。
-  const items = allNavItems;
-  const groups = allNavGroups;
-  const { who } = useAuthUser();
+  const { who, role: authRole } = useAuthUser();
+  // メニューはユーザーの実ロールで出し分ける。セッション取得前はページのロールで暫定表示。
+  const effectiveRole = authRole ?? role;
+  const items = visibleNavItems(effectiveRole);
+  const groups = visibleNavGroups(effectiveRole);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   // 親カテゴリ（○○メニュー）の開閉状態。既定は「現在のページを含むグループのみ開く」。

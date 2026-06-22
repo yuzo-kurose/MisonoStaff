@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
 export interface AuthUserState {
@@ -8,6 +9,8 @@ export interface AuthUserState {
   who: string;
   /** ログイン済みかどうか。 */
   authed: boolean;
+  /** 権限ロール（app_metadata.role）。未ログイン/未判定は undefined。 */
+  role?: string;
   /** 初回判定が完了したか（true になるまでは描画を保留できる）。 */
   ready: boolean;
 }
@@ -22,9 +25,10 @@ export function useAuthUser(): AuthUserState {
   useEffect(() => {
     const supabase = createClient();
 
-    const apply = (user: { email?: string; user_metadata?: { name?: string } } | null) => {
-      const name = user?.user_metadata?.name || user?.email || "";
-      setState({ who: name, authed: !!user, ready: true });
+    const apply = (user: User | null) => {
+      const name = (user?.user_metadata?.name as string | undefined) || user?.email || "";
+      const role = user?.app_metadata?.role as string | undefined;
+      setState({ who: name, authed: !!user, role, ready: true });
     };
 
     supabase.auth.getUser().then(({ data }) => apply(data.user));

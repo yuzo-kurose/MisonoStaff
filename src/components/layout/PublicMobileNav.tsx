@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Menu, X, ChevronDown, Home, LogIn, LogOut, UserPlus, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser } from "@/hooks/useAuthUser";
-import { allNavGroups } from "@/lib/nav";
+import { visibleNavGroups } from "@/lib/nav";
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
@@ -20,13 +20,10 @@ function isActive(pathname: string, href: string) {
 export function PublicMobileNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { who, authed } = useAuthUser();
+  const { who, authed, role } = useAuthUser();
+  const groups = visibleNavGroups(role);
   const [open, setOpen] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(
-      allNavGroups.map((g) => [g.label, g.items.some((it) => isActive(pathname, it.href))]),
-    ),
-  );
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setOpen(false);
@@ -97,7 +94,7 @@ export function PublicMobileNav() {
                 );
               })}
 
-              {allNavGroups.map((group) => {
+              {groups.map((group) => {
                 const groupOpen = openGroups[group.label] ?? true;
                 const GroupIcon = group.icon;
                 return (

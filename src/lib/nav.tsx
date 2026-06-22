@@ -107,3 +107,30 @@ export const allNavGroups: NavGroup[] = [
 
 /** allNavGroups を平坦化した全項目（モバイル下部タブ等で使用）。 */
 export const allNavItems: NavItem[] = allNavGroups.flatMap((g) => g.items);
+
+/**
+ * 権限ロールに応じて表示するメニュー（グループ）を返す。
+ * - participant（ユーザー）        : 参加者メニューのみ
+ * - representative（所属代表者）   : 参加者＋代表者メニュー
+ * - reception（受付）              : 参加者＋受付管理メニュー
+ * - admin（管理者/システム管理者） : 全メニュー
+ * 未ログイン/不明は空（公開トップではクイックリンクのみ表示）。
+ */
+export function visibleNavGroups(role: string | undefined): NavGroup[] {
+  switch (role) {
+    case "participant":
+      return navGroupsByRole.participant;
+    case "representative":
+      return [...navGroupsByRole.participant, ...navGroupsByRole.representative];
+    case "reception":
+      return [...navGroupsByRole.participant, ...navGroupsByRole.reception];
+    case "admin":
+      return allNavGroups;
+    default:
+      return [];
+  }
+}
+
+export function visibleNavItems(role: string | undefined): NavItem[] {
+  return visibleNavGroups(role).flatMap((g) => g.items);
+}
