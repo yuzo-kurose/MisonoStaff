@@ -9,6 +9,7 @@ export type RosterMember = {
 };
 export type RosterGroup = {
   applicationId: string;
+  eventId: string;
   eventName: string;
   eventDate: string;
   branchName: string;
@@ -92,6 +93,7 @@ export async function getRoster(): Promise<RosterGroup[]> {
         }));
       return {
         applicationId: a.id,
+        eventId: a.event_id,
         eventName: ev?.name ?? "（不明なイベント）",
         eventDate: ev?.event_date ?? "",
         branchName: branches.find((b) => b.id === a.branch_id)?.name ?? "",

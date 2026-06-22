@@ -27,6 +27,21 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
     unpaid: all.filter((m) => m.status === "confirmed").length,
   };
 
+  // イベント単位にまとめる（イベント → 拠点(application) → メンバー）。
+  const byEvent = (() => {
+    const m = new Map<
+      string,
+      { eventId: string; eventName: string; eventDate: string; apps: RosterGroup[] }
+    >();
+    for (const g of groups) {
+      const e =
+        m.get(g.eventId) ?? { eventId: g.eventId, eventName: g.eventName, eventDate: g.eventDate, apps: [] };
+      e.apps.push(g);
+      m.set(g.eventId, e);
+    }
+    return [...m.values()].sort((a, b) => a.eventDate.localeCompare(b.eventDate));
+  })();
+
   const confirm = (applicationId: string) => {
     setMsg(null);
     startTransition(async () => {
@@ -121,74 +136,81 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
         <Alert variant="info">対象の名簿がありません。</Alert>
       ) : (
         <div className="space-y-8">
-          {groups.map((g) => {
-            const applying = g.members.filter((m) => m.status === "applying").length;
-            return (
-              <Card key={g.applicationId}>
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <CardTitle>{g.eventName}</CardTitle>
-                    <p className="text-body-sm text-neutral-600">
-                      {jpDate(g.eventDate)}・{g.branchName}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {g.applicationStatus === "confirmed" ? (
-                      <Badge variant="success">確定済み</Badge>
-                    ) : (
-                      <span className="text-body-sm text-neutral-600">
-                        {g.members.length}名（未確定 {applying}名）
-                      </span>
-                    )}
-                    <Button
-                      size="md"
-                      disabled={pending || applying === 0}
-                      onClick={() => confirm(g.applicationId)}
-                    >
-                      未確定を確定する
-                    </Button>
-                  </div>
-                </div>
-                {/* スマホ：カード表示 */}
-                <div className="space-y-2 md:hidden">
-                  {g.members.map((m) => (
-                    <MobileRecord
-                      key={m.participantId}
-                      title={m.name}
-                      badge={<StatusBadge status={m.status} />}
-                      rows={[{ label: "金額", value: yen(m.amount) }]}
-                      action={memberAction(m) ?? undefined}
-                    />
-                  ))}
-                </div>
+          {byEvent.map((ev) => (
+            <Card key={ev.eventId}>
+              <div className="mb-4">
+                <CardTitle>{ev.eventName}</CardTitle>
+                <p className="text-body-sm text-neutral-600">{jpDate(ev.eventDate)}</p>
+              </div>
 
-                {/* PC：テーブル表示 */}
-                <div className="hidden md:block">
-                  <Table
-                    head={
-                      <tr>
-                        <Th>氏名</Th>
-                        <Th>金額</Th>
-                        <Th>状態</Th>
-                        <Th>操作</Th>
-                      </tr>
-                    }
-                  >
-                    {g.members.map((m) => (
-                      <tr key={m.participantId}>
-                        <Td>{m.name}</Td>
-                        <Td>{yen(m.amount)}</Td>
-                        <Td>
-                          <StatusBadge status={m.status} />
-                        </Td>
-                        <Td>{memberAction(m) ?? <span className="text-body-sm text-neutral-600">—</span>}</Td>
-                      </tr>
-                    ))}
-                  </Table>
-                </div>
-              </Card>
-            );
-          })}
+              <div className="space-y-5">
+                {ev.apps.map((g) => {
+                  const applying = g.members.filter((m) => m.status === "applying").length;
+                  return (
+                    <div key={g.applicationId} className="rounded-lg border border-neutral-200 p-3 md:p-4">
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-heading-sm text-neutral-900">{g.branchName}</p>
+                        <div className="flex items-center gap-3">
+                          {g.applicationStatus === "confirmed" ? (
+                            <Badge variant="success">確定済み</Badge>
+                          ) : (
+                            <span className="text-body-sm text-neutral-600">
+                              {g.members.length}名（未確定 {applying}名）
+                            </span>
+                          )}
+                          <Button
+                            size="md"
+                            disabled={pending || applying === 0}
+                            onClick={() => confirm(g.applicationId)}
+                          >
+                            未確定を確定する
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* スマホ：カード表示 */}
+                      <div className="space-y-2 md:hidden">
+                        {g.members.map((m) => (
+                          <MobileRecord
+                            key={m.participantId}
+                            title={m.name}
+                            badge={<StatusBadge status={m.status} />}
+                            rows={[{ label: "金額", value: yen(m.amount) }]}
+                            action={memberAction(m) ?? undefined}
+                          />
+                        ))}
+                      </div>
+
+                      {/* PC：テーブル表示 */}
+                      <div className="hidden md:block">
+                        <Table
+                          head={
+                            <tr>
+                              <Th>氏名</Th>
+                              <Th>金額</Th>
+                              <Th>状態</Th>
+                              <Th>操作</Th>
+                            </tr>
+                          }
+                        >
+                          {g.members.map((m) => (
+                            <tr key={m.participantId}>
+                              <Td>{m.name}</Td>
+                              <Td>{yen(m.amount)}</Td>
+                              <Td>
+                                <StatusBadge status={m.status} />
+                              </Td>
+                              <Td>{memberAction(m) ?? <span className="text-body-sm text-neutral-600">—</span>}</Td>
+                            </tr>
+                          ))}
+                        </Table>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          ))}
         </div>
       )}
     </AppShell>
