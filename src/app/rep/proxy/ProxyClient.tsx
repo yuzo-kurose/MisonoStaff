@@ -165,7 +165,6 @@ export function ProxyClient({
                 </p>
               ) : (
                 <Select
-                  className="max-w-sm"
                   value={branchId}
                   onChange={(e) => setBranchId(e.target.value)}
                   required
@@ -183,7 +182,7 @@ export function ProxyClient({
             </Field>
 
             <Field label="対象月" required hint="対象月を選ぶと、その月のイベントが表示されます">
-              <Select className="max-w-sm" value={month} onChange={(e) => changeMonth(e.target.value)}>
+              <Select value={month} onChange={(e) => changeMonth(e.target.value)}>
                 <option value="" disabled>
                   選択してください
                 </option>
@@ -234,7 +233,7 @@ export function ProxyClient({
 
             {/* 入力項目は縦並び：部 → 氏名 → メールアドレス → 部署 */}
             <Field label="部" required>
-              <Select className="max-w-sm" value={division} onChange={(e) => setDivision(e.target.value)}>
+              <Select value={division} onChange={(e) => setDivision(e.target.value)}>
                 <option value="" disabled>
                   選択してください
                 </option>
@@ -257,7 +256,7 @@ export function ProxyClient({
               />
             </Field>
             <Field label="部署（配置先）" hint="任意">
-              <Select className="max-w-sm" value={department} onChange={(e) => setDepartment(e.target.value)}>
+              <Select value={department} onChange={(e) => setDepartment(e.target.value)}>
                 <option value="">未選択</option>
                 {departments.map((d) => (
                   <option key={d} value={d}>
