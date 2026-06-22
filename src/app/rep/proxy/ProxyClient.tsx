@@ -1,19 +1,20 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { UserPlus, Upload, Plus, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Fieldset, Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
-import { registerProxyMember } from "./actions";
+import { registerProxyMember, getProxyFields, type ProxyField } from "./actions";
 
 type EventOpt = { id: string; name: string; venue: string | null; date: string };
 type DivisionOpt = { value: string; label: string };
 
-type Row = { name: string; email: string; department: string };
-const emptyRow = (): Row => ({ name: "", email: "", department: "" });
+type CellValue = { value: string; optionIds: string[] };
+type Row = { name: string; email: string; department: string; values: Record<string, CellValue> };
+const emptyRow = (): Row => ({ name: "", email: "", department: "", values: {} });
 const initialRows = (): Row[] => [emptyRow(), emptyRow(), emptyRow()];
 
 export function ProxyClient({
@@ -32,10 +33,26 @@ export function ProxyClient({
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
   const [division, setDivision] = useState("");
   const [rows, setRows] = useState<Row[]>(initialRows());
+  const [fields, setFields] = useState<ProxyField[]>([]);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // 選択イベントのフォーム項目を取得し、一覧表の列として展開する。
+  useEffect(() => {
+    let active = true;
+    if (eventIds.length === 0) {
+      setFields([]);
+      return;
+    }
+    getProxyFields(eventIds).then((fs) => {
+      if (active) setFields(fs);
+    });
+    return () => {
+      active = false;
+    };
+  }, [eventIds]);
 
   // 対象月の選択肢（イベント開催月の重複なし・昇順）。
   const monthOptions = useMemo(() => {
@@ -66,6 +83,64 @@ export function ProxyClient({
   const addRow = () => setRows((rs) => [...rs, emptyRow()]);
   const removeRow = (i: number) =>
     setRows((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs));
+
+  // フォーム項目セルの値操作
+  const cellOf = (r: Row, fieldId: string): CellValue => r.values[fieldId] ?? { value: "", optionIds: [] };
+  const setCell = (i: number, fieldId: string, patch: Partial<CellValue>) =>
+    setRows((rs) =>
+      rs.map((r, idx) =>
+        idx === i
+          ? { ...r, values: { ...r.values, [fieldId]: { ...cellOf(r, fieldId), ...patch } } }
+          : r,
+      ),
+    );
+  const toggleCellOption = (i: number, fieldId: string, optionId: string) =>
+    setRows((rs) =>
+      rs.map((r, idx) => {
+        if (idx !== i) return r;
+        const cur = cellOf(r, fieldId).optionIds;
+        const next = cur.includes(optionId) ? cur.filter((x) => x !== optionId) : [...cur, optionId];
+        return { ...r, values: { ...r.values, [fieldId]: { ...cellOf(r, fieldId), optionIds: next } } };
+      }),
+    );
+
+  // フォーム項目1セル分の入力UI（項目タイプごとに出し分け）。
+  const fieldInput = (i: number, f: ProxyField) => {
+    const c = cellOf(rows[i], f.id);
+    if (f.fieldType === "select_single") {
+      return (
+        <Select value={c.optionIds[0] ?? ""} onChange={(e) => setCell(i, f.id, { optionIds: e.target.value ? [e.target.value] : [] })}>
+          <option value="">未選択</option>
+          {f.options.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </Select>
+      );
+    }
+    if (f.fieldType === "select_multiple") {
+      return (
+        <div className="space-y-1">
+          {f.options.map((o) => (
+            <label key={o.id} className="flex items-center gap-1.5 text-body-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 flex-none"
+                checked={c.optionIds.includes(o.id)}
+                onChange={() => toggleCellOption(i, f.id, o.id)}
+              />
+              <span className="truncate">{o.label}</span>
+            </label>
+          ))}
+        </div>
+      );
+    }
+    const type = f.fieldType === "number" ? "number" : f.fieldType === "date" ? "date" : "text";
+    return (
+      <Input type={type} value={c.value} onChange={(e) => setCell(i, f.id, { value: e.target.value })} />
+    );
+  };
 
   // 入力済み（氏名 or メールがある）行のみ登録対象とする。
   const filledRows = rows.filter((r) => r.name.trim() || r.email.trim());
@@ -100,6 +175,10 @@ export function ProxyClient({
           email: r.email,
           division,
           department: r.department,
+          values: fields.map((f) => {
+            const c = cellOf(r, f.id);
+            return { fieldId: f.id, value: c.value || null, optionIds: c.optionIds };
+          }),
         });
         if (res.ok) ok++;
         else {
@@ -287,9 +366,15 @@ export function ProxyClient({
               <thead>
                 <tr className="text-left text-label-sm text-neutral-600">
                   <th className="w-10 px-2 pb-2 font-medium">#</th>
-                  <th className="px-2 pb-2 font-medium">氏名 *</th>
-                  <th className="px-2 pb-2 font-medium">メールアドレス *</th>
-                  <th className="px-2 pb-2 font-medium">部署</th>
+                  <th className="min-w-[8rem] px-2 pb-2 font-medium">氏名 *</th>
+                  <th className="min-w-[12rem] px-2 pb-2 font-medium">メールアドレス *</th>
+                  <th className="min-w-[8rem] px-2 pb-2 font-medium">部署</th>
+                  {fields.map((f) => (
+                    <th key={f.id} className="min-w-[9rem] px-2 pb-2 font-medium">
+                      {f.label}
+                      {f.isRequired && <span className="text-error-900"> *</span>}
+                    </th>
+                  ))}
                   <th className="w-12 px-2 pb-2 font-medium">操作</th>
                 </tr>
               </thead>
@@ -322,6 +407,11 @@ export function ProxyClient({
                         ))}
                       </Select>
                     </td>
+                    {fields.map((f) => (
+                      <td key={f.id} className="px-2 py-1.5">
+                        {fieldInput(i, f)}
+                      </td>
+                    ))}
                     <td className="px-2 py-1.5 text-center">
                       <button
                         type="button"
