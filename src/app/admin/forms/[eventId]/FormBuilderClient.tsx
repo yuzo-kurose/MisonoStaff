@@ -159,7 +159,7 @@ export function FormBuilderClient({
     router.push("/admin/events");
   };
 
-  // 保存・テンプレートで共用する項目ペイロード。
+  // テンプレート保存用ペイロード（IDなし）。
   const fieldsPayload = () =>
     fields.map((f) => ({
       label: f.label,
@@ -168,6 +168,18 @@ export function FormBuilderClient({
       priceCalc: f.priceCalc,
       unitPrice: f.unitPrice,
       options: f.options?.map((o) => ({ label: o.label, price: o.price })),
+    }));
+
+  // フォーム保存用ペイロード（差分更新のためID付き）。
+  const fieldsSavePayload = () =>
+    fields.map((f) => ({
+      id: f.id,
+      label: f.label,
+      fieldType: f.fieldType,
+      required: f.required,
+      priceCalc: f.priceCalc,
+      unitPrice: f.unitPrice,
+      options: f.options?.map((o) => ({ id: o.id, label: o.label, price: o.price })),
     }));
 
   // 現在の項目を名前付きテンプレートとして保存。
@@ -216,7 +228,7 @@ export function FormBuilderClient({
   const onSave = () => {
     setMsg(null);
     startTransition(async () => {
-      const res = await saveForm(formId, formName, fieldsPayload());
+      const res = await saveForm(formId, formName, fieldsSavePayload());
       if (res.ok) {
         setSavedSnapshot(JSON.stringify({ formName, fields }));
         setMsg({ ok: true, text: "フォームを保存しました。" });
