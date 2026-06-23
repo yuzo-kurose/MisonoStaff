@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/layout/AppShell";
-import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/Card";
+import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import { ButtonLink } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
@@ -79,15 +80,16 @@ export default async function MyPage() {
       )}
 
       <div className="grid gap-6 md:grid-cols-[auto,1fr]">
-        <Card className="flex flex-col items-center">
-          <CardTitle>当日受付</CardTitle>
-          <p className="mb-3 mt-1 text-center text-body-sm text-neutral-700">
-            このQRを受付で提示すると、
-            <br />
-            当日参加する全イベントが一度に受付されます。
-          </p>
-          <QrPlaceholder token={profile?.checkin_token ?? "no-token"} />
-        </Card>
+        <CollapsibleCard title="当日受付" className="md:self-start">
+          <div className="flex flex-col items-center">
+            <p className="mb-3 text-center text-body-sm text-neutral-700">
+              このQRを受付で提示すると、
+              <br />
+              当日参加する全イベントが一度に受付されます。
+            </p>
+            <QrPlaceholder token={profile?.checkin_token ?? "no-token"} />
+          </div>
+        </CollapsibleCard>
 
         <div className="space-y-4">
           {unpaidTotal > 0 && (
@@ -96,9 +98,8 @@ export default async function MyPage() {
               まとめて1回で決済できます。
             </Alert>
           )}
-          <Card>
-            <div className="mb-4 flex items-center justify-between">
-              <CardTitle>申込中・参加予定</CardTitle>
+          <CollapsibleCard title="申込中・参加予定">
+            <div className="mb-3 flex justify-end">
               <ButtonLink href="/events" variant="ghost">
                 ＋ 新しく申し込む
               </ButtonLink>
@@ -136,11 +137,10 @@ export default async function MyPage() {
                 </ButtonLink>
               </div>
             )}
-          </Card>
+          </CollapsibleCard>
 
-          <Card>
-            <CardTitle>申込履歴</CardTitle>
-            <p className="mb-3 mt-1 text-body-sm text-neutral-600">
+          <CollapsibleCard title="申込履歴">
+            <p className="mb-3 text-body-sm text-neutral-600">
               過去の申込（取消分を含む）を確認できます。
             </p>
             {history.length === 0 ? (
@@ -170,7 +170,7 @@ export default async function MyPage() {
                 ))}
               </ul>
             )}
-          </Card>
+          </CollapsibleCard>
 
           <ProfileCard
             name={profile?.name ?? ""}

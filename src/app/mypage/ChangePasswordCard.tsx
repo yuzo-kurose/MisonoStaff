@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { KeyRound } from "lucide-react";
-import { Card, CardTitle } from "@/components/ui/Card";
+import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import { Field, Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -67,16 +67,15 @@ export function ChangePasswordCard({ email }: { email: string }) {
   }
 
   return (
-    <Card>
-      <div className="mb-4 flex items-center justify-between">
-        <CardTitle>パスワード</CardTitle>
-        {!open && (
+    <CollapsibleCard title="パスワード">
+      {!open && (
+        <div className="mb-3 flex justify-end">
           <Button variant="ghost" onClick={() => { setDone(false); setOpen(true); }}>
             <KeyRound size={15} className="mr-1" />
             変更
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {done && !open && <Alert variant="success">パスワードを変更しました。</Alert>}
 
@@ -126,6 +125,6 @@ export function ChangePasswordCard({ email }: { email: string }) {
           </div>
         </form>
       )}
-    </Card>
+    </CollapsibleCard>
   );
 }

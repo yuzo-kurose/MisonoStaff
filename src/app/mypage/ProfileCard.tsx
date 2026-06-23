@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
-import { Card, CardTitle } from "@/components/ui/Card";
+import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -61,16 +61,15 @@ export function ProfileCard({
   }
 
   return (
-    <Card>
-      <div className="mb-4 flex items-center justify-between">
-        <CardTitle>登録情報</CardTitle>
-        {!editing && (
+    <CollapsibleCard title="登録情報">
+      {!editing && (
+        <div className="mb-3 flex justify-end">
           <Button variant="ghost" onClick={() => { setDone(false); setEditing(true); }}>
             <Pencil size={15} className="mr-1" />
             編集
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {done && !editing && <Alert variant="success">登録情報を更新しました。</Alert>}
 
@@ -121,7 +120,7 @@ export function ProfileCard({
           </div>
         </form>
       )}
-    </Card>
+    </CollapsibleCard>
   );
 }
 
