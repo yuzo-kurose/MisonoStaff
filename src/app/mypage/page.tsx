@@ -15,31 +15,23 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
-import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import { ButtonLink } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { yen, jpDate } from "@/lib/format";
-import { getMyProfile, getMyParticipations, getMyApplicationHistory } from "@/lib/queries/me";
+import { getMyProfile, getMyParticipations } from "@/lib/queries/me";
 import { getBranches } from "@/lib/queries/branches";
 import { getPublishedAnnouncements } from "@/lib/queries/announcements";
-import { getDepartmentNames } from "@/lib/queries/departments";
 import { getCurrentUser } from "@/lib/supabase/server";
-import { ProfileCard } from "./ProfileCard";
-import { ChangePasswordCard } from "./ChangePasswordCard";
 import { QrCard } from "./QrCard";
 
 export default async function MyPage() {
-  const [user, profile, participations, history, branches, announcements, departmentOptions] =
-    await Promise.all([
-      getCurrentUser(),
-      getMyProfile(),
-      getMyParticipations(),
-      getMyApplicationHistory(),
-      getBranches(),
-      getPublishedAnnouncements(),
-      getDepartmentNames(),
-    ]);
+  const [profile, participations, branches, announcements] = await Promise.all([
+    getMyProfile(),
+    getMyParticipations(),
+    getBranches(),
+    getPublishedAnnouncements(),
+  ]);
 
   const branchName = branches.find((b) => b.id === profile?.branch_id)?.name ?? "—";
   const today = new Date().toISOString().slice(0, 10);
@@ -82,13 +74,32 @@ export default async function MyPage() {
   const quickActions = [
     { href: "/events", label: "イベントに申し込む", icon: CalendarPlus },
     { href: "/payment", label: "決済状況を確認", icon: CreditCard },
-    { href: "#history", label: "申込履歴を見る", icon: FileText },
-    { href: "#profile", label: "プロフィール編集", icon: UserCog },
+    { href: "/mypage/history", label: "申込履歴を見る", icon: FileText },
+    { href: "/mypage/profile", label: "プロフィール編集", icon: UserCog },
   ];
 
   return (
     <AppShell role="participant">
       <PageHeader title="マイページ" description={`${profile?.name ?? ""} さん（${branchName}）`} />
+
+      {/* クイックアクション（上部） */}
+      <section className="mb-5 rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm">
+        <h2 className="mb-4 text-heading-sm text-neutral-900">クイックアクション</h2>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {quickActions.map((a) => (
+            <Link
+              key={a.label}
+              href={a.href}
+              className="flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3 transition-colors hover:bg-neutral-50"
+            >
+              <span className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-primary-50 text-primary-900">
+                <a.icon size={20} />
+              </span>
+              <span className="text-body-md text-neutral-900">{a.label}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* ヒーロー */}
@@ -117,7 +128,7 @@ export default async function MyPage() {
               </div>
             </div>
             <Link
-              href="#profile"
+              href="/mypage/profile"
               className="inline-flex w-fit items-center gap-2 rounded-lg bg-neutral-900/55 px-4 py-2 text-body-sm text-neutral-white ring-1 ring-neutral-white/30 backdrop-blur transition-colors hover:bg-neutral-900/70"
             >
               <Settings size={16} /> プロフィールを編集
@@ -153,7 +164,7 @@ export default async function MyPage() {
             ))}
           </div>
           <Link
-            href="#history"
+            href="/mypage/history"
             className="mt-4 inline-flex items-center gap-1 text-body-sm font-medium text-primary-900 hover:underline"
           >
             申込履歴をすべて見る <ChevronRight size={15} />
@@ -245,70 +256,6 @@ export default async function MyPage() {
             </div>
           )}
         </section>
-
-        {/* クイックアクション */}
-        <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-12">
-          <h2 className="mb-4 text-heading-sm text-neutral-900">クイックアクション</h2>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {quickActions.map((a) => (
-              <Link
-                key={a.label}
-                href={a.href}
-                className="flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3 transition-colors hover:bg-neutral-50"
-              >
-                <span className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-primary-50 text-primary-900">
-                  <a.icon size={20} />
-                </span>
-                <span className="text-body-md text-neutral-900">{a.label}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      {/* 申込履歴（折りたたみ） */}
-      <div id="history" className="mt-6 scroll-mt-20">
-        <CollapsibleCard title="申込履歴">
-          <p className="mb-3 text-body-sm text-neutral-600">過去の申込（取消分を含む）を確認できます。</p>
-          {history.length === 0 ? (
-            <p className="py-4 text-center text-body-md text-neutral-600">申込履歴はまだありません。</p>
-          ) : (
-            <ul className="divide-y divide-neutral-200">
-              {history.map((h) => (
-                <li key={h.participantId} className="flex items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-body-md text-neutral-900">{h.eventName}</p>
-                    <p className="text-body-sm text-neutral-600">
-                      {h.eventDate ? jpDate(h.eventDate) : ""}
-                      <span className="mx-1.5 text-neutral-300">/</span>
-                      {yen(h.amount)}
-                      {h.status === "cancelled" && h.cancelledAt && (
-                        <>
-                          <span className="mx-1.5 text-neutral-300">/</span>
-                          {jpDate(h.cancelledAt)} 取消
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <StatusBadge status={h.status} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </CollapsibleCard>
-      </div>
-
-      {/* 登録情報・設定（折りたたみ） */}
-      <div id="profile" className="mt-4 space-y-4 scroll-mt-20">
-        <ProfileCard
-          name={profile?.name ?? ""}
-          division={profile?.division ?? ""}
-          department={profile?.department ?? ""}
-          departmentOptions={departmentOptions}
-          branchName={branchName}
-          email={user?.email ?? "—"}
-        />
-        <ChangePasswordCard email={user?.email ?? ""} />
       </div>
     </AppShell>
   );
