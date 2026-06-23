@@ -132,12 +132,16 @@ export default async function MyPage() {
               <Link
                 key={a.label}
                 href={a.href}
-                className="flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3 transition-colors hover:bg-neutral-50"
+                className="group flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-white px-4 py-3.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md active:translate-y-0 active:shadow-sm"
               >
-                <span className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-primary-50 text-primary-900">
+                <span className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-primary-50 text-primary-900 transition-colors group-hover:bg-primary-100">
                   <a.icon size={20} />
                 </span>
-                <span className="text-body-md text-neutral-900">{a.label}</span>
+                <span className="text-body-md font-medium text-neutral-900">{a.label}</span>
+                <ChevronRight
+                  size={18}
+                  className="ml-auto flex-none text-neutral-300 transition-colors group-hover:text-primary-700"
+                />
               </Link>
             ))}
           </div>
