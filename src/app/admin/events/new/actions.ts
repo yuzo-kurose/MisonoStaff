@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { FIXED_FIELDS } from "@/lib/forms/fixed";
 
 export type CreateEventInput = {
   name: string;
@@ -41,6 +42,21 @@ export async function createEvent(
       .single();
     if (fErr) throw fErr;
     const formId = (formRow as { id: string }).id;
+
+    // 1-2) 固定項目（宿泊申込/往路/復路/食事申込）を投入。
+    //   いずれも単一選択・金額は選択肢ごと（option_based）。選択肢はイベントごとに後から設定。
+    const fixedRows = FIXED_FIELDS.map((f, i) => ({
+      form_id: formId,
+      label: f.label,
+      field_type: "select_single",
+      is_required: true,
+      sort_order: i,
+      price_calc_type: "option_based",
+      unit_price: null,
+      field_key: f.key,
+    }));
+    const { error: ffErr } = await supabase.from("form_fields").insert(fixedRows as never);
+    if (ffErr) throw ffErr;
 
     // 2) イベント
     const { data: evRow, error: eErr } = await supabase

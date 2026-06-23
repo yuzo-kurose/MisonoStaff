@@ -22,6 +22,7 @@ export type SaveField = {
   required: boolean;
   priceCalc: "none" | "per_unit" | "option_based";
   unitPrice?: number;
+  fieldKey?: string | null; // 固定項目キー（保持）。予備項目は null
   options?: SaveOption[];
 };
 
@@ -49,16 +50,20 @@ export async function saveForm(
     .eq("id", formId);
   if (nameErr) return { ok: false, error: nameErr.message };
 
-  // 既存の項目ID
+  // 既存の項目ID（固定項目キー付き）
   const { data: exData } = await supabase
     .from("form_fields")
-    .select("id")
+    .select("id,field_key")
     .eq("form_id", formId);
-  const existingFieldIds = new Set(((exData ?? []) as { id: string }[]).map((f) => f.id));
+  const existingFields = (exData ?? []) as { id: string; field_key: string | null }[];
+  const existingFieldIds = new Set(existingFields.map((f) => f.id));
+  const fixedFieldIds = new Set(existingFields.filter((f) => f.field_key).map((f) => f.id));
   const keptFieldIds = new Set(fields.map((f) => f.id).filter((id) => existingFieldIds.has(id)));
 
-  // 削除された項目を削除（回答済みならFKで失敗 → 分かりやすいメッセージ）
-  const fieldsToDelete = [...existingFieldIds].filter((id) => !keptFieldIds.has(id));
+  // 削除された項目を削除（固定項目は削除しない。回答済みならFKで失敗 → 分かりやすいメッセージ）
+  const fieldsToDelete = [...existingFieldIds].filter(
+    (id) => !keptFieldIds.has(id) && !fixedFieldIds.has(id),
+  );
   if (fieldsToDelete.length) {
     const { error } = await supabase.from("form_fields").delete().in("id", fieldsToDelete);
     if (error) return { ok: false, error: isFkError(error.message) ? FK_MSG : error.message };
@@ -93,6 +98,7 @@ export async function saveForm(
           sort_order: i,
           price_calc_type: f.priceCalc,
           unit_price: f.unitPrice ?? null,
+          field_key: f.fieldKey ?? null,
         } as never)
         .select("id")
         .single();

@@ -12,6 +12,7 @@ import { StickyActionBar } from "@/components/ui/StickyActionBar";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { yen } from "@/lib/format";
 import type { FieldType } from "@/lib/mock/data";
+import { MAX_SPARE_FIELDS } from "@/lib/forms/fixed";
 import { saveForm, saveFormTemplate, type FormTemplate } from "./actions";
 
 export type ClientOption = { id: string; label: string; price?: number };
@@ -23,7 +24,10 @@ export type ClientField = {
   priceCalc: "none" | "per_unit" | "option_based";
   unitPrice?: number;
   options?: ClientOption[];
+  fieldKey?: string | null; // 固定項目キー。予備項目は null/undefined
 };
+
+const isFixed = (f: ClientField) => !!f.fieldKey;
 
 const typeOptions: { value: FieldType; label: string }[] = [
   { value: "text", label: "テキスト" },
@@ -70,30 +74,40 @@ export function FormBuilderClient({
     [formName, fields, savedSnapshot],
   );
 
+  // 予備項目数（固定項目は除く）と、予備項目の開始位置。
+  const spareCount = fields.filter((f) => !isFixed(f)).length;
+  const firstSpareIdx = fields.findIndex((f) => !isFixed(f));
+
   const update = (id: string, patch: Partial<ClientField>) =>
     setFields((fs) => fs.map((f) => (f.id === id ? { ...f, ...patch } : f)));
 
-  const addField = () =>
+  // 予備項目を追加（最大 MAX_SPARE_FIELDS 個）。固定項目はイベント作成時に投入済み。
+  const addField = () => {
+    if (spareCount >= MAX_SPARE_FIELDS) return;
     setFields((fs) => [
       ...fs,
-      { id: uid(), label: "新しい項目", fieldType: "text", required: false, priceCalc: "none" },
+      { id: uid(), label: "予備項目", fieldType: "text", required: false, priceCalc: "none", fieldKey: null },
     ]);
+  };
 
-  const remove = (id: string) => setFields((fs) => fs.filter((f) => f.id !== id));
+  const remove = (id: string) =>
+    setFields((fs) => fs.filter((f) => f.id !== id || isFixed(f)));
 
+  // 並べ替えは予備項目どうしのみ（固定項目は先頭固定）。
   const move = (idx: number, dir: -1 | 1) =>
     setFields((fs) => {
-      const next = [...fs];
       const j = idx + dir;
-      if (j < 0 || j >= next.length) return fs;
+      if (j < firstSpareIdx || j >= fs.length || isFixed(fs[idx])) return fs;
+      const next = [...fs];
       [next[idx], next[j]] = [next[j], next[idx]];
       return next;
     });
 
-  // ドラッグ並び替え：from の項目を to の位置へ移動する。
+  // ドラッグ並び替え：予備項目の範囲内のみ。
   const reorder = (from: number, to: number) =>
     setFields((fs) => {
-      if (from === to || from < 0 || to < 0 || from >= fs.length || to >= fs.length) return fs;
+      if (from === to || from < firstSpareIdx || to < firstSpareIdx) return fs;
+      if (from >= fs.length || to >= fs.length || isFixed(fs[from]) || isFixed(fs[to])) return fs;
       const next = [...fs];
       const [moved] = next.splice(from, 1);
       next.splice(to, 0, moved);
@@ -159,18 +173,20 @@ export function FormBuilderClient({
     router.push("/admin/events");
   };
 
-  // テンプレート保存用ペイロード（IDなし）。
+  // テンプレート保存用ペイロード（IDなし・予備項目のみ）。固定項目はテンプレ対象外。
   const fieldsPayload = () =>
-    fields.map((f) => ({
-      label: f.label,
-      fieldType: f.fieldType,
-      required: f.required,
-      priceCalc: f.priceCalc,
-      unitPrice: f.unitPrice,
-      options: f.options?.map((o) => ({ label: o.label, price: o.price })),
-    }));
+    fields
+      .filter((f) => !isFixed(f))
+      .map((f) => ({
+        label: f.label,
+        fieldType: f.fieldType,
+        required: f.required,
+        priceCalc: f.priceCalc,
+        unitPrice: f.unitPrice,
+        options: f.options?.map((o) => ({ label: o.label, price: o.price })),
+      }));
 
-  // フォーム保存用ペイロード（差分更新のためID付き）。
+  // フォーム保存用ペイロード（差分更新のためID付き・固定キーを保持）。
   const fieldsSavePayload = () =>
     fields.map((f) => ({
       id: f.id,
@@ -179,6 +195,7 @@ export function FormBuilderClient({
       required: f.required,
       priceCalc: f.priceCalc,
       unitPrice: f.unitPrice,
+      fieldKey: f.fieldKey ?? null,
       options: f.options?.map((o) => ({ id: o.id, label: o.label, price: o.price })),
     }));
 
@@ -206,23 +223,30 @@ export function FormBuilderClient({
     });
   };
 
-  // テンプレートを現在のフォームに読み込む（既存項目を置き換え。新しいIDを採番）。
+  // テンプレートを読み込む（固定項目は維持し、予備項目だけを置き換える。最大5個）。
   const onLoadTemplate = (templateId: string) => {
     const tpl = templates.find((t) => t.id === templateId);
     if (!tpl) return;
-    if (fields.length > 0 && !window.confirm(`現在の項目を「${tpl.name}」の内容で置き換えます。よろしいですか？`)) return;
-    setFields(
-      tpl.fields.map((f) => ({
-        id: uid(),
-        label: f.label,
-        fieldType: f.fieldType as ClientField["fieldType"],
-        required: f.required,
-        priceCalc: f.priceCalc,
-        unitPrice: f.unitPrice,
-        options: f.options?.map((o) => ({ id: uid(), label: o.label, price: o.price })),
-      })),
-    );
-    setMsg({ ok: true, text: `テンプレート「${tpl.name}」を読み込みました。保存するには「保存」を押してください。` });
+    if (spareCount > 0 && !window.confirm(`予備項目を「${tpl.name}」の内容で置き換えます。よろしいですか？（固定項目は維持されます）`)) return;
+    const fixed = fields.filter((f) => isFixed(f));
+    const spares = tpl.fields.slice(0, MAX_SPARE_FIELDS).map((f) => ({
+      id: uid(),
+      label: f.label,
+      fieldType: f.fieldType as ClientField["fieldType"],
+      required: f.required,
+      priceCalc: f.priceCalc,
+      unitPrice: f.unitPrice,
+      options: f.options?.map((o) => ({ id: uid(), label: o.label, price: o.price })),
+      fieldKey: null,
+    }));
+    setFields([...fixed, ...spares]);
+    const dropped = tpl.fields.length - spares.length;
+    setMsg({
+      ok: true,
+      text: `テンプレート「${tpl.name}」の予備項目を読み込みました。${
+        dropped > 0 ? `（上限${MAX_SPARE_FIELDS}個のため${dropped}項目は読み込まれていません）` : ""
+      }保存するには「保存」を押してください。`,
+    });
   };
 
   const onSave = () => {
@@ -299,52 +323,70 @@ export function FormBuilderClient({
             <Card>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span
-                    draggable
-                    onDragStart={() => setDragIdx(idx)}
-                    onDragEnd={() => setDragIdx(null)}
-                    title="ドラッグで並び替え"
-                    aria-label="ドラッグで並び替え"
-                    className="cursor-grab text-neutral-400 hover:text-neutral-600 active:cursor-grabbing"
-                  >
-                    <GripVertical size={18} />
-                  </span>
+                  {isFixed(f) ? (
+                    <span className="text-neutral-300" title="固定項目（並び替え不可）">
+                      <GripVertical size={18} />
+                    </span>
+                  ) : (
+                    <span
+                      draggable
+                      onDragStart={() => setDragIdx(idx)}
+                      onDragEnd={() => setDragIdx(null)}
+                      title="ドラッグで並び替え"
+                      aria-label="ドラッグで並び替え"
+                      className="cursor-grab text-neutral-400 hover:text-neutral-600 active:cursor-grabbing"
+                    >
+                      <GripVertical size={18} />
+                    </span>
+                  )}
                   <span className="text-label-sm text-neutral-600">項目 {idx + 1}</span>
+                  {isFixed(f) ? (
+                    <Badge variant="info">固定</Badge>
+                  ) : (
+                    <Badge variant="neutral">予備</Badge>
+                  )}
                 </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="md"
-                    aria-label="上へ移動"
-                    disabled={idx === 0}
-                    onClick={() => move(idx, -1)}
-                  >
-                    <ChevronUp size={16} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="md"
-                    aria-label="下へ移動"
-                    disabled={idx === fields.length - 1}
-                    onClick={() => move(idx, 1)}
-                  >
-                    <ChevronDown size={16} />
-                  </Button>
-                  <Button variant="ghost" size="md" aria-label="この項目を削除" onClick={() => remove(f.id)}>
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
+                {!isFixed(f) && (
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="md"
+                      aria-label="上へ移動"
+                      disabled={idx <= firstSpareIdx}
+                      onClick={() => move(idx, -1)}
+                    >
+                      <ChevronUp size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="md"
+                      aria-label="下へ移動"
+                      disabled={idx === fields.length - 1}
+                      onClick={() => move(idx, 1)}
+                    >
+                      <ChevronDown size={16} />
+                    </Button>
+                    <Button variant="ghost" size="md" aria-label="この項目を削除" onClick={() => remove(f.id)}>
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div className="mt-3 space-y-3">
                 <Field label="項目名" required>
-                  <Input value={f.label} onChange={(e) => update(f.id, { label: e.target.value })} />
+                  <Input
+                    value={f.label}
+                    disabled={isFixed(f)}
+                    onChange={(e) => update(f.id, { label: e.target.value })}
+                  />
                 </Field>
 
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="タイプ">
                     <Select
                       value={f.fieldType}
+                      disabled={isFixed(f)}
                       onChange={(e) => update(f.id, { fieldType: e.target.value as FieldType })}
                     >
                       {typeOptions.map((t) => (
@@ -357,6 +399,7 @@ export function FormBuilderClient({
                   <Field label="金額連動">
                     <Select
                       value={f.priceCalc}
+                      disabled={isFixed(f)}
                       onChange={(e) =>
                         update(f.id, { priceCalc: e.target.value as ClientField["priceCalc"] })
                       }
@@ -455,9 +498,18 @@ export function FormBuilderClient({
             </div>
           ))}
 
-          <Button variant="secondary" fullWidth size="lg" onClick={addField}>
-            <Plus size={18} /> 項目を追加
+          <Button
+            variant="secondary"
+            fullWidth
+            size="lg"
+            onClick={addField}
+            disabled={spareCount >= MAX_SPARE_FIELDS}
+          >
+            <Plus size={18} /> 予備項目を追加（{spareCount}/{MAX_SPARE_FIELDS}）
           </Button>
+          <p className="text-body-sm text-neutral-500">
+            宿泊申込・往路・復路・食事申込は全イベント共通の固定項目です。選択肢と金額のみイベントごとに設定できます。
+          </p>
         </div>
 
         {/* プレビュー */}

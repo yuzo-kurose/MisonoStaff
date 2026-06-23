@@ -42,6 +42,7 @@ export default async function FormBuilderPage({
     required: f.is_required,
     priceCalc: f.price_calc_type,
     unitPrice: f.unit_price ?? undefined,
+    fieldKey: f.field_key ?? null,
     options: f.options.map((o) => ({
       id: o.id,
       label: o.label,

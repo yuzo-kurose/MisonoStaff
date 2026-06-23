@@ -102,6 +102,7 @@ export interface FormField {
   sort_order: number;
   price_calc_type: PriceCalcType;
   unit_price: number | null;
+  field_key: string | null; // 固定項目キー（lodging/outbound/return/meal）。予備項目は null
   created_at: string;
   updated_at: string;
 }
