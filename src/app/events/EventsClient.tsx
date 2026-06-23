@@ -2,237 +2,243 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, CalendarDays, Clock, Users, CalendarX, Search } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Users, Clock, CalendarX, ChevronRight, Ticket } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Field";
+import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { jpDate } from "@/lib/format";
+import { yen } from "@/lib/format";
 
 export type EventListItem = {
   id: string;
   name: string;
   eventDate: string;
+  startDate: string | null;
   venue: string | null;
   deadline: string;
   capacity: number | null;
+  fee: number;
+  category: string;
 };
 
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
 const today = () => new Date().toISOString().slice(0, 10);
 const daysUntil = (d: string) =>
   Math.round((new Date(d).getTime() - new Date(today()).getTime()) / 86400000);
+const md = (iso: string) => {
+  const [, m, d] = iso.split("-");
+  return `${Number(m)}/${d}`;
+};
+const weekday = (iso: string) => `${WD[new Date(iso).getDay()]}曜日`;
+const fullDate = (iso: string) => {
+  const [y, m, d] = iso.split("-");
+  return `${y}/${m}/${d}（${WD[new Date(iso).getDay()]}）`;
+};
+
+type Tab = "upcoming" | "past";
+type Sort = "date" | "deadline";
 
 export function EventsClient({ events }: { events: EventListItem[] }) {
   const router = useRouter();
-  const [selected, setSelected] = useState<string[]>([]);
+  const [tab, setTab] = useState<Tab>("upcoming");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<Sort>("date");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [openOnly, setOpenOnly] = useState(false);
 
-  // 開催日の範囲（日付入力の min/max 用）
-  const dateRange = useMemo(() => {
-    const ds = events.map((e) => e.eventDate).sort((a, b) => a.localeCompare(b));
-    return { min: ds[0] ?? "", max: ds[ds.length - 1] ?? "" };
-  }, [events]);
+  const t = today();
+  const counts = useMemo(
+    () => ({
+      upcoming: events.filter((e) => e.eventDate >= t).length,
+      past: events.filter((e) => e.eventDate < t).length,
+    }),
+    [events, t],
+  );
 
-  // 検索（イベント名）＋期間（開催日 from〜to）＋受付中のみ で絞り込み
-  const filtered = useMemo(() => {
+  const list = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const t = today();
-    return events.filter((e) => {
+    const r = events.filter((e) => {
+      if (tab === "upcoming" ? e.eventDate < t : e.eventDate >= t) return false;
       if (q && !e.name.toLowerCase().includes(q)) return false;
       if (fromDate && e.eventDate < fromDate) return false;
       if (toDate && e.eventDate > toDate) return false;
       if (openOnly && e.deadline < t) return false;
       return true;
     });
-  }, [events, query, fromDate, toDate, openOnly]);
+    r.sort((a, b) =>
+      sort === "deadline"
+        ? a.deadline.localeCompare(b.deadline)
+        : a.eventDate.localeCompare(b.eventDate),
+    );
+    return r;
+  }, [events, tab, query, fromDate, toDate, openOnly, sort, t]);
 
-  const byDate = useMemo(() => {
-    const map = new Map<string, EventListItem[]>();
-    for (const e of filtered) {
-      const arr = map.get(e.eventDate) ?? [];
-      arr.push(e);
-      map.set(e.eventDate, arr);
-    }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [filtered]);
-
-  const toggle = (id: string) =>
-    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const TabBtn = ({ id, label, n }: { id: Tab; label: string; n: number }) => (
+    <button
+      type="button"
+      onClick={() => setTab(id)}
+      className={`relative px-1 pb-3 text-body-md transition-colors ${
+        tab === id ? "font-semibold text-primary-900" : "text-neutral-500 hover:text-neutral-800"
+      }`}
+    >
+      {label}（{n}）
+      {tab === id && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary-700" />}
+    </button>
+  );
 
   return (
     <AppShell role="participant">
       <PageHeader
-        title="イベントに申し込む"
-        description="複数のイベントをまとめて選択できます。同日開催はまとめて表示しています。"
+        title="イベント一覧"
+        description="参加したいイベントを選んで、詳細の確認や申し込みができます。"
       />
 
-      {events.length === 0 ? (
-        <EmptyState
-          icon={CalendarX}
-          title="現在申込受付中のイベントはありません"
-          description="新しいイベントが公開されるとここに表示されます。連絡事項もあわせてご確認ください。"
-        />
-      ) : (
-        <>
-          {/* 検索・絞り込み */}
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
-              <Search
-                size={18}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
-              />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="イベント名で検索"
-                className="pl-10"
-                aria-label="イベント名で検索"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                type="date"
-                value={fromDate}
-                min={dateRange.min}
-                max={toDate || dateRange.max}
-                onChange={(e) => setFromDate(e.target.value)}
-                aria-label="開催日の開始"
-                className="sm:w-40"
-              />
-              <span className="flex-none text-neutral-500">〜</span>
-              <Input
-                type="date"
-                value={toDate}
-                min={fromDate || dateRange.min}
-                max={dateRange.max}
-                onChange={(e) => setToDate(e.target.value)}
-                aria-label="開催日の終了"
-                className="sm:w-40"
-              />
-            </div>
-            <label className="flex flex-none items-center gap-2 text-body-sm text-neutral-700">
-              <input
-                type="checkbox"
-                checked={openOnly}
-                onChange={(e) => setOpenOnly(e.target.checked)}
-                className="h-4 w-4 rounded border-neutral-400 text-primary-700"
-              />
-              受付中のみ
-            </label>
-          </div>
+      {/* タブ */}
+      <div className="mb-5 flex gap-6 border-b border-neutral-200">
+        <TabBtn id="upcoming" label="開催予定" n={counts.upcoming} />
+        <TabBtn id="past" label="過去イベント" n={counts.past} />
+      </div>
 
-          {byDate.length === 0 ? (
-            <EmptyState
-              icon={Search}
-              title="条件に一致するイベントがありません"
-              description="検索条件や日程の絞り込みを変更してお試しください。"
-              action={
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setQuery("");
-                    setFromDate("");
-                    setToDate("");
-                    setOpenOnly(false);
-                  }}
-                >
-                  条件をリセット
-                </Button>
-              }
-            />
-          ) : (
-            <div className="space-y-8 pb-28">
-          {byDate.map(([date, list]) => (
-            <section key={date}>
-              <div className="mb-3 flex items-center gap-2.5">
-                <span className="h-6 w-1.5 rounded-full bg-primary-700" />
-                <h2 className="flex items-center gap-2 text-heading-md text-neutral-900">
-                  <CalendarDays size={18} className="text-primary-700" />
-                  {jpDate(date)}
-                </h2>
-              </div>
-              <div className="grid gap-3">
-                {list.map((e) => {
-                  const checked = selected.includes(e.id);
-                  const left = daysUntil(e.deadline);
-                  const closed = left < 0;
-                  return (
-                    <button
-                      key={e.id}
-                      type="button"
-                      onClick={() => toggle(e.id)}
-                      aria-pressed={checked}
-                      className={`flex items-start gap-3 rounded-xl border p-4 text-left shadow-sm transition-all hover:shadow-md ${
-                        checked
-                          ? "border-primary-700 bg-primary-50 ring-1 ring-primary-700"
-                          : "border-neutral-200 bg-neutral-white hover:border-neutral-300"
-                      }`}
-                    >
-                      <span
-                        className={`mt-0.5 grid h-5 w-5 flex-none place-items-center rounded border transition-colors ${
-                          checked
-                            ? "border-primary-900 bg-primary-900 text-neutral-white"
-                            : "border-neutral-400 bg-neutral-white"
-                        }`}
-                        aria-hidden
-                      >
-                        {checked && <Check size={14} strokeWidth={3} />}
-                      </span>
-                      <span className="flex-1">
-                        <span className="block text-body-lg font-medium text-neutral-900">
-                          {e.name}
-                        </span>
-                        <span className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-body-sm text-neutral-600">
-                          <span className="inline-flex items-center gap-1">
-                            <Clock size={14} className="text-neutral-400" />
-                            申込締切 {jpDate(e.deadline)}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Users size={14} className="text-neutral-400" />
-                            定員 {e.capacity ?? "—"}名
-                          </span>
-                        </span>
-                      </span>
-                      <span
-                        className={`flex-none rounded-full px-2.5 py-0.5 text-label-sm font-medium ${
-                          closed
-                            ? "bg-neutral-100 text-neutral-500"
-                            : left <= 3
-                              ? "bg-error-100 text-error-900"
-                              : "bg-info-100 text-info-900"
-                        }`}
-                      >
-                        {closed ? "締切" : left === 0 ? "本日締切" : `締切まであと${left}日`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
+      {/* 検索・絞り込み・並び替え */}
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="イベント名で検索"
+            className="pl-10"
+            aria-label="イベント名で検索"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setFilterOpen((o) => !o)}
+          className={`flex flex-none items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-body-md transition-colors ${
+            filterOpen || fromDate || toDate || openOnly
+              ? "border-primary-300 bg-primary-50 text-primary-900"
+              : "border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+          }`}
+        >
+          <SlidersHorizontal size={16} /> 絞り込み
+        </button>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as Sort)}
+          className="flex-none rounded-lg border border-neutral-200 px-3 py-2.5 text-body-md text-neutral-700"
+          aria-label="並び替え"
+        >
+          <option value="date">開催日が近い順</option>
+          <option value="deadline">締切が近い順</option>
+        </select>
+      </div>
+
+      {/* 絞り込みパネル */}
+      {filterOpen && (
+        <div className="mb-5 flex flex-col gap-3 rounded-xl border border-neutral-200 bg-neutral-white p-4 sm:flex-row sm:items-end">
+          <div>
+            <label className="mb-1 block text-label-sm text-neutral-600">開催日（期間）</label>
+            <div className="flex items-center gap-2">
+              <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="sm:w-40" />
+              <span className="text-neutral-500">〜</span>
+              <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="sm:w-40" />
             </div>
-          )}
-        </>
+          </div>
+          <label className="flex items-center gap-2 text-body-sm text-neutral-700 sm:pb-2.5">
+            <input
+              type="checkbox"
+              checked={openOnly}
+              onChange={(e) => setOpenOnly(e.target.checked)}
+              className="h-4 w-4 rounded border-neutral-400 text-primary-700"
+            />
+            受付中のみ
+          </label>
+          <button
+            type="button"
+            onClick={() => { setFromDate(""); setToDate(""); setOpenOnly(false); }}
+            className="text-body-sm text-primary-900 hover:underline sm:ml-auto sm:pb-2.5"
+          >
+            条件をリセット
+          </button>
+        </div>
       )}
 
-      {events.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-neutral-200 bg-neutral-white/95 backdrop-blur md:left-60">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-8">
-            <p className="text-body-sm text-neutral-700">
-              <span className="text-heading-sm text-primary-900">{selected.length}</span> 件選択中
-            </p>
-            <Button
-              size="lg"
-              disabled={selected.length === 0}
-              onClick={() => router.push(`/events/apply?ids=${selected.join(",")}`)}
-            >
-              申込内容を入力する
-            </Button>
-          </div>
+      {/* 一覧 */}
+      {list.length === 0 ? (
+        <EmptyState
+          icon={tab === "past" ? CalendarX : Search}
+          title={tab === "past" ? "過去のイベントはありません" : "条件に一致するイベントがありません"}
+          description="検索条件やタブを切り替えてお試しください。"
+        />
+      ) : (
+        <div className="space-y-3">
+          {list.map((e) => {
+            const left = daysUntil(e.deadline);
+            const closed = left < 0;
+            return (
+              <button
+                key={e.id}
+                type="button"
+                onClick={() => router.push(`/events/apply?ids=${e.id}`)}
+                className="flex w-full items-stretch gap-3 rounded-xl border border-neutral-200 bg-neutral-white p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md sm:gap-4"
+              >
+                {/* サムネイル */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/syuugou.jpeg"
+                  alt=""
+                  className="h-20 w-24 flex-none rounded-lg object-cover sm:h-28 sm:w-44"
+                />
+
+                {/* 日付ブロック */}
+                <div className="flex w-14 flex-none flex-col items-center justify-center sm:w-20">
+                  <span className="text-heading-lg font-bold leading-none text-neutral-900 sm:text-[1.75rem]">
+                    {md(e.eventDate)}
+                  </span>
+                  <span className="mt-1 text-label-sm text-neutral-500">{weekday(e.eventDate)}</span>
+                </div>
+
+                {/* 内容 */}
+                <div className="min-w-0 flex-1">
+                  <Badge variant="info">{e.category}</Badge>
+                  <p className="mt-1 truncate text-body-lg font-medium text-neutral-900">{e.name}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-body-sm text-neutral-600">
+                    {e.venue && (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin size={14} className="text-neutral-400" /> {e.venue}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1">
+                      <Users size={14} className="text-neutral-400" /> 定員 {e.capacity ?? "—"}名
+                    </span>
+                    <span className="hidden items-center gap-1 sm:inline-flex">
+                      <Clock size={14} className="text-neutral-400" /> 開催日 {fullDate(e.eventDate)}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Ticket size={14} className="text-neutral-400" /> 参加費 {e.fee > 0 ? yen(e.fee) : "無料"}
+                    </span>
+                  </div>
+                  <span
+                    className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-label-sm font-medium ${
+                      closed
+                        ? "bg-neutral-100 text-neutral-500"
+                        : left <= 3
+                          ? "bg-error-100 text-error-900"
+                          : "bg-error-50 text-error-900"
+                    }`}
+                  >
+                    {closed ? "締切" : left === 0 ? "本日締切" : `締切まであと${left}日`}
+                  </span>
+                </div>
+
+                <ChevronRight size={20} className="flex-none self-center text-neutral-300" />
+              </button>
+            );
+          })}
         </div>
       )}
     </AppShell>
