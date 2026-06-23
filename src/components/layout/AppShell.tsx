@@ -87,8 +87,8 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
             <span className="hidden text-heading-sm font-bold text-neutral-900 sm:inline">神苑スタッフ</span>
           </Link>
 
-          {/* PC：横並びナビ */}
-          <nav className="hidden flex-1 items-center gap-1 overflow-x-auto md:flex">
+          {/* PC：横並びナビ（センター寄せ） */}
+          <nav className="hidden flex-1 items-center justify-center gap-1 overflow-x-auto md:flex">
             {items.map((it) => {
               const active = it.href === activeHref;
               const Icon = it.icon;
