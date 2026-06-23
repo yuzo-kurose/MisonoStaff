@@ -13,19 +13,17 @@ type EventOpt = { id: string; name: string; venue: string | null; date: string }
 type DivisionOpt = { value: string; label: string };
 
 type CellValue = { value: string; optionIds: string[] };
-type Row = { name: string; email: string; department: string; values: Record<string, CellValue> };
-const emptyRow = (): Row => ({ name: "", email: "", department: "", values: {} });
+type Row = { name: string; email: string; values: Record<string, CellValue> };
+const emptyRow = (): Row => ({ name: "", email: "", values: {} });
 const initialRows = (): Row[] => [emptyRow(), emptyRow(), emptyRow()];
 
 export function ProxyClient({
   events,
   divisions,
-  departments,
   branches,
 }: {
   events: EventOpt[];
   divisions: DivisionOpt[];
-  departments: string[];
   branches: { id: string; name: string }[];
 }) {
   const [eventId, setEventId] = useState("");
@@ -162,7 +160,6 @@ export function ProxyClient({
           name: r.name,
           email: r.email,
           division,
-          department: r.department,
           values: fields.map((f) => {
             const c = cellOf(r, f.id);
             return { fieldId: f.id, value: c.value || null, optionIds: c.optionIds };
@@ -184,11 +181,11 @@ export function ProxyClient({
     });
   };
 
-  // CSV: 氏名,メール,部署(任意)。拠点・部・イベントは画面の登録条件を使用する。
+  // CSV: 氏名,メール。拠点・部・イベントは画面の登録条件を使用する。
   const runCsv = (file: File) => {
     setMsg(null);
     if (!branchId || !division || !eventId) {
-      setMsg({ ok: false, text: "先に登録条件（拠点・部・対象月・参加イベント）を選択してください。" });
+      setMsg({ ok: false, text: "先に登録条件（拠点・部・参加イベント）を選択してください。" });
       return;
     }
     startTransition(async () => {
@@ -201,14 +198,13 @@ export function ProxyClient({
       const errs: string[] = [];
       for (const line of data) {
         const cols = line.split(",").map((c) => c.replace(/^"|"$/g, "").trim());
-        const [cName, cEmail, cDepartment] = cols;
+        const [cName, cEmail] = cols;
         const res = await registerProxyMember({
           eventIds: [eventId],
           branchId,
           name: cName ?? "",
           email: cEmail ?? "",
           division,
-          department: cDepartment ?? "",
         });
         if (res.ok) ok++;
         else {
@@ -322,7 +318,6 @@ export function ProxyClient({
                   <th className="w-10 px-2 pb-2 font-medium">#</th>
                   <th className="min-w-[8rem] px-2 pb-2 font-medium">氏名 *</th>
                   <th className="min-w-[12rem] px-2 pb-2 font-medium">メールアドレス *</th>
-                  <th className="min-w-[8rem] px-2 pb-2 font-medium">部署</th>
                   {fields.map((f) => (
                     <th key={f.id} className="min-w-[9rem] px-2 pb-2 font-medium">
                       {f.label}
@@ -350,16 +345,6 @@ export function ProxyClient({
                         onChange={(e) => setRow(i, { email: e.target.value })}
                         placeholder="hanako@example.com"
                       />
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <Select value={r.department} onChange={(e) => setRow(i, { department: e.target.value })}>
-                        <option value="">未選択</option>
-                        {departments.map((d) => (
-                          <option key={d} value={d}>
-                            {d}
-                          </option>
-                        ))}
-                      </Select>
                     </td>
                     {fields.map((f) => (
                       <td key={f.id} className="px-2 py-1.5">
@@ -395,7 +380,7 @@ export function ProxyClient({
 
         <SectionCard
           title="CSVで一括取り込み"
-          description="列: 氏名, メール, 部署(任意)。拠点・部・イベントは上の登録条件を使用します。1行目が見出しなら自動でスキップします。"
+          description="列: 氏名, メール。拠点・部・イベントは上の登録条件を使用します。1行目が見出しなら自動でスキップします。"
         >
           <input
             ref={fileRef}

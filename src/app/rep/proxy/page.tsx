@@ -1,5 +1,4 @@
 import { getPublishedEvents } from "@/lib/queries/events";
-import { getDepartmentNames } from "@/lib/queries/departments";
 import { getBranches } from "@/lib/queries/branches";
 import { getAuthContext } from "@/lib/auth/guard";
 import { createClient } from "@/lib/supabase/server";
@@ -7,11 +6,7 @@ import { divisions } from "@/lib/mock/data";
 import { ProxyClient } from "./ProxyClient";
 
 export default async function ProxyPage() {
-  const [events, departments, auth] = await Promise.all([
-    getPublishedEvents(),
-    getDepartmentNames(),
-    getAuthContext(),
-  ]);
+  const [events, auth] = await Promise.all([getPublishedEvents(), getAuthContext()]);
 
   // 登録先拠点：管理者は全拠点、代表者は自分が代表を務める拠点（拠点マスタ）。
   let branches: { id: string; name: string }[] = [];
@@ -31,7 +26,6 @@ export default async function ProxyPage() {
     <ProxyClient
       events={events.map((e) => ({ id: e.id, name: e.name, venue: e.venue, date: e.event_date }))}
       divisions={divisions.map((d) => ({ value: d.value, label: d.label }))}
-      departments={departments}
       branches={branches}
     />
   );
