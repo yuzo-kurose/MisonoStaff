@@ -122,28 +122,27 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
         }
       />
 
-      {/* 上部：イベント選択。選んだイベント単位で集計カードと一覧を表示する。 */}
-      <Card className="mb-4">
-        <label className="mb-1 block text-label-sm text-neutral-600">イベントを選択</label>
-        <Select value={eventId} onChange={(e) => setEventId(e.target.value)} className="max-w-md">
-          <option value="">すべてのイベント</option>
-          {events.map(([id, ev]) => (
-            <option key={id} value={id}>
-              {ev.name}（{jpDate(ev.date)}）
-            </option>
-          ))}
-        </Select>
-      </Card>
-
       {msg && (
         <div className="mb-4">
           <Alert variant={msg.ok ? "success" : "error"}>{msg.text}</Alert>
         </div>
       )}
 
+      {/* 絞り込み：イベント選択の横に氏名・拠点・部署・状態を1行でまとめる。 */}
       <Card className="mb-4">
         <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-[200px] flex-1">
+          <div className="min-w-[220px] flex-[2]">
+            <label className="mb-1 block text-label-sm text-neutral-600">イベントを選択</label>
+            <Select value={eventId} onChange={(e) => setEventId(e.target.value)}>
+              <option value="">すべてのイベント</option>
+              {events.map(([id, ev]) => (
+                <option key={id} value={id}>
+                  {ev.name}（{jpDate(ev.date)}）
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="min-w-[180px] flex-1">
             <label className="mb-1 block text-label-sm text-neutral-600">氏名で検索</label>
             <div className="relative">
               <Search
@@ -158,7 +157,7 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
               />
             </div>
           </div>
-          <div className="w-40">
+          <div className="w-32">
             <label className="mb-1 block text-label-sm text-neutral-600">拠点</label>
             <Select value={branchId} onChange={(e) => setBranchId(e.target.value)}>
               <option value="">すべて</option>
@@ -169,7 +168,7 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
               ))}
             </Select>
           </div>
-          <div className="w-44">
+          <div className="w-36">
             <label className="mb-1 block text-label-sm text-neutral-600">部署</label>
             <Select value={department} onChange={(e) => setDepartment(e.target.value)}>
               <option value="">すべて</option>
@@ -180,7 +179,7 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
               ))}
             </Select>
           </div>
-          <div className="w-40">
+          <div className="w-32">
             <label className="mb-1 block text-label-sm text-neutral-600">状態</label>
             <Select value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="">すべて</option>
