@@ -11,6 +11,8 @@ import {
   Megaphone,
   Tags,
   Users,
+  FileText,
+  Bell,
   type LucideIcon,
 } from "lucide-react";
 
@@ -47,7 +49,9 @@ export const navGroupsByRole: Record<Role, NavGroup[]> = {
       icon: Home,
       items: [
         { href: "/mypage", label: "マイページ", icon: Home },
-        { href: "/events", label: "イベント・申込", icon: CalendarPlus },
+        { href: "/events", label: "イベント", icon: CalendarPlus },
+        { href: "/mypage/history", label: "申込履歴", icon: FileText },
+        { href: "/announcements", label: "お知らせ", icon: Bell },
       ],
     },
   ],
