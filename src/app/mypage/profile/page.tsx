@@ -8,6 +8,7 @@ import { getDepartmentNames } from "@/lib/queries/departments";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { ProfileCard } from "../ProfileCard";
 import { ChangePasswordCard } from "../ChangePasswordCard";
+import { HeroImageCard } from "../HeroImageCard";
 
 export default async function ProfileEditPage() {
   const [user, profile, branches, departmentOptions] = await Promise.all([
@@ -38,6 +39,7 @@ export default async function ProfileEditPage() {
           branchName={branchName}
           email={user?.email ?? "—"}
         />
+        {user && <HeroImageCard userId={user.id} currentUrl={profile?.hero_image_url ?? null} />}
         <ChangePasswordCard email={user?.email ?? ""} />
       </div>
     </AppShell>

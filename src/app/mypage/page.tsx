@@ -34,6 +34,7 @@ export default async function MyPage() {
   ]);
 
   const branchName = branches.find((b) => b.id === profile?.branch_id)?.name ?? "—";
+  const heroImage = profile?.hero_image_url || "/syuugou.jpeg";
   const today = new Date().toISOString().slice(0, 10);
 
   // 申込中・参加予定（取消以外）。開催日順。
@@ -84,20 +85,16 @@ export default async function MyPage() {
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* ヒーロー */}
-        <section className="relative overflow-hidden rounded-2xl lg:col-span-7">
-          <Image
-            src="/syuugou.jpeg"
-            alt=""
-            fill
-            priority
-            className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 60vw"
-          />
+        <section className="relative min-h-[220px] overflow-hidden rounded-2xl lg:col-span-7">
+          {/* 本人がアップロードした画像（外部URL）と既定画像の両対応のため img を使用 */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/85 via-neutral-900/45 to-neutral-900/15" />
           <div className="relative flex h-full min-h-[220px] flex-col justify-end gap-3 p-6">
             <div className="flex items-center gap-4">
               <span className="grid h-16 w-16 flex-none place-items-center overflow-hidden rounded-full ring-2 ring-neutral-white/70">
-                <Image src="/syuugou.jpeg" alt="" width={64} height={64} className="h-full w-full object-cover" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={heroImage} alt="" className="h-full w-full object-cover" />
               </span>
               <div>
                 <p className="text-heading-lg font-bold text-neutral-white">

@@ -49,6 +49,7 @@ export interface Profile {
   status: AccountStatus;
   created_via: CreatedVia;
   checkin_token: string;
+  hero_image_url: string | null; // マイページのヒーロー画像（本人がアップロード）
   created_at: string;
   updated_at: string;
 }

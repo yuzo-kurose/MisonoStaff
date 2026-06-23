@@ -42,3 +42,24 @@ export async function updateMyProfile(
   revalidatePath("/mypage");
   return { ok: true };
 }
+
+/** 本人のヒーロー画像URLを保存（null で既定画像に戻す）。RLS で自分の行のみ更新。 */
+export async function updateMyHeroImage(
+  url: string | null,
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "ログインが必要です。" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ hero_image_url: url } as never)
+    .eq("id", user.id);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/mypage");
+  revalidatePath("/mypage/profile");
+  return { ok: true };
+}
