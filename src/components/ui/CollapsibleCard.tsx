@@ -20,22 +20,31 @@ export function CollapsibleCard({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className={`rounded-xl border border-neutral-200 bg-neutral-white shadow-sm ${className}`}>
+    <div className={`overflow-hidden rounded-xl border border-neutral-200 bg-neutral-white shadow-sm ${className}`}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className={`flex w-full items-center justify-between gap-3 px-6 pt-6 text-left ${
-          open ? "pb-4" : "pb-6"
+        className={`group flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-neutral-50 ${
+          open ? "border-b border-neutral-200" : ""
         }`}
       >
-        <span className="text-heading-lg text-neutral-900">{title}</span>
-        <ChevronDown
-          size={20}
-          className={`flex-none text-neutral-400 transition-transform ${open ? "rotate-180" : ""}`}
-        />
+        {/* 見出しアクセント（PageHeader と統一） */}
+        <span className="h-5 w-1.5 flex-none rounded-full bg-primary-700" aria-hidden />
+        <span className="flex-1 text-body-md font-semibold tracking-tight text-neutral-900">
+          {title}
+        </span>
+        <span
+          className="grid h-7 w-7 flex-none place-items-center rounded-full bg-neutral-100 text-neutral-500 transition-colors group-hover:bg-neutral-200"
+          aria-hidden
+        >
+          <ChevronDown
+            size={16}
+            className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          />
+        </span>
       </button>
-      {open && <div className="px-6 pb-6">{children}</div>}
+      {open && <div className="p-5">{children}</div>}
     </div>
   );
 }
