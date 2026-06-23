@@ -5,7 +5,7 @@ import { UserPlus, Upload, Plus, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { Field, Fieldset, Input, Select } from "@/components/ui/Field";
+import { Field, Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { registerProxyMember, getProxyFields, type ProxyField } from "./actions";
 
@@ -28,7 +28,6 @@ export function ProxyClient({
   departments: string[];
   branches: { id: string; name: string }[];
 }) {
-  const [month, setMonth] = useState("");
   const [eventId, setEventId] = useState("");
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
   const [division, setDivision] = useState("");
@@ -54,25 +53,17 @@ export function ProxyClient({
     };
   }, [eventId]);
 
-  // 対象月の選択肢（イベント開催月の重複なし・昇順）。
-  const monthOptions = useMemo(() => {
-    const set = new Set(events.map((e) => (e.date ?? "").slice(0, 7)).filter(Boolean));
-    return [...set].sort().map((ym) => {
-      const [y, m] = ym.split("-");
-      return { value: ym, label: `${y}年${Number(m)}月` };
-    });
-  }, [events]);
-
-  // 選択中の対象月のイベントのみ表示する。
-  const monthEvents = useMemo(
-    () => (month ? events.filter((e) => (e.date ?? "").slice(0, 7) === month) : []),
-    [events, month],
+  // イベント選択リスト（開催日昇順。日付つきで表示）。
+  const eventOptions = useMemo(
+    () =>
+      [...events]
+        .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))
+        .map((e) => ({
+          id: e.id,
+          label: `${e.date ? e.date.replace(/-/g, "/") + "　" : ""}${e.name}${e.venue ? `（${e.venue}）` : ""}`,
+        })),
+    [events],
   );
-
-  const changeMonth = (ym: string) => {
-    setMonth(ym);
-    setEventId(""); // 対象月を変えたら選択をリセット
-  };
 
   // 一覧表の行操作
   const setRow = (i: number, patch: Partial<Row>) =>
@@ -262,96 +253,60 @@ export function ProxyClient({
           submitAll();
         }}
       >
-        {/* 共通条件：登録先拠点・対象月・参加イベント（表の全行に適用） */}
+        {/* 共通条件：登録先拠点・部・参加イベント（表の全行に適用） */}
         <SectionCard
           title="登録条件"
           description="ここで選んだ拠点・部・イベントが、下の表のすべてのメンバーに適用されます。イベントごとに登録します。"
         >
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="登録先拠点" required hint="この拠点の名簿に登録されます">
-                {branches.length === 0 ? (
-                  <p className="text-body-sm text-error-900">
-                    担当拠点がありません。管理者に拠点マスタでの代表設定を依頼してください。
-                  </p>
-                ) : (
-                  <Select className="max-w-[14rem]" value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
-                    <option value="" disabled>
-                      選択してください
-                    </option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              </Field>
-
-              <Field label="部" required hint="この部として全メンバーを登録します">
-                <Select className="max-w-[14rem]" value={division} onChange={(e) => setDivision(e.target.value)}>
-                  <option value="" disabled>
-                    選択してください
-                  </option>
-                  {divisions.map((d) => (
-                    <option key={d.value} value={d.value}>
-                      {d.label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-
-              <Field label="対象月" required hint="対象月を選ぶと、その月のイベントが表示されます">
-                <Select className="max-w-[14rem]" value={month} onChange={(e) => changeMonth(e.target.value)}>
-                  <option value="" disabled>
-                    選択してください
-                  </option>
-                  {monthOptions.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            </div>
-
-            <Fieldset label="参加イベント" required hint="1イベントを選択（イベントごとに登録します）">
-              {month === "" ? (
-                <p className="text-body-sm text-neutral-600">先に対象月を選択してください。</p>
-              ) : monthEvents.length === 0 ? (
-                <p className="text-body-sm text-neutral-600">この月の公開中イベントはありません。</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="登録先拠点" required hint="この拠点の名簿に登録されます">
+              {branches.length === 0 ? (
+                <p className="text-body-sm text-error-900">
+                  担当拠点がありません。管理者に拠点マスタでの代表設定を依頼してください。
+                </p>
               ) : (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {monthEvents.map((e) => {
-                    const on = eventId === e.id;
-                    return (
-                      <label
-                        key={e.id}
-                        className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-body-md transition-colors ${
-                          on
-                            ? "border-primary-700 bg-primary-50 text-neutral-900"
-                            : "border-neutral-200 bg-neutral-white text-neutral-700 hover:bg-neutral-50"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="proxy-event"
-                          className="h-4 w-4 flex-none"
-                          checked={on}
-                          onChange={() => setEventId(e.id)}
-                        />
-                        <span className="truncate">
-                          {e.name}
-                          {e.venue && (
-                            <span className="ml-1 text-body-sm text-neutral-600">（{e.venue}）</span>
-                          )}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
+                <Select className="max-w-[14rem]" value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
+                  <option value="" disabled>
+                    選択してください
+                  </option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </Select>
               )}
-            </Fieldset>
+            </Field>
+
+            <Field label="部" required hint="この部として全メンバーを登録します">
+              <Select className="max-w-[14rem]" value={division} onChange={(e) => setDivision(e.target.value)}>
+                <option value="" disabled>
+                  選択してください
+                </option>
+                {divisions.map((d) => (
+                  <option key={d.value} value={d.value}>
+                    {d.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field label="参加イベント" required hint="登録するイベントを選択します">
+              {eventOptions.length === 0 ? (
+                <p className="text-body-sm text-neutral-600">公開中のイベントがありません。</p>
+              ) : (
+                <Select value={eventId} onChange={(e) => setEventId(e.target.value)}>
+                  <option value="" disabled>
+                    選択してください
+                  </option>
+                  {eventOptions.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.label}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
           </div>
         </SectionCard>
 
