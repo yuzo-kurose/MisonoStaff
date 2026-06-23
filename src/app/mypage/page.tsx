@@ -82,25 +82,6 @@ export default async function MyPage() {
     <AppShell role="participant">
       <PageHeader title="マイページ" description={`${profile?.name ?? ""} さん（${branchName}）`} />
 
-      {/* クイックアクション（上部） */}
-      <section className="mb-5 rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm">
-        <h2 className="mb-4 text-heading-sm text-neutral-900">クイックアクション</h2>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {quickActions.map((a) => (
-            <Link
-              key={a.label}
-              href={a.href}
-              className="flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3 transition-colors hover:bg-neutral-50"
-            >
-              <span className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-primary-50 text-primary-900">
-                <a.icon size={20} />
-              </span>
-              <span className="text-body-md text-neutral-900">{a.label}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* ヒーロー */}
         <section className="relative overflow-hidden rounded-2xl lg:col-span-7">
@@ -145,6 +126,25 @@ export default async function MyPage() {
             venue={nextEvent?.venue ?? null}
           />
         </div>
+
+        {/* クイックアクション（写真の下） */}
+        <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-12">
+          <h2 className="mb-4 text-heading-sm text-neutral-900">クイックアクション</h2>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {quickActions.map((a) => (
+              <Link
+                key={a.label}
+                href={a.href}
+                className="flex items-center gap-3 rounded-xl border border-neutral-200 px-4 py-3 transition-colors hover:bg-neutral-50"
+              >
+                <span className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-primary-50 text-primary-900">
+                  <a.icon size={20} />
+                </span>
+                <span className="text-body-md text-neutral-900">{a.label}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {/* 参加ステータス */}
         <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-5">
