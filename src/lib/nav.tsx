@@ -49,7 +49,7 @@ export const navGroupsByRole: Record<Role, NavGroup[]> = {
       icon: Home,
       items: [
         { href: "/mypage", label: "マイページ", icon: Home },
-        { href: "/events", label: "イベント", icon: CalendarPlus },
+        { href: "/events", label: "イベント申込", icon: CalendarPlus },
         { href: "/mypage/history", label: "申込履歴", icon: FileText },
         { href: "/announcements", label: "お知らせ", icon: Bell },
       ],
@@ -139,4 +139,31 @@ export function visibleNavGroups(role: string | undefined): NavGroup[] {
 
 export function visibleNavItems(role: string | undefined): NavItem[] {
   return visibleNavGroups(role).flatMap((g) => g.items);
+}
+
+/**
+ * 画面切替で選べるビュー（権限のあるビューのみ）。
+ * - participant   : 参加者のみ
+ * - representative: 参加者＋代表者
+ * - reception     : 参加者＋受付
+ * - admin         : 全て（参加者・代表者・管理者・受付）
+ */
+export function selectableViews(role: string | undefined): Role[] {
+  switch (role) {
+    case "representative":
+      return ["participant", "representative"];
+    case "reception":
+      return ["participant", "reception"];
+    case "admin":
+      return ["participant", "representative", "admin", "reception"];
+    case "participant":
+      return ["participant"];
+    default:
+      return [];
+  }
+}
+
+/** ビュー（ロール）のヘッダーメニュー項目。 */
+export function navItemsForView(view: Role): NavItem[] {
+  return navByRole[view] ?? [];
 }

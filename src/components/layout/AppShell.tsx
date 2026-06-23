@@ -3,9 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, ChevronDown, Menu, X, Bell, UserCog, Grid3x3 } from "lucide-react";
+import { LogOut, ChevronDown, Menu, X, Bell, UserCog, Grid3x3, Repeat } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { visibleNavItems, roleLabels, type Role } from "@/lib/nav";
+import { selectableViews, navItemsForView, roleLabels, type Role } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser } from "@/hooks/useAuthUser";
 
@@ -15,28 +15,37 @@ function activeHrefOf(pathname: string, hrefs: string[]): string | undefined {
     .filter((h) => pathname === h || pathname.startsWith(h + "/"))
     .sort((a, b) => b.length - a.length)[0];
 }
+const inView = (pathname: string, view: Role) =>
+  navItemsForView(view).some((it) => pathname === it.href || pathname.startsWith(it.href + "/"));
 
 /**
- * 共通シェル（上部横ナビ型）。
- * - PC：白いトップヘッダー（左ロゴ／中央：横並びナビ・現在地は下線／右：通知ベル＋アカウント）。
- * - スマホ：上部にロゴ＋ベル＋ハンバーガー、下部に固定タブバー（主要4項目＋メニュー）。
- * メニュー項目はユーザーの実ロールで出し分ける（visibleNavItems）。
+ * 共通シェル（上部横ナビ型＋画面切替）。
+ * - 右上の「画面切替」で権限のあるビュー（参加者/代表者/管理者/受付）を選択でき、
+ *   選択したビューのメニューをヘッダーに表示する。選択するとそのビューの先頭画面へ遷移。
+ * - PC：横並びナビ（現在地は下線）＋通知ベル＋アカウント。
+ * - スマホ：下部タブ（主要4項目＋メニュー）＋全メニュードロワー。
  */
 export function AppShell({ role, children }: { role: Role; children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { who, role: authRole } = useAuthUser();
   const effectiveRole = authRole ?? role;
-  const items = visibleNavItems(effectiveRole);
+
+  const views = selectableViews(effectiveRole);
+  const ownDefault = (views.includes(effectiveRole as Role) ? (effectiveRole as Role) : views[0]) ?? "participant";
+  // 現在ページが属するビューを優先。無ければ自分の既定ビュー。
+  const view: Role = views.find((v) => inView(pathname, v)) ?? ownDefault;
+  const items = navItemsForView(view);
   const activeHref = activeHrefOf(pathname, items.map((i) => i.href));
 
   const [menuOpen, setMenuOpen] = useState(false); // スマホ：全メニュードロワー
   const [accountOpen, setAccountOpen] = useState(false); // PC：アカウントメニュー
+  const [viewOpen, setViewOpen] = useState(false); // 画面切替メニュー
 
-  // 遷移時に開いているメニューを閉じる。
   useEffect(() => {
     setMenuOpen(false);
     setAccountOpen(false);
+    setViewOpen(false);
   }, [pathname]);
 
   async function logout() {
@@ -45,10 +54,16 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
     router.refresh();
   }
 
-  const initial = (who ?? "").trim().charAt(0) || "ス";
-  const roleLabel = roleLabels[effectiveRole as Role] ?? roleLabels[role];
+  // ビューを切り替えてそのビューの先頭画面へ遷移。
+  function switchView(v: Role) {
+    setViewOpen(false);
+    setMenuOpen(false);
+    const first = navItemsForView(v)[0];
+    if (first) router.push(first.href);
+  }
 
-  // スマホ下部タブ：主要4項目＋「メニュー」。
+  const initial = (who ?? "").trim().charAt(0) || "ス";
+  const roleLabel = roleLabels[view];
   const tabItems = items.slice(0, 4);
 
   const Avatar = ({ size = 36 }: { size?: number }) => (
@@ -65,11 +80,11 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
     <div className="flex min-h-screen flex-col bg-neutral-50">
       {/* トップヘッダー */}
       <header className="sticky top-0 z-30 h-16 flex-none border-b border-neutral-200 bg-neutral-white">
-        <div className="mx-auto flex h-full max-w-7xl items-center gap-4 px-4 md:px-6">
+        <div className="mx-auto flex h-full max-w-[1600px] items-center gap-3 px-3 md:gap-4 md:px-5">
           {/* ロゴ */}
           <Link href="/mypage" className="flex flex-none items-center gap-2">
             <Image src="/mark.png" alt="神慈秀明会" width={28} height={28} priority />
-            <span className="text-heading-sm font-bold text-neutral-900">神苑スタッフ</span>
+            <span className="hidden text-heading-sm font-bold text-neutral-900 sm:inline">神苑スタッフ</span>
           </Link>
 
           {/* PC：横並びナビ */}
@@ -97,8 +112,45 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
             })}
           </nav>
 
-          {/* 右：通知ベル＋アカウント（PC）／ベル＋ハンバーガー（スマホ） */}
+          {/* 右：画面切替＋通知ベル＋アカウント */}
           <div className="ml-auto flex flex-none items-center gap-1.5 md:ml-0">
+            {/* 画面切替（権限のあるビューが2つ以上のときのみ・PC） */}
+            {views.length > 1 && (
+              <div className="relative hidden md:block">
+                <button
+                  type="button"
+                  onClick={() => setViewOpen((o) => !o)}
+                  aria-expanded={viewOpen}
+                  className="flex items-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-1.5 text-label-md text-neutral-700 hover:bg-neutral-50"
+                >
+                  <Repeat size={15} className="text-neutral-500" />
+                  {roleLabel}
+                  <ChevronDown size={15} className="text-neutral-400" />
+                </button>
+                {viewOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setViewOpen(false)} aria-hidden />
+                    <div className="absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-white py-1 shadow-lg">
+                      <p className="px-3 py-1.5 text-label-sm text-neutral-500">画面を切り替え</p>
+                      {views.map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => switchView(v)}
+                          className={`flex w-full items-center justify-between px-4 py-2 text-label-md hover:bg-neutral-50 ${
+                            v === view ? "font-semibold text-primary-900" : "text-neutral-700"
+                          }`}
+                        >
+                          {roleLabels[v]}
+                          {v === view && <span className="h-1.5 w-1.5 rounded-full bg-primary-700" />}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             <Link
               href="/announcements"
               aria-label="お知らせ"
@@ -165,7 +217,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
 
       {/* メイン */}
       <main className="min-w-0 flex-1">
-        <div className="mx-auto max-w-7xl px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-10">{children}</div>
+        <div className="mx-auto max-w-[1600px] px-4 py-6 pb-24 md:px-6 md:py-8 md:pb-10">{children}</div>
       </main>
 
       {/* スマホ：下部固定タブバー */}
@@ -218,6 +270,30 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
                 <X size={20} />
               </button>
             </div>
+
+            {/* 画面切替（スマホ） */}
+            {views.length > 1 && (
+              <div className="flex-none border-b border-neutral-200 px-3 py-2">
+                <p className="mb-1 px-1 text-label-sm text-neutral-500">画面を切り替え</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {views.map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => switchView(v)}
+                      className={`rounded-full px-3 py-1 text-label-sm ${
+                        v === view
+                          ? "bg-primary-700 text-neutral-white"
+                          : "bg-neutral-100 text-neutral-700"
+                      }`}
+                    >
+                      {roleLabels[v]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <nav className="flex-1 space-y-1 overflow-y-auto p-3">
               {items.map((it) => {
                 const active = it.href === activeHref;
