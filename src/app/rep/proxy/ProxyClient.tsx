@@ -311,8 +311,9 @@ export function ProxyClient({
           title="メンバー一覧"
           description="1行に1名分を入力します。行を追加して複数名をまとめて登録できます。氏名またはメールが空の行は登録されません。"
         >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] border-separate border-spacing-0 text-body-sm">
+          {/* PC：一覧表 */}
+          <div className="hidden md:block">
+            <table className="w-full border-separate border-spacing-0 text-body-sm">
               <thead>
                 <tr className="text-left text-label-sm text-neutral-600">
                   <th className="w-10 px-2 pb-2 font-medium">#</th>
@@ -366,6 +367,48 @@ export function ProxyClient({
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* スマホ：メンバーごとのカード（横スクロールなし・縦積み） */}
+          <div className="space-y-4 md:hidden">
+            {rows.map((r, i) => (
+              <div key={i} className="rounded-lg border border-neutral-200 p-3">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-label-md text-neutral-700">メンバー {i + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeRow(i)}
+                    disabled={pending || rows.length <= 1}
+                    aria-label={`メンバー${i + 1}を削除`}
+                    className="rounded p-2 text-neutral-500 transition-colors hover:bg-error-50 hover:text-error-900 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <Field label="氏名" required>
+                    <Input
+                      value={r.name}
+                      onChange={(e) => setRow(i, { name: e.target.value })}
+                      placeholder="田中 花子"
+                    />
+                  </Field>
+                  <Field label="メールアドレス" required>
+                    <Input
+                      type="email"
+                      value={r.email}
+                      onChange={(e) => setRow(i, { email: e.target.value })}
+                      placeholder="hanako@example.com"
+                    />
+                  </Field>
+                  {fields.map((f) => (
+                    <Field key={f.id} label={f.label} required={f.isRequired}>
+                      {fieldInput(i, f)}
+                    </Field>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-200 pt-4">
