@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui/Alert";
 import { QrPlaceholder } from "@/components/QrPlaceholder";
 import { CalendarClock } from "lucide-react";
 import { yen, jpDate } from "@/lib/format";
-import { getMyProfile, getMyParticipations } from "@/lib/queries/me";
+import { getMyProfile, getMyParticipations, getMyApplicationHistory } from "@/lib/queries/me";
 import { getBranches } from "@/lib/queries/branches";
 import { getPublishedEvents } from "@/lib/queries/events";
 import { getDepartmentNames } from "@/lib/queries/departments";
@@ -15,15 +15,19 @@ import { ProfileCard } from "./ProfileCard";
 import { ChangePasswordCard } from "./ChangePasswordCard";
 
 export default async function MyPage() {
-  const [user, profile, participations, branches, events, departmentOptions] =
+  const [user, profile, participations, history, branches, events, departmentOptions] =
     await Promise.all([
       getCurrentUser(),
       getMyProfile(),
       getMyParticipations(),
+      getMyApplicationHistory(),
       getBranches(),
       getPublishedEvents(),
       getDepartmentNames(),
     ]);
+
+  // 申込中・参加予定は取消を除いた現行のみ。
+  const activeParticipations = participations.filter((p) => p.status !== "cancelled");
 
   const branchName = branches.find((b) => b.id === profile?.branch_id)?.name ?? "—";
   const unpaidTotal = participations
@@ -100,7 +104,7 @@ export default async function MyPage() {
               </ButtonLink>
             </div>
 
-            {participations.length === 0 ? (
+            {activeParticipations.length === 0 ? (
               <p className="py-6 text-center text-body-md text-neutral-600">
                 まだ申込がありません。
                 <br />
@@ -108,7 +112,7 @@ export default async function MyPage() {
               </p>
             ) : (
               <ul className="divide-y divide-neutral-200">
-                {participations.map((p) => (
+                {activeParticipations.map((p) => (
                   <li
                     key={p.participantId}
                     className="flex items-center justify-between py-3"
@@ -131,6 +135,40 @@ export default async function MyPage() {
                   確定分をまとめて決済（{yen(unpaidTotal)}）
                 </ButtonLink>
               </div>
+            )}
+          </Card>
+
+          <Card>
+            <CardTitle>申込履歴</CardTitle>
+            <p className="mb-3 mt-1 text-body-sm text-neutral-600">
+              過去の申込（取消分を含む）を確認できます。
+            </p>
+            {history.length === 0 ? (
+              <p className="py-4 text-center text-body-md text-neutral-600">
+                申込履歴はまだありません。
+              </p>
+            ) : (
+              <ul className="divide-y divide-neutral-200">
+                {history.map((h) => (
+                  <li key={h.participantId} className="flex items-center justify-between gap-3 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-body-md text-neutral-900">{h.eventName}</p>
+                      <p className="text-body-sm text-neutral-600">
+                        {h.eventDate ? jpDate(h.eventDate) : ""}
+                        <span className="mx-1.5 text-neutral-300">/</span>
+                        {yen(h.amount)}
+                        {h.status === "cancelled" && h.cancelledAt && (
+                          <>
+                            <span className="mx-1.5 text-neutral-300">/</span>
+                            {jpDate(h.cancelledAt)} 取消
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <StatusBadge status={h.status} />
+                  </li>
+                ))}
+              </ul>
             )}
           </Card>
 

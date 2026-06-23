@@ -57,3 +57,50 @@ export async function getMyParticipations(): Promise<MyParticipation[]> {
     };
   });
 }
+
+export type MyHistoryRow = {
+  participantId: string;
+  status: Participant["status"];
+  amount: number;
+  eventName: string;
+  eventDate: string;
+  appliedAt: string | null;
+  cancelledAt: string | null;
+};
+
+/** ログイン中ユーザーの申込履歴（取消含む全件・申込日の新しい順）。 */
+export async function getMyApplicationHistory(): Promise<MyHistoryRow[]> {
+  const supabase = await createClient();
+  const user = await getCurrentUser();
+  if (!user) return [];
+
+  const { data } = await supabase
+    .from("participants")
+    .select(
+      "id,status,total_amount,created_at,cancelled_at,applications!inner(events!inner(name,event_date))",
+    )
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const rows = (data ?? []) as unknown as {
+    id: string;
+    status: Participant["status"];
+    total_amount: number;
+    created_at: string | null;
+    cancelled_at: string | null;
+    applications: { events: Pick<EventRow, "name" | "event_date"> | null } | null;
+  }[];
+
+  return rows.map((p) => {
+    const ev = p.applications?.events ?? null;
+    return {
+      participantId: p.id,
+      status: p.status,
+      amount: p.total_amount,
+      eventName: ev?.name ?? "（不明なイベント）",
+      eventDate: ev?.event_date ?? "",
+      appliedAt: p.created_at,
+      cancelledAt: p.cancelled_at,
+    };
+  });
+}
