@@ -15,24 +15,27 @@ type Props = {
   division: string;
   department: string;
   departmentOptions: string[];
-  branchName: string;
+  branchId: string;
+  branches: { id: string; name: string }[];
   email: string;
 };
 
 const divisionLabel = (v: string) => divisions.find((d) => d.value === v)?.label ?? "—";
 
-/** 登録情報の表示＋本人編集（氏名・部・部署）。所属/メールは表示のみ。 */
+/** 登録情報の表示＋本人編集（氏名・部・部署・所属）。メールは表示のみ。 */
 export function ProfileCard({
   name,
   division,
   department,
   departmentOptions,
-  branchName,
+  branchId,
+  branches,
   email,
 }: Props) {
   const router = useRouter();
+  const branchName = branches.find((b) => b.id === branchId)?.name ?? "—";
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name, division, department });
+  const [form, setForm] = useState({ name, division, department, branchId });
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -55,7 +58,7 @@ export function ProfileCard({
   }
 
   function onCancel() {
-    setForm({ name, division, department });
+    setForm({ name, division, department, branchId });
     setError(null);
     setEditing(false);
   }
@@ -78,7 +81,7 @@ export function ProfileCard({
           <Row label="氏名" value={name} />
           <Row label="部" value={divisionLabel(division)} />
           <Row label="部署（配置先）" value={department || "—"} />
-          <Row label="所属（拠点）" value={branchName} hint="変更は管理者へ" />
+          <Row label="所属（拠点）" value={branchName} />
           <Row label="メールアドレス" value={email} hint="変更不可" />
         </dl>
       ) : (
@@ -107,8 +110,13 @@ export function ProfileCard({
               ))}
             </Select>
           </Field>
-          <Field label="所属（拠点）" hint="所属の変更は管理者へご連絡ください">
-            <Input value={branchName} disabled />
+          <Field label="所属（拠点）" required>
+            <Select value={form.branchId} onChange={(e) => set("branchId", e.target.value)} required>
+              <option value="" disabled>選択してください</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </Select>
           </Field>
           <div className="flex gap-3">
             <Button type="submit" disabled={loading}>

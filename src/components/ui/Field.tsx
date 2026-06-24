@@ -78,10 +78,13 @@ const control =
   "disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-500 " +
   "aria-[invalid=true]:border-error-900 aria-[invalid=true]:focus:ring-error-100";
 
+// Input と Select の高さを揃える（フォントサイズ差で行高がずれないよう固定）。
+const controlHeight = "h-11";
+
 export function Input({ className = "", type, inputMode, ...props }: ComponentProps<"input">) {
   // 数値入力はスマホでテンキーを出す（明示指定があればそれを優先）。
   const mode = inputMode ?? (type === "number" ? "numeric" : undefined);
-  return <input type={type} inputMode={mode} className={`${control} text-body-md ${className}`} {...props} />;
+  return <input type={type} inputMode={mode} className={`${control} ${controlHeight} text-body-md ${className}`} {...props} />;
 }
 
 export function Textarea({ className = "", ...props }: ComponentProps<"textarea">) {
@@ -90,7 +93,8 @@ export function Textarea({ className = "", ...props }: ComponentProps<"textarea"
 
 export function Select({ className = "", ...props }: ComponentProps<"select">) {
   // ネイティブの選択肢が小さくなりがちなので、一段大きめ(text-body-lg)にして読みやすくする。
-  return <select className={`${control} text-body-lg ${className}`} {...props} />;
+  // 高さは Input と揃える（controlHeight）。
+  return <select className={`${control} ${controlHeight} text-body-lg ${className}`} {...props} />;
 }
 
 /**

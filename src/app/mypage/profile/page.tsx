@@ -17,7 +17,7 @@ export default async function ProfileEditPage() {
     getBranches(),
     getDepartmentNames(),
   ]);
-  const branchName = branches.find((b) => b.id === profile?.branch_id)?.name ?? "—";
+  const branchOptions = branches.map((b) => ({ id: b.id, name: b.name }));
 
   return (
     <AppShell role="participant">
@@ -36,7 +36,8 @@ export default async function ProfileEditPage() {
           division={profile?.division ?? ""}
           department={profile?.department ?? ""}
           departmentOptions={departmentOptions}
-          branchName={branchName}
+          branchId={profile?.branch_id ?? ""}
+          branches={branchOptions}
           email={user?.email ?? "—"}
         />
         {user && <HeroImageCard userId={user.id} currentUrl={profile?.hero_image_url ?? null} />}

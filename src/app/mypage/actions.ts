@@ -7,20 +7,22 @@ export type ProfileEditInput = {
   name: string;
   division: string;
   department: string; // 配置先（任意・空可）
+  branchId: string; // 所属拠点（本人が変更可能）
 };
 
 /**
- * ログイン中ユーザー本人の登録情報（氏名・部）を更新する。
+ * ログイン中ユーザー本人の登録情報（氏名・部・部署・所属）を更新する。
  *
  * 通常の user セッション client を使う＝RLS が効く。profiles_update_self ポリシーにより
- * 自分の行だけ更新でき、role と branch_id は WITH CHECK で固定されている（所属の変更は管理者のみ）。
- * service_role を使わないので認可は RLS が保証する。
+ * 自分の行だけ更新でき、role は WITH CHECK で固定（権限の自己昇格を防ぐ）。
+ * branch_id（所属）は本人が変更可能。service_role を使わないので認可は RLS が保証する。
  */
 export async function updateMyProfile(
   input: ProfileEditInput,
 ): Promise<{ ok: boolean; error?: string }> {
   if (!input.name.trim()) return { ok: false, error: "氏名を入力してください。" };
   if (!input.division) return { ok: false, error: "部を選択してください。" };
+  if (!input.branchId) return { ok: false, error: "所属（拠点）を選択してください。" };
 
   const supabase = await createClient();
   const {
@@ -34,12 +36,14 @@ export async function updateMyProfile(
       name: input.name.trim(),
       division: input.division,
       department: input.department.trim() || null,
+      branch_id: input.branchId,
     } as never)
     .eq("id", user.id);
 
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/mypage");
+  revalidatePath("/mypage/profile");
   return { ok: true };
 }
 
