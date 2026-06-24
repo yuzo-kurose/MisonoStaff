@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { UserPlus, Upload, Plus, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { PageHeader, SectionCard } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
@@ -307,11 +307,12 @@ export function ProxyClient({
           </div>
         </div>
 
-        {/* メンバー一覧表：1行＝1名。行ごとに 部／氏名／メール／部署 を入力 */}
-        <SectionCard
-          title="メンバー一覧"
-          description="1行に1名分を入力します。行を追加して複数名をまとめて登録できます。氏名またはメールが空の行は登録されません。"
-        >
+        {/* メンバー一覧表：1行＝1名。行ごとに 氏名／メール／フォーム項目 を入力 */}
+        <div>
+          <h2 className="text-heading-sm text-neutral-900">メンバー一覧</h2>
+          <p className="mb-3 mt-0.5 text-body-sm text-neutral-600">
+            1行に1名分を入力します。行を追加して複数名をまとめて登録できます。氏名またはメールが空の行は登録されません。
+          </p>
           {/* PC：一覧表 */}
           <div className="hidden md:block">
             <table className="w-full border-separate border-spacing-0 text-body-sm">
@@ -420,12 +421,13 @@ export function ProxyClient({
               <UserPlus size={18} /> {pending ? "登録中…" : `${filledRows.length}名を登録`}
             </Button>
           </div>
-        </SectionCard>
+        </div>
 
-        <SectionCard
-          title="CSVで一括取り込み"
-          description="列: 氏名, メール。拠点・部・イベントは上の登録条件を使用します。1行目が見出しなら自動でスキップします。"
-        >
+        <div>
+          <h2 className="text-heading-sm text-neutral-900">CSVで一括取り込み</h2>
+          <p className="mb-3 mt-0.5 text-body-sm text-neutral-600">
+            列: 氏名, メール。拠点・部・イベントは上の登録条件を使用します。1行目が見出しなら自動でスキップします。
+          </p>
           <input
             ref={fileRef}
             type="file"
@@ -447,7 +449,7 @@ export function ProxyClient({
               {pending ? "取り込み中…" : "反映"}
             </Button>
           </div>
-        </SectionCard>
+        </div>
 
         <div className="flex justify-end">
           <ButtonLink href="/rep/roster" variant="ghost">
