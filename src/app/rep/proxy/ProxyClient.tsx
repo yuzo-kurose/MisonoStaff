@@ -250,10 +250,11 @@ export function ProxyClient({
         }}
       >
         {/* 共通条件：登録先拠点・部・参加イベント（表の全行に適用） */}
-        <SectionCard
-          title="登録条件"
-          description="ここで選んだ拠点・部・イベントが、下の表のすべてのメンバーに適用されます。イベントごとに登録します。"
-        >
+        <div>
+          <h2 className="text-heading-sm text-neutral-900">登録条件</h2>
+          <p className="mb-3 mt-0.5 text-body-sm text-neutral-600">
+            ここで選んだ拠点・部・イベントが、下の表のすべてのメンバーに適用されます。イベントごとに登録します。
+          </p>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="登録先拠点" required hint="この拠点の名簿に登録されます">
               {branches.length === 0 ? (
@@ -304,7 +305,7 @@ export function ProxyClient({
               )}
             </Field>
           </div>
-        </SectionCard>
+        </div>
 
         {/* メンバー一覧表：1行＝1名。行ごとに 部／氏名／メール／部署 を入力 */}
         <SectionCard
