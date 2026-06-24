@@ -133,7 +133,7 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-[220px] flex-[2]">
             <label className="mb-1 block text-label-sm text-neutral-600">イベントを選択</label>
-            <Select value={eventId} onChange={(e) => setEventId(e.target.value)}>
+            <Select value={eventId} onChange={(e) => setEventId(e.target.value)} className="h-11">
               <option value="">すべてのイベント</option>
               {events.map(([id, ev]) => (
                 <option key={id} value={id}>
@@ -153,13 +153,13 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="氏名"
-                className="pl-10"
+                className="h-11 pl-10"
               />
             </div>
           </div>
           <div className="w-32">
             <label className="mb-1 block text-label-sm text-neutral-600">拠点</label>
-            <Select value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+            <Select value={branchId} onChange={(e) => setBranchId(e.target.value)} className="h-11">
               <option value="">すべて</option>
               {branches.map(([id, name]) => (
                 <option key={id} value={id}>
@@ -170,7 +170,7 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
           </div>
           <div className="w-36">
             <label className="mb-1 block text-label-sm text-neutral-600">部署</label>
-            <Select value={department} onChange={(e) => setDepartment(e.target.value)}>
+            <Select value={department} onChange={(e) => setDepartment(e.target.value)} className="h-11">
               <option value="">すべて</option>
               {departments.map((d) => (
                 <option key={d} value={d}>
@@ -181,7 +181,7 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
           </div>
           <div className="w-32">
             <label className="mb-1 block text-label-sm text-neutral-600">状態</label>
-            <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <Select value={status} onChange={(e) => setStatus(e.target.value)} className="h-11">
               <option value="">すべて</option>
               <option value="applying">申込中</option>
               <option value="confirmed">確定</option>
