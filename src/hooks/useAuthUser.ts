@@ -31,7 +31,9 @@ export function useAuthUser(): AuthUserState {
       setState({ who: name, authed: !!user, role, ready: true });
     };
 
-    supabase.auth.getUser().then(({ data }) => apply(data.user));
+    // 表示用途のみ。getSession はローカル保存のセッションを読むだけでネットワーク往復が無く、
+    // 画面遷移ごとの待ち時間が出ない（トークンの検証・更新は middleware が担う）。
+    supabase.auth.getSession().then(({ data }) => apply(data.session?.user ?? null));
 
     const {
       data: { subscription },
