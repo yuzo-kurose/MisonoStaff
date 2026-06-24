@@ -6,10 +6,6 @@ import {
   ClipboardCheck,
   Archive,
   ChevronRight,
-  CalendarPlus,
-  CreditCard,
-  FileText,
-  UserCog,
   Settings,
   MapPin,
 } from "lucide-react";
@@ -71,13 +67,6 @@ export default async function MyPage() {
     { key: "cancelled", label: "キャンセル", value: stats.cancelled, icon: Archive, tone: "text-neutral-500 bg-neutral-100" },
   ];
 
-  const quickActions = [
-    { href: "/events", label: "イベントに申し込む", icon: CalendarPlus },
-    { href: "/payment", label: "決済状況を確認", icon: CreditCard },
-    { href: "/mypage/history", label: "申込履歴を見る", icon: FileText },
-    { href: "/mypage/profile", label: "プロフィール編集", icon: UserCog },
-  ];
-
   return (
     <>
       <PageHeader title="マイページ" description={`${profile?.name ?? ""} さん（${branchName}）`} />
@@ -122,29 +111,6 @@ export default async function MyPage() {
             venue={nextEvent?.venue ?? null}
           />
         </div>
-
-        {/* クイックアクション（写真の下） */}
-        <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-12">
-          <h2 className="mb-4 text-heading-sm text-neutral-900">クイックアクション</h2>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {quickActions.map((a) => (
-              <Link
-                key={a.label}
-                href={a.href}
-                className="group flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-white px-4 py-3.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md active:translate-y-0 active:shadow-sm"
-              >
-                <span className="grid h-10 w-10 flex-none place-items-center rounded-lg bg-primary-50 text-primary-900 transition-colors group-hover:bg-primary-100">
-                  <a.icon size={20} />
-                </span>
-                <span className="text-body-md font-medium text-neutral-900">{a.label}</span>
-                <ChevronRight
-                  size={18}
-                  className="ml-auto flex-none text-neutral-300 transition-colors group-hover:text-primary-700"
-                />
-              </Link>
-            ))}
-          </div>
-        </section>
 
         {/* 参加ステータス */}
         <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-5">
