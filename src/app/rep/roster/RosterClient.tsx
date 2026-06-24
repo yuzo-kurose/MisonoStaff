@@ -183,23 +183,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
       {groups.length === 0 ? (
         <Alert variant="info">対象の名簿がありません。</Alert>
       ) : (
-        <>
-          {/* イベントを選択：そのイベントの自所属の申込一覧を表示する。 */}
-          <div className="mb-4 max-w-md">
-            <label className="mb-1 block text-label-sm text-neutral-600">イベント</label>
-            <Select
-              value={selectedEvent?.eventId ?? ""}
-              onChange={(e) => setEventId(e.target.value)}
-            >
-              {byEvent.map((ev) => (
-                <option key={ev.eventId} value={ev.eventId}>
-                  {ev.eventName}（{jpDate(ev.eventDate)}）
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="space-y-8">
+        <div className="space-y-8">
           {byEvent.filter((ev) => ev.eventId === selectedEvent?.eventId).map((ev) => {
             // イベント内の全メンバーを所属付きで1リストに統合（所属→氏名でソート）。
             const flat = ev.apps
@@ -213,18 +197,30 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
             const fields = ev.apps[0]?.fields ?? [];
             return (
               <div key={ev.eventId}>
-                {/* カードの上：件数＋一括確定ボタン */}
-                <div className="mb-2 flex flex-wrap items-center justify-end gap-3">
-                  <span className="text-body-sm text-neutral-600">
-                    {flat.length}名（未確定 {applyingCount}名）
-                  </span>
-                  <Button
-                    size="md"
-                    disabled={pending || pendingAppIds.length === 0}
-                    onClick={() => confirmAll(pendingAppIds)}
-                  >
-                    未確定をまとめて確定する
-                  </Button>
+                {/* 一覧のすぐ上：イベント選択＋件数＋一括確定ボタン */}
+                <div className="mb-2 flex flex-wrap items-end justify-between gap-3">
+                  <div className="max-w-md flex-1">
+                    <label className="mb-1 block text-label-sm text-neutral-600">イベント</label>
+                    <Select value={selectedEvent?.eventId ?? ""} onChange={(e) => setEventId(e.target.value)}>
+                      {byEvent.map((e2) => (
+                        <option key={e2.eventId} value={e2.eventId}>
+                          {e2.eventName}（{jpDate(e2.eventDate)}）
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-3 pb-0.5">
+                    <span className="text-body-sm text-neutral-600">
+                      {flat.length}名（未確定 {applyingCount}名）
+                    </span>
+                    <Button
+                      size="md"
+                      disabled={pending || pendingAppIds.length === 0}
+                      onClick={() => confirmAll(pendingAppIds)}
+                    >
+                      未確定をまとめて確定する
+                    </Button>
+                  </div>
                 </div>
 
                 <Card>
@@ -291,8 +287,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
               </div>
             );
           })}
-          </div>
-        </>
+        </div>
       )}
     </AppShell>
   );
