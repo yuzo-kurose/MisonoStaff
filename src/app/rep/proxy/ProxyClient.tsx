@@ -255,55 +255,61 @@ export function ProxyClient({
           <p className="mb-3 mt-0.5 text-body-sm text-neutral-600">
             ここで選んだ拠点・部・イベントが、下の表のすべてのメンバーに適用されます。イベントごとに登録します。
           </p>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="登録先拠点" required hint="この拠点の名簿に登録されます">
-              {branches.length === 0 ? (
-                <p className="text-body-sm text-error-900">
-                  担当拠点がありません。管理者に拠点マスタでの代表設定を依頼してください。
-                </p>
-              ) : (
-                <Select className="max-w-[14rem]" value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start">
+            <div className="w-full sm:w-56">
+              <Field label="登録先拠点" required>
+                {branches.length === 0 ? (
+                  <p className="text-body-sm text-error-900">
+                    担当拠点がありません。管理者に拠点マスタでの代表設定を依頼してください。
+                  </p>
+                ) : (
+                  <Select value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
+                    <option value="" disabled>
+                      選択してください
+                    </option>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            </div>
+
+            <div className="w-full sm:w-44">
+              <Field label="部" required>
+                <Select value={division} onChange={(e) => setDivision(e.target.value)}>
                   <option value="" disabled>
                     選択してください
                   </option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
+                  {divisions.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
                     </option>
                   ))}
                 </Select>
-              )}
-            </Field>
+              </Field>
+            </div>
 
-            <Field label="部" required hint="この部として全メンバーを登録します">
-              <Select className="max-w-[14rem]" value={division} onChange={(e) => setDivision(e.target.value)}>
-                <option value="" disabled>
-                  選択してください
-                </option>
-                {divisions.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-
-            <Field label="参加イベント" required hint="登録するイベントを選択します">
-              {eventOptions.length === 0 ? (
-                <p className="text-body-sm text-neutral-600">公開中のイベントがありません。</p>
-              ) : (
-                <Select value={eventId} onChange={(e) => setEventId(e.target.value)}>
-                  <option value="" disabled>
-                    選択してください
-                  </option>
-                  {eventOptions.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.label}
+            <div className="w-full sm:w-80">
+              <Field label="参加イベント" required>
+                {eventOptions.length === 0 ? (
+                  <p className="text-body-sm text-neutral-600">公開中のイベントがありません。</p>
+                ) : (
+                  <Select value={eventId} onChange={(e) => setEventId(e.target.value)}>
+                    <option value="" disabled>
+                      選択してください
                     </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
+                    {eventOptions.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.label}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            </div>
           </div>
         </div>
 
