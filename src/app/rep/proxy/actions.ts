@@ -8,6 +8,15 @@ import type { FieldType } from "@/types/database";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
+/** メール本文に値を埋め込む前のHTMLエスケープ（HTMLインジェクション対策）。 */
+const escapeHtml = (s: string) =>
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 /** メールアドレスから既存ユーザーのIDを探す（なければ null）。 */
 async function findUserIdByEmail(admin: AdminClient, email: string): Promise<string | null> {
   const target = email.toLowerCase();
@@ -297,10 +306,10 @@ export async function registerProxyMember(
     .filter((n): n is string => Boolean(n));
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const html = `
-    <p>${input.name.trim()} 様</p>
+    <p>${escapeHtml(input.name.trim())} 様</p>
     <p>下記イベントの参加申込を代行で登録しました。内容をご確認ください。</p>
-    <ul>${eventNames.map((n) => `<li>${n}</li>`).join("")}</ul>
-    <p>マイページからご確認・変更いただけます：<a href="${appUrl}/mypage">マイページを開く</a></p>`;
+    <ul>${eventNames.map((n) => `<li>${escapeHtml(n)}</li>`).join("")}</ul>
+    <p>マイページからご確認・変更いただけます：<a href="${escapeHtml(appUrl)}/mypage">マイページを開く</a></p>`;
   try {
     await sendEmail({
       to: email,

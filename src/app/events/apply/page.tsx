@@ -4,6 +4,7 @@ import { Alert } from "@/components/ui/Alert";
 import { getEventWithForm } from "@/lib/queries/events";
 import { getMyProfile } from "@/lib/queries/me";
 import { getBranches } from "@/lib/queries/branches";
+import { divisions } from "@/lib/mock/data";
 import { getMyExistingApplications } from "./actions";
 import { ApplyClient, type ApplyEvent } from "./ApplyClient";
 
@@ -65,6 +66,8 @@ export default async function ApplyPage({
       profileName={profile?.name ?? ""}
       branches={branches.map((b) => ({ id: b.id, name: b.name }))}
       defaultBranchId={existingBranchId ?? profile?.branch_id ?? ""}
+      divisions={divisions.map((d) => ({ value: d.value, label: d.label }))}
+      defaultDivision={profile?.division ?? ""}
       existing={existing}
     />
   );

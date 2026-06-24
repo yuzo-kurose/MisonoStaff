@@ -41,12 +41,16 @@ export function ApplyClient({
   profileName,
   branches,
   defaultBranchId,
+  divisions,
+  defaultDivision,
   existing,
 }: {
   events: ApplyEvent[];
   profileName: string;
   branches: { id: string; name: string }[];
   defaultBranchId: string;
+  divisions: { value: string; label: string }[];
+  defaultDivision: string;
   existing: Record<string, ExistingApplication>;
 }) {
   const router = useRouter();
@@ -78,6 +82,7 @@ export function ApplyClient({
   const [single, setSingle] = useState<Record<string, string>>(seed.s);
   const [multi, setMulti] = useState<Record<string, string[]>>(seed.m);
   const [branchId, setBranchId] = useState(defaultBranchId);
+  const [division, setDivision] = useState(defaultDivision);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -127,8 +132,13 @@ export function ApplyClient({
       setError("所属（拠点）を選択してください。");
       return;
     }
+    if (!division) {
+      setError("部を選択してください。");
+      return;
+    }
     const input: ApplyInput = {
       branchId,
+      division,
       events: events.map((e) => ({
         eventId: e.id,
         values: e.fields.map((f) => {
@@ -163,12 +173,12 @@ export function ApplyClient({
 
       <Card className="mb-6">
         <CardTitle>申込者情報</CardTitle>
-        <dl className="mt-3 grid grid-cols-2 gap-y-2 text-body-md">
-          <dt className="text-neutral-600">氏名</dt>
-          <dd className="text-neutral-900">{profileName}</dd>
-        </dl>
-        <div className="mt-4 max-w-xs">
-          <Field label="所属（拠点）" required hint="この申込の所属を選択してください">
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div>
+            <p className="mb-1 text-label-sm text-neutral-600">氏名</p>
+            <p className="py-2.5 text-body-md text-neutral-900">{profileName}</p>
+          </div>
+          <Field label="所属（拠点）" required>
             <Select value={branchId} onChange={(e) => setBranchId(e.target.value)} required>
               <option value="" disabled>
                 選択してください
@@ -176,6 +186,18 @@ export function ApplyClient({
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="部" required>
+            <Select value={division} onChange={(e) => setDivision(e.target.value)} required>
+              <option value="" disabled>
+                選択してください
+              </option>
+              {divisions.map((d) => (
+                <option key={d.value} value={d.value}>
+                  {d.label}
                 </option>
               ))}
             </Select>

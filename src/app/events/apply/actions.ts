@@ -11,6 +11,7 @@ export type ApplyValue = {
 };
 export type ApplyInput = {
   branchId: string; // 申込時に選択する所属拠点
+  division?: string; // 申込時に選択する部（本人プロフィールに反映）
   events: { eventId: string; values: ApplyValue[] }[];
 };
 
@@ -49,6 +50,12 @@ export async function submitApplication(
     .eq("id", branchId)
     .maybeSingle();
   if (!branchRow) return { ok: false, error: "選択した所属（拠点）が不正です。" };
+
+  // 申込者情報の所属・部を本人プロフィールに反映（RLSで自分の行のみ更新）。
+  const validDivisions = ["student", "university", "adult", "mens", "general"];
+  const profilePatch: Record<string, string> = { branch_id: branchId };
+  if (input.division && validDivisions.includes(input.division)) profilePatch.division = input.division;
+  await supabase.from("profiles").update(profilePatch as never).eq("id", user.id);
 
   const eventIds = input.events.map((e) => e.eventId);
   if (eventIds.length === 0) return { ok: false, error: "イベントが選択されていません。" };
