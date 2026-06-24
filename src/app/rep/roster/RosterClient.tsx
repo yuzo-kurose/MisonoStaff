@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { Table, Th, Td } from "@/components/ui/Table";
+import { Select } from "@/components/ui/Field";
 import { MobileRecord } from "@/components/ui/MobileRecord";
 import { yen, jpDate } from "@/lib/format";
 import type { RosterGroup } from "@/lib/queries/roster";
@@ -31,6 +32,10 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
     }
     return [...m.values()].sort((a, b) => a.eventDate.localeCompare(b.eventDate));
   })();
+
+  // 選択中のイベント（既定は先頭＝開催日が近い順）。
+  const [eventId, setEventId] = useState(() => byEvent[0]?.eventId ?? "");
+  const selectedEvent = byEvent.find((e) => e.eventId === eventId) ?? byEvent[0];
 
   // イベント内の未確定を含む application をまとめて確定する。
   const confirmAll = (applicationIds: string[]) => {
@@ -178,8 +183,25 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
       {groups.length === 0 ? (
         <Alert variant="info">対象の名簿がありません。</Alert>
       ) : (
-        <div className="space-y-8">
-          {byEvent.map((ev) => {
+        <>
+          {/* イベントを選択：そのイベントの自所属の申込一覧を表示する。 */}
+          <Card className="mb-4">
+            <label className="mb-1 block text-label-sm text-neutral-600">イベントを選択</label>
+            <Select
+              value={selectedEvent?.eventId ?? ""}
+              onChange={(e) => setEventId(e.target.value)}
+              className="max-w-md"
+            >
+              {byEvent.map((ev) => (
+                <option key={ev.eventId} value={ev.eventId}>
+                  {ev.eventName}（{jpDate(ev.eventDate)}）
+                </option>
+              ))}
+            </Select>
+          </Card>
+
+          <div className="space-y-8">
+          {byEvent.filter((ev) => ev.eventId === selectedEvent?.eventId).map((ev) => {
             // イベント内の全メンバーを所属付きで1リストに統合（所属→氏名でソート）。
             const flat = ev.apps
               .flatMap((g) => g.members.map((m) => ({ ...m, branchName: g.branchName })))
@@ -262,7 +284,8 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
               </Card>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
     </AppShell>
   );
