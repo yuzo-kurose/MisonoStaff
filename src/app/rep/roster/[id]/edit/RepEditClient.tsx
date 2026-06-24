@@ -8,6 +8,7 @@ import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
+import { toast } from "@/components/ui/toast";
 import { updateParticipantValues, type ParticipantEdit } from "../../actions";
 
 type Cell = { value: string; optionIds: string[] };
@@ -44,10 +45,12 @@ export function RepEditClient({ data }: { data: ParticipantEdit }) {
       });
       const res = await updateParticipantValues(data.participantId, payload);
       if (res.ok) {
+        toast("申込内容を保存しました。");
         router.push("/rep/roster");
         router.refresh();
       } else {
         setMsg({ ok: false, text: `保存に失敗：${res.error}` });
+        toast(`保存に失敗：${res.error}`, "error");
       }
     });
   };

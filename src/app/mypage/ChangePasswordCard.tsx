@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { KeyRound } from "lucide-react";
 import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
+import { toast } from "@/components/ui/toast";
 import { Field, Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -64,6 +65,7 @@ export function ChangePasswordCard({ email }: { email: string }) {
     reset();
     setOpen(false);
     setDone(true);
+    toast("パスワードを変更しました。");
   }
 
   return (

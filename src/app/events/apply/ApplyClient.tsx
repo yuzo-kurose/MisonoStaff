@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { StickyActionBar } from "@/components/ui/StickyActionBar";
+import { toast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/Badge";
 import { yen, jpDate } from "@/lib/format";
 import {
@@ -156,8 +157,10 @@ export function ApplyClient({
       const res = await submitApplication(input);
       if (!res.ok) {
         setError(res.error ?? "申込に失敗しました。");
+        toast(res.error ?? "申込に失敗しました。", "error");
         return;
       }
+      toast("申込を受け付けました。");
       router.push("/mypage");
       router.refresh();
     });

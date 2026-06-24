@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
+import { toast } from "@/components/ui/toast";
 import { registerProxyMember, getProxyFields, type ProxyField } from "./actions";
 
 type EventOpt = { id: string; name: string; venue: string | null; date: string };
@@ -170,12 +171,11 @@ export function ProxyClient({
           if (errs.length < 3) errs.push(`${r.name || r.email || "?"}：${res.error ?? "失敗"}`);
         }
       }
-      setMsg({
-        ok: ng === 0,
-        text: `登録完了：成功 ${ok} 件 / 失敗 ${ng} 件${
-          errs.length ? `（例: ${errs.join(" / ")}）` : ""
-        }`,
-      });
+      const resultText = `登録完了：成功 ${ok} 件 / 失敗 ${ng} 件${
+        errs.length ? `（例: ${errs.join(" / ")}）` : ""
+      }`;
+      setMsg({ ok: ng === 0, text: resultText });
+      toast(resultText, ng === 0 ? "success" : "error");
       if (ng === 0) setRows(initialRows());
     });
   };

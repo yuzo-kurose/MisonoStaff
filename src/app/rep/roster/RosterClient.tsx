@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Card, PageHeader } from "@/components/ui/Card";
+import { toast } from "@/components/ui/toast";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
@@ -16,6 +17,11 @@ import { refundParticipant } from "@/app/admin/applications/actions";
 export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdmin: boolean }) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // 操作結果は画面位置に関わらずトーストでも通知する。
+  useEffect(() => {
+    if (msg) toast(msg.text, msg.ok ? "success" : "error");
+  }, [msg]);
 
   // イベント単位にまとめる（イベント → 拠点(application) → メンバー）。
   const byEvent = (() => {

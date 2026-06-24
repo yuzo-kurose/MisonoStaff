@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
+import { toast } from "@/components/ui/toast";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -50,10 +51,12 @@ export function ProfileCard({
     setLoading(false);
     if (!res.ok) {
       setError(res.error ?? "更新に失敗しました。");
+      toast(res.error ?? "更新に失敗しました。", "error");
       return;
     }
     setEditing(false);
     setDone(true);
+    toast("登録情報を更新しました。");
     router.refresh();
   }
 

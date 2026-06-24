@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronUp, ChevronDown, Trash2, Plus, X, GripVertical } from "lucide-react";
 import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { toast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { StickyActionBar } from "@/components/ui/StickyActionBar";
@@ -255,8 +256,10 @@ export function FormBuilderClient({
       if (res.ok) {
         setSavedSnapshot(JSON.stringify({ formName, fields }));
         setMsg({ ok: true, text: "フォームを保存しました。" });
+        toast("フォームを保存しました。");
       } else {
         setMsg({ ok: false, text: `保存に失敗しました：${res.error ?? "不明なエラー"}` });
+        toast(`保存に失敗しました：${res.error ?? "不明なエラー"}`, "error");
       }
     });
   };

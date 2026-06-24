@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { RouteProgress } from "@/components/layout/RouteProgress";
+import { Toaster } from "@/components/ui/toast";
 
 // フォントは游ゴシック体（システムフォント）。tailwind の font-sans でスタック指定。
 
@@ -19,6 +20,7 @@ export default function RootLayout({
       <body className="font-sans text-body-md antialiased">
         <RouteProgress />
         {children}
+        <Toaster />
       </body>
     </html>
   );
