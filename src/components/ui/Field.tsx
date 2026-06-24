@@ -92,9 +92,8 @@ export function Textarea({ className = "", ...props }: ComponentProps<"textarea"
 }
 
 export function Select({ className = "", ...props }: ComponentProps<"select">) {
-  // ネイティブの選択肢が小さくなりがちなので、一段大きめ(text-body-lg)にして読みやすくする。
-  // 高さは Input と揃える（controlHeight）。
-  return <select className={`${control} ${controlHeight} text-body-lg ${className}`} {...props} />;
+  // 文字サイズ・高さを Input／一覧と揃える（text-body-md・controlHeight）。
+  return <select className={`${control} ${controlHeight} text-body-md ${className}`} {...props} />;
 }
 
 /**
