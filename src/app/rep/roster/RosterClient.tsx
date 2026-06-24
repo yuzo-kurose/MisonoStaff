@@ -1,31 +1,21 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Users, CheckCircle2, Clock, CreditCard } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
-import { StatCard, StatGrid } from "@/components/ui/StatCard";
 import { Alert } from "@/components/ui/Alert";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { MobileRecord } from "@/components/ui/MobileRecord";
 import { yen, jpDate } from "@/lib/format";
 import type { RosterGroup } from "@/lib/queries/roster";
-import { confirmApplication, removeParticipant, resolveChangeRequest } from "./actions";
+import { confirmApplication, confirmParticipant, removeParticipant, resolveChangeRequest } from "./actions";
 import { refundParticipant } from "@/app/admin/applications/actions";
 
 export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdmin: boolean }) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
-
-  const all = groups.flatMap((g) => g.members);
-  const stat = {
-    total: all.length,
-    confirmed: all.filter((m) => m.status === "confirmed" || m.status === "paid").length,
-    applying: all.filter((m) => m.status === "applying").length,
-    unpaid: all.filter((m) => m.status === "confirmed").length,
-  };
 
   // イベント単位にまとめる（イベント → 拠点(application) → メンバー）。
   const byEvent = (() => {
@@ -60,16 +50,29 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
     });
   };
 
-  // 申込中／確定（未決済）のキャンセル。確定済みは確認ダイアログを出す。
-  const cancel = (participantId: string, status: string) => {
-    if (status === "confirmed" && !window.confirm("この参加者をキャンセルしますか？（未決済）")) return;
+  // 人単位の確定。
+  const confirmRow = (participantId: string) => {
+    setMsg(null);
+    startTransition(async () => {
+      const res = await confirmParticipant(participantId);
+      setMsg(
+        res.ok
+          ? { ok: true, text: "確定しました。確定者へ決済依頼を送信しました。" }
+          : { ok: false, text: `確定に失敗：${res.error}` },
+      );
+    });
+  };
+
+  // 削除（名簿から外す＝キャンセル）。決済前のキャンセルは名簿除外で完結。確認ダイアログを出す。
+  const remove = (participantId: string) => {
+    if (!window.confirm("この申込を名簿から削除（キャンセル）します。よろしいですか？")) return;
     setMsg(null);
     startTransition(async () => {
       const res = await removeParticipant(participantId);
       setMsg(
         res.ok
-          ? { ok: true, text: "キャンセルしました。" }
-          : { ok: false, text: `キャンセルに失敗：${res.error}` },
+          ? { ok: true, text: "削除（キャンセル）しました。" }
+          : { ok: false, text: `削除に失敗：${res.error}` },
       );
     });
   };
@@ -121,29 +124,42 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
       </span>
     ) : null;
 
-  // 1メンバーの操作ボタン（表・スマホカードで共用）。
+  // 1メンバーの操作（確定・削除）。表・スマホカードで共用。
   const memberAction = (m: RosterGroup["members"][number]) => {
-    if (m.status === "applying")
-      return (
-        <Button variant="ghost" size="md" onClick={() => cancel(m.participantId, m.status)}>
-          名簿から外す
-        </Button>
-      );
-    if (m.status === "confirmed")
-      return (
-        <Button variant="ghost" size="md" onClick={() => cancel(m.participantId, m.status)}>
-          キャンセル
-        </Button>
-      );
+    // 決済済みはキャンセル＝Stripe返金（管理者のみ）。
     if (m.status === "paid")
       return isAdmin ? (
-        <Button variant="ghost" size="md" onClick={() => refund(m.participantId)}>
-          キャンセル（返金）
+        <Button
+          variant="ghost"
+          size="md"
+          disabled={pending}
+          onClick={() => refund(m.participantId)}
+          className="text-error-900 hover:bg-error-100"
+        >
+          削除（返金）
         </Button>
       ) : (
         <span className="text-body-sm text-neutral-500">返金は管理者へ</span>
       );
-    return null;
+    // 申込中／確定（未決済）：確定（申込中のみ）＋削除。
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {m.status === "applying" && (
+          <Button size="md" disabled={pending} onClick={() => confirmRow(m.participantId)}>
+            確定
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="md"
+          disabled={pending}
+          onClick={() => remove(m.participantId)}
+          className="text-error-900 hover:bg-error-100"
+        >
+          削除
+        </Button>
+      </div>
+    );
   };
 
   return (
@@ -152,13 +168,6 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
         title="拠点名簿の確認・確定"
         description="申込締切（毎月25日）までに確定してください。確定後、各参加者へまとめて決済依頼が可能になります。"
       />
-
-      <StatGrid>
-        <StatCard icon={Users} label="申込者数" value={stat.total} variant="primary" />
-        <StatCard icon={CheckCircle2} label="確定" value={stat.confirmed} variant="success" />
-        <StatCard icon={Clock} label="未確定" value={stat.applying} variant="warning" />
-        <StatCard icon={CreditCard} label="未決済" value={stat.unpaid} variant="info" />
-      </StatGrid>
 
       {msg && (
         <div className="mb-4">
@@ -202,10 +211,10 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
 
                 {/* スマホ：カード表示 */}
                 <div className="space-y-2 md:hidden">
-                  {flat.map((m) => (
+                  {flat.map((m, i) => (
                     <MobileRecord
                       key={m.participantId}
-                      title={m.name}
+                      title={`${i + 1}. ${m.name}`}
                       badge={<StatusBadge status={m.status} />}
                       rows={[
                         { label: "所属", value: m.branchName || "—" },
@@ -222,6 +231,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                   <Table
                     head={
                       <tr>
+                        <Th>No</Th>
                         <Th>所属</Th>
                         <Th>氏名</Th>
                         <Th>金額</Th>
@@ -230,8 +240,11 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                       </tr>
                     }
                   >
-                    {flat.map((m) => (
+                    {flat.map((m, i) => (
                       <tr key={m.participantId}>
+                        <Td>
+                          <span className="tabular-nums text-neutral-500">{i + 1}</span>
+                        </Td>
                         <Td>{m.branchName || <span className="text-neutral-400">—</span>}</Td>
                         <Td>
                           {m.name}

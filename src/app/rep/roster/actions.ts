@@ -99,6 +99,86 @@ export async function confirmApplication(
   return { ok: true };
 }
 
+/** 1名分の決済依頼メールを送る（人単位の確定で使用）。 */
+async function sendPaymentRequestForParticipant(participantId: string) {
+  const admin = createAdminClient();
+  const { data: p } = await admin
+    .from("participants")
+    .select("id,user_id,total_amount,application_id")
+    .eq("id", participantId)
+    .single();
+  const part = p as unknown as {
+    id: string;
+    user_id: string;
+    total_amount: number;
+    application_id: string;
+  } | null;
+  if (!part) return;
+
+  const { data: appData } = await admin
+    .from("applications")
+    .select("event_id")
+    .eq("id", part.application_id)
+    .single();
+  const eventId = (appData as { event_id: string } | null)?.event_id;
+  const { data: ev } = await admin.from("events").select("name").eq("id", eventId ?? "").single();
+  const eventName = (ev as { name: string } | null)?.name ?? "イベント";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  const { data: u } = await admin.auth.admin.getUserById(part.user_id);
+  const email = u.user?.email;
+  if (!email) return;
+  const html = `
+    <p>神苑スタッフの参加申込が確定しました。下記より事前決済をお願いします。</p>
+    <p><strong>${eventName}</strong><br>参加費：${yen(part.total_amount)}</p>
+    <p><a href="${appUrl}/payment">▶ お支払いに進む</a></p>
+    <p>※ ログイン後、確定分をまとめて決済できます。</p>`;
+  const res = await sendEmail({
+    to: email,
+    subject: `【神苑スタッフ】${eventName} 参加費お支払いのお願い`,
+    html,
+  });
+  await admin.from("notification_logs").insert({
+    user_id: part.user_id,
+    participant_id: part.id,
+    type: "payment_request",
+    channel: "email",
+    destination: email,
+    status: res.sent ? "sent" : "failed",
+    sent_at: res.sent ? new Date().toISOString() : null,
+  } as never);
+}
+
+/**
+ * 人単位の確定：1名の participant を applying→confirmed にする。
+ * RLS により代表者（自拠点）/管理者のみ成功。確定者へ決済依頼メールを送る。
+ */
+export async function confirmParticipant(
+  participantId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "ログインが必要です。" };
+
+  const { data: updated, error } = await supabase
+    .from("participants")
+    .update({ status: "confirmed" } as never)
+    .eq("id", participantId)
+    .eq("status", "applying")
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!updated) return { ok: false, error: "確定できる申込ではありません（既に確定/決済済みの可能性）。" };
+
+  await sendPaymentRequestForParticipant(participantId);
+
+  revalidatePath("/rep/roster");
+  revalidatePath("/rep/payments");
+  return { ok: true };
+}
+
 /** 名簿から外す（個人をキャンセル扱い）。決済前のキャンセルは名簿除外で完結。 */
 export async function removeParticipant(
   participantId: string,
