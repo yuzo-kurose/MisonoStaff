@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
+import { Card, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
@@ -212,11 +212,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
             const applyingCount = flat.filter((m) => m.status === "applying").length;
             return (
               <Card key={ev.eventId}>
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <CardTitle>{ev.eventName}</CardTitle>
-                    <p className="text-body-sm text-neutral-600">{jpDate(ev.eventDate)}</p>
-                  </div>
+                <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
                   <div className="flex items-center gap-3">
                     <span className="text-body-sm text-neutral-600">
                       {flat.length}名（未確定 {applyingCount}名）
