@@ -185,12 +185,11 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
       ) : (
         <>
           {/* イベントを選択：そのイベントの自所属の申込一覧を表示する。 */}
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <label className="flex-none text-label-sm text-neutral-600">イベント</label>
+          <div className="mb-4 max-w-md">
+            <label className="mb-1 block text-label-sm text-neutral-600">イベント</label>
             <Select
               value={selectedEvent?.eventId ?? ""}
               onChange={(e) => setEventId(e.target.value)}
-              className="max-w-md"
             >
               {byEvent.map((ev) => (
                 <option key={ev.eventId} value={ev.eventId}>
@@ -210,6 +209,8 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
               .filter((g) => g.members.some((m) => m.status === "applying"))
               .map((g) => g.applicationId);
             const applyingCount = flat.filter((m) => m.status === "applying").length;
+            // 申込フォーム項目（列見出し）。同一イベントは同じフォームなので先頭から取得。
+            const fields = ev.apps[0]?.fields ?? [];
             return (
               <Card key={ev.eventId}>
                 <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
@@ -237,6 +238,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                       rows={[
                         { label: "所属", value: m.branchName || "—" },
                         { label: "金額", value: yen(m.amount) },
+                        ...fields.map((f) => ({ label: f.label, value: m.values[f.id] || "—" })),
                         ...(m.request ? [{ label: "依頼", value: reqInfo(m) }] : []),
                       ]}
                       action={memberAction(m) ?? undefined}
@@ -245,7 +247,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                 </div>
 
                 {/* PC：テーブル表示 */}
-                <div className="hidden md:block">
+                <div className="hidden overflow-x-auto md:block">
                   <Table
                     head={
                       <tr>
@@ -253,6 +255,9 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                         <Th>所属</Th>
                         <Th>氏名</Th>
                         <Th>金額</Th>
+                        {fields.map((f) => (
+                          <Th key={f.id}>{f.label}</Th>
+                        ))}
                         <Th>状態</Th>
                         <Th>操作</Th>
                       </tr>
@@ -269,6 +274,11 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                           {m.request && <div className="mt-1">{reqInfo(m)}</div>}
                         </Td>
                         <Td>{yen(m.amount)}</Td>
+                        {fields.map((f) => (
+                          <Td key={f.id}>
+                            {m.values[f.id] || <span className="text-neutral-400">—</span>}
+                          </Td>
+                        ))}
                         <Td>
                           <StatusBadge status={m.status} />
                         </Td>
