@@ -185,8 +185,8 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
       ) : (
         <>
           {/* イベントを選択：そのイベントの自所属の申込一覧を表示する。 */}
-          <Card className="mb-4">
-            <label className="mb-1 block text-label-sm text-neutral-600">イベントを選択</label>
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <label className="flex-none text-label-sm text-neutral-600">イベント</label>
             <Select
               value={selectedEvent?.eventId ?? ""}
               onChange={(e) => setEventId(e.target.value)}
@@ -198,7 +198,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                 </option>
               ))}
             </Select>
-          </Card>
+          </div>
 
           <div className="space-y-8">
           {byEvent.filter((ev) => ev.eventId === selectedEvent?.eventId).map((ev) => {

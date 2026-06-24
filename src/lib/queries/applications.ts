@@ -45,15 +45,26 @@ export async function getAdminApplications(): Promise<AppRow[]> {
   const names = (profs ?? []) as unknown as { id: string; name: string; department: string | null }[];
 
   const [{ data: evs }, { data: brs }] = await Promise.all([
-    supabase.from("events").select("id,name,event_date").in("id", [...new Set(appList.map((a) => a.event_id))]),
+    // 論理削除済みイベントは申込一覧に出さない。
+    supabase
+      .from("events")
+      .select("id,name,event_date")
+      .in("id", [...new Set(appList.map((a) => a.event_id))])
+      .is("deleted_at", null),
     supabase.from("branches").select("id,name").in("id", [...new Set(appList.map((a) => a.branch_id))]),
   ]);
   const events = (evs ?? []) as unknown as { id: string; name: string; event_date: string }[];
   const branches = (brs ?? []) as unknown as { id: string; name: string }[];
+  const validEventIds = new Set(events.map((e) => e.id));
 
   const today = new Date().toISOString().slice(0, 10);
 
-  return participants.map((p) => {
+  return participants
+    .filter((p) => {
+      const app = appList.find((a) => a.id === p.application_id);
+      return app && validEventIds.has(app.event_id);
+    })
+    .map((p) => {
     const app = appList.find((a) => a.id === p.application_id);
     const ev = events.find((e) => e.id === app?.event_id);
     const eventDate = ev?.event_date ?? "";

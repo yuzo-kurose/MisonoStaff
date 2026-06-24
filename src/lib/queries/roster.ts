@@ -74,12 +74,18 @@ export async function getRoster(): Promise<RosterGroup[]> {
 
   const [{ data: profs }, { data: evs }, { data: brs }] = await Promise.all([
     supabase.from("profiles").select("id,name").in("id", [...new Set(participants.map((p) => p.user_id))]),
-    supabase.from("events").select("id,name,event_date").in("id", [...new Set(apps.map((a) => a.event_id))]),
+    // 論理削除済みイベントは名簿に出さない。
+    supabase
+      .from("events")
+      .select("id,name,event_date")
+      .in("id", [...new Set(apps.map((a) => a.event_id))])
+      .is("deleted_at", null),
     supabase.from("branches").select("id,name").in("id", [...new Set(apps.map((a) => a.branch_id))]),
   ]);
   const names = (profs ?? []) as unknown as { id: string; name: string }[];
   const events = (evs ?? []) as unknown as { id: string; name: string; event_date: string }[];
   const branches = (brs ?? []) as unknown as { id: string; name: string }[];
+  const validEventIds = new Set(events.map((e) => e.id));
 
   // 未対応の変更依頼（編集/キャンセル）。テーブル未作成等は無視。
   const reqMap = new Map<string, { type: "edit" | "cancel"; message: string | null }>();
@@ -122,6 +128,6 @@ export async function getRoster(): Promise<RosterGroup[]> {
         members,
       };
     })
-    .filter((g) => g.members.length > 0)
+    .filter((g) => g.members.length > 0 && validEventIds.has(g.eventId))
     .sort((a, b) => a.eventDate.localeCompare(b.eventDate));
 }
