@@ -1,9 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPublishedEvents } from "@/lib/queries/events";
+import { getMyExistingApplications } from "./apply/actions";
 import { EventsClient, type EventListItem } from "./EventsClient";
 
 export default async function EventsPage() {
   const events = await getPublishedEvents();
+
+  // 申込済み状態（イベントID→状態）。取消は除外済み（getMyExistingApplications）。
+  const existing = await getMyExistingApplications(events.map((e) => e.id));
+  const appliedStatus: Record<string, string> = {};
+  for (const [eventId, app] of Object.entries(existing)) appliedStatus[eventId] = app.status;
 
   // 参加費（最低額）をフォーム定義から算出する。
   //  - option_based：その項目の最安選択肢の価格（なし=0 等）
@@ -48,5 +54,5 @@ export default async function EventsPage() {
     category: "神苑スタッフ",
   }));
 
-  return <EventsClient events={items} />;
+  return <EventsClient events={items} appliedStatus={appliedStatus} />;
 }

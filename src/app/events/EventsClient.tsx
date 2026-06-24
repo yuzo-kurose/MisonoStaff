@@ -1,11 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Search, SlidersHorizontal, MapPin, Users, Clock, CalendarX, ChevronRight, Ticket } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Users, Clock, CalendarX, Ticket } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -40,8 +39,13 @@ const fullDate = (iso: string) => {
 type Tab = "upcoming" | "past";
 type Sort = "date" | "deadline";
 
-export function EventsClient({ events }: { events: EventListItem[] }) {
-  const router = useRouter();
+export function EventsClient({
+  events,
+  appliedStatus = {},
+}: {
+  events: EventListItem[];
+  appliedStatus?: Record<string, string>;
+}) {
   const [tab, setTab] = useState<Tab>("upcoming");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("date");
@@ -179,12 +183,11 @@ export function EventsClient({ events }: { events: EventListItem[] }) {
           {list.map((e) => {
             const left = daysUntil(e.deadline);
             const closed = left < 0;
+            const applied = Boolean(appliedStatus[e.id]);
             return (
-              <button
+              <div
                 key={e.id}
-                type="button"
-                onClick={() => router.push(`/events/apply?ids=${e.id}`)}
-                className="flex w-full items-stretch gap-3 rounded-xl border border-neutral-200 bg-neutral-white p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md sm:gap-4"
+                className="flex w-full items-stretch gap-3 rounded-xl border border-neutral-200 bg-neutral-white p-3 text-left shadow-sm sm:gap-4"
               >
                 {/* サムネイル */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -235,8 +238,28 @@ export function EventsClient({ events }: { events: EventListItem[] }) {
                   </span>
                 </div>
 
-                <ChevronRight size={20} className="flex-none self-center text-neutral-300" />
-              </button>
+                {/* 操作：申込済みは申込ボタン非活性＋修正ボタン。未申込は申込ボタン（締切後は非活性）。 */}
+                <div className="flex flex-none flex-col items-stretch justify-center gap-2">
+                  {applied ? (
+                    <>
+                      <Button size="md" disabled>
+                        申込済み
+                      </Button>
+                      <ButtonLink href={`/events/apply?ids=${e.id}`} variant="secondary" size="md">
+                        修正
+                      </ButtonLink>
+                    </>
+                  ) : closed ? (
+                    <Button size="md" disabled>
+                      締切
+                    </Button>
+                  ) : (
+                    <ButtonLink href={`/events/apply?ids=${e.id}`} size="md">
+                      申込
+                    </ButtonLink>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
