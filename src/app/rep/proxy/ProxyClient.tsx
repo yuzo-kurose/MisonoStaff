@@ -227,14 +227,8 @@ export function ProxyClient({
     <AppShell role="representative">
       <PageHeader
         title="代行入力"
-        description="拠点メンバー分の申込をまとめて入力します。入力時にアカウントが発行されます。"
+        description="拠点メンバー分の申込をまとめて入力します。登録後、申込結果を本人へメールでお知らせします。"
       />
-
-      <div className="mb-6">
-        <Alert variant="info">
-          メールアドレス宛に初回ログイン（パスワード設定）の案内を送る想定です。金額は本人/代表者が後から入力・確定します。
-        </Alert>
-      </div>
 
       {msg && (
         <div className="mb-4">

@@ -3,7 +3,21 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth/guard";
+import { sendEmail } from "@/lib/email";
 import type { FieldType } from "@/types/database";
+
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+/** メールアドレスから既存ユーザーのIDを探す（なければ null）。 */
+async function findUserIdByEmail(admin: AdminClient, email: string): Promise<string | null> {
+  const target = email.toLowerCase();
+  for (let page = 1; ; page++) {
+    const { data } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    const u = data.users.find((x) => (x.email ?? "").toLowerCase() === target);
+    if (u) return u.id;
+    if (data.users.length < 200) return null;
+  }
+}
 
 export type ProxyValue = {
   fieldId: string;
@@ -96,11 +110,11 @@ function tempPassword(): string {
 
 /**
  * 代表者がメンバー1名分の申込を代行登録する。
- *  - service_role で確認済みアカウントを作成（created_via=proxy）
+ *  - メールから既存ユーザーを特定（アカウント登録済みでも可）。未登録なら確認済みアカウントを作成。
  *  - 選択イベントごとに application（拠点単位・open）を用意し participant を作成
+ *  - 登録後、本人へ申込結果メールを送信する（ベストエフォート）。
  *
- * 金額は申込フォームの回答が未入力のため 0 で作成し、本人/代表者が後から入力・確定する。
- * 代表者の所属拠点（profiles.branch_id）を申込先拠点として使う。
+ * 金額はフォーム回答から再計算する。登録先拠点（input.branchId）を申込先拠点として使う。
  */
 export async function registerProxyMember(
   input: ProxyMemberInput,
@@ -141,38 +155,42 @@ export async function registerProxyMember(
   }
 
   const admin = createAdminClient();
+  const email = input.email.trim();
 
-  // 1) アカウント作成（profiles は handle_new_user トリガが metadata から作成）
-  const { data: created, error: cErr } = await admin.auth.admin.createUser({
-    email: input.email.trim(),
-    password: tempPassword(),
-    email_confirm: true,
-    user_metadata: {
-      name: input.name.trim(),
-      kana: "",
-      branch_id: branchId,
-      division: input.division,
-      department: input.department?.trim() || "",
-    },
-  });
-  if (cErr) {
-    if (cErr.message.toLowerCase().includes("already"))
-      return { ok: false, error: "このメールアドレスは既に登録されています。" };
-    return { ok: false, error: cErr.message };
+  // 1) ユーザーを特定：既存（アカウント登録済み）なら再利用。無ければ確認済みアカウントを作成する。
+  //    ※ アカウント発行の有無に関わらず、登録後に申込結果メールを送る。
+  let userId = await findUserIdByEmail(admin, email);
+  if (!userId) {
+    const { data: created, error: cErr } = await admin.auth.admin.createUser({
+      email,
+      password: tempPassword(),
+      email_confirm: true,
+      user_metadata: {
+        name: input.name.trim(),
+        kana: "",
+        branch_id: branchId,
+        division: input.division,
+        department: input.department?.trim() || "",
+      },
+    });
+    if (cErr) {
+      // 競合（同時作成等）で既に存在する場合は再検索して再利用。
+      userId = await findUserIdByEmail(admin, email);
+      if (!userId) return { ok: false, error: cErr.message };
+    } else {
+      userId = created.user?.id ?? null;
+      if (userId) await admin.from("profiles").update({ created_via: "proxy" } as never).eq("id", userId);
+    }
   }
-  const newUserId = created.user?.id;
-  if (!newUserId) return { ok: false, error: "アカウント作成に失敗しました。" };
-
-  // created_via を proxy に
-  await admin.from("profiles").update({ created_via: "proxy" } as never).eq("id", newUserId);
+  if (!userId) return { ok: false, error: "ユーザーの特定に失敗しました。" };
 
   // フォーム回答を保存・金額計算するため、対象イベントの form_id と項目定義を取得する。
   const values = input.values ?? [];
   const { data: evRows } = await admin
     .from("events")
-    .select("id,form_id")
+    .select("id,form_id,name")
     .in("id", input.eventIds);
-  const eventForms = (evRows ?? []) as unknown as { id: string; form_id: string }[];
+  const eventForms = (evRows ?? []) as unknown as { id: string; form_id: string; name: string }[];
 
   const fieldIds = values.map((v) => v.fieldId);
   let fieldDefs: { id: string; form_id: string; price_calc_type: string; unit_price: number | null }[] = [];
@@ -256,7 +274,7 @@ export async function registerProxyMember(
       .from("participants")
       .insert({
         application_id: applicationId,
-        user_id: newUserId,
+        user_id: userId,
         status: "applying",
         total_amount: total,
         entered_via: "proxy",
@@ -271,6 +289,26 @@ export async function registerProxyMember(
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : "回答の保存に失敗しました。" };
     }
+  }
+
+  // 3) 申込結果をメールで本人に通知（ベストエフォート）。
+  const eventNames = input.eventIds
+    .map((id) => eventForms.find((e) => e.id === id)?.name)
+    .filter((n): n is string => Boolean(n));
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const html = `
+    <p>${input.name.trim()} 様</p>
+    <p>下記イベントの参加申込を代行で登録しました。内容をご確認ください。</p>
+    <ul>${eventNames.map((n) => `<li>${n}</li>`).join("")}</ul>
+    <p>マイページからご確認・変更いただけます：<a href="${appUrl}/mypage">マイページを開く</a></p>`;
+  try {
+    await sendEmail({
+      to: email,
+      subject: "【神苑スタッフ】参加申込（代行登録）のお知らせ",
+      html,
+    });
+  } catch {
+    // メール送信失敗は申込自体の成否に影響させない。
   }
 
   return { ok: true };
