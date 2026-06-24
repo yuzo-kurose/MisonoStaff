@@ -70,8 +70,11 @@ function ActiveEventList({ list }: { list: EventListItem[] }) {
 
 export default async function AdminEventsPage() {
   const [events, deletedEvents] = await Promise.all([getAdminEvents(), getDeletedEvents()]);
-  const published = events.filter((e) => e.status !== "draft"); // 公開中・締切
+  const today = new Date().toISOString().slice(0, 10);
   const drafts = events.filter((e) => e.status === "draft"); // 公開前（下書き）
+  const nonDraft = events.filter((e) => e.status !== "draft");
+  const published = nonDraft.filter((e) => e.event_date >= today); // 開催前・開催中
+  const ended = nonDraft.filter((e) => e.event_date < today); // 終了済（開催日が過去）
 
   return (
     <>
@@ -108,6 +111,21 @@ export default async function AdminEventsPage() {
           </p>
         )}
       </section>
+
+      {/* 終了済イベント（開催日が過去・折りたたみ・既定は閉じる） */}
+      {ended.length > 0 && (
+        <details className="mt-8 rounded-xl border border-neutral-200 bg-neutral-white">
+          <summary className="cursor-pointer px-4 py-3 text-heading-sm text-neutral-900">
+            終了済イベント（{ended.length}）
+          </summary>
+          <div className="border-t border-neutral-200 p-4">
+            <p className="mb-3 text-body-sm text-neutral-600">
+              開催日が過ぎたイベントです。内容の確認・コピーができます。
+            </p>
+            <ActiveEventList list={ended} />
+          </div>
+        </details>
+      )}
 
       {/* 削除済みイベント（折りたたみ・既定は閉じる） */}
       {deletedEvents.length > 0 && (
