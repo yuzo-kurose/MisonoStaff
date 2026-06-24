@@ -212,22 +212,22 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
             // 申込フォーム項目（列見出し）。同一イベントは同じフォームなので先頭から取得。
             const fields = ev.apps[0]?.fields ?? [];
             return (
-              <Card key={ev.eventId}>
-                <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-body-sm text-neutral-600">
-                      {flat.length}名（未確定 {applyingCount}名）
-                    </span>
-                    <Button
-                      size="md"
-                      disabled={pending || pendingAppIds.length === 0}
-                      onClick={() => confirmAll(pendingAppIds)}
-                    >
-                      未確定をまとめて確定する
-                    </Button>
-                  </div>
+              <div key={ev.eventId}>
+                {/* カードの上：件数＋一括確定ボタン */}
+                <div className="mb-2 flex flex-wrap items-center justify-end gap-3">
+                  <span className="text-body-sm text-neutral-600">
+                    {flat.length}名（未確定 {applyingCount}名）
+                  </span>
+                  <Button
+                    size="md"
+                    disabled={pending || pendingAppIds.length === 0}
+                    onClick={() => confirmAll(pendingAppIds)}
+                  >
+                    未確定をまとめて確定する
+                  </Button>
                 </div>
 
+                <Card>
                 {/* スマホ：カード表示 */}
                 <div className="space-y-2 md:hidden">
                   {flat.map((m, i) => (
@@ -287,7 +287,8 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                     ))}
                   </Table>
                 </div>
-              </Card>
+                </Card>
+              </div>
             );
           })}
           </div>
