@@ -30,7 +30,6 @@ type ProfileHit = { id: string; name: string; kana: string; checkin_token: strin
 export default function ReceptionPage() {
   const supabase = createClient();
   const [date, setDate] = useState(todayStr());
-  const [venue, setVenue] = useState("");
   const [token, setToken] = useState("");
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<ProfileHit[]>([]);
@@ -59,7 +58,6 @@ export default function ReceptionPage() {
     const { data, error } = await supabase.rpc("checkin_candidates", {
       p_token: t,
       p_date: date,
-      p_venue: venue || undefined,
     } as never);
     setLoading(false);
     if (error) {
@@ -154,12 +152,9 @@ export default function ReceptionPage() {
         参加者のQR（人単位）を読み取ると、その人が当日参加する全イベントをまとめて受付できます。
       </Alert>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 max-w-xs">
         <Field label="受付日">
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
-        <Field label="会場（任意で絞り込み）">
-          <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="本殿 など" />
         </Field>
       </div>
 
