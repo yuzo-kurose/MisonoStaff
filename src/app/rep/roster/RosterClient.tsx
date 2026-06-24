@@ -250,8 +250,8 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                   ))}
                 </div>
 
-                {/* PC：テーブル表示 */}
-                <div className="hidden overflow-x-auto md:block">
+                {/* PC：テーブル表示（セルは折り返さず、必要なら横スクロール） */}
+                <div className="hidden overflow-x-auto md:block [&_td]:whitespace-nowrap">
                   <Table
                     head={
                       <tr>
