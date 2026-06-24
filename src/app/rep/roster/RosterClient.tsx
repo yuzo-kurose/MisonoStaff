@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, PageHeader } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { Table, Th, Td } from "@/components/ui/Table";
@@ -146,7 +146,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
       ) : (
         <span className="text-body-sm text-neutral-500">返金は管理者へ</span>
       );
-    // 申込中／確定（未決済）：確定（申込中のみ）＋削除。
+    // 申込中／確定（未決済）：確定（申込中のみ）＋編集＋削除。
     return (
       <div className="flex flex-wrap items-center gap-1.5">
         {m.status === "applying" && (
@@ -154,6 +154,9 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
             確定
           </Button>
         )}
+        <ButtonLink href={`/rep/roster/${m.participantId}/edit`} variant="secondary" size="md">
+          編集
+        </ButtonLink>
         <Button
           variant="ghost"
           size="md"
@@ -170,7 +173,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
   return (
     <AppShell role="representative">
       <PageHeader
-        title="拠点名簿の確認・確定"
+        title="申込名簿"
         description="申込締切（毎月25日）までに確定してください。確定後、各参加者へまとめて決済依頼が可能になります。"
       />
 

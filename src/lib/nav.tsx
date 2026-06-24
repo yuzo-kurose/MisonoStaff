@@ -60,7 +60,7 @@ export const navGroupsByRole: Record<Role, NavGroup[]> = {
       label: "代表者メニュー",
       icon: ClipboardList,
       items: [
-        { href: "/rep/roster", label: "所属名簿", icon: ClipboardList },
+        { href: "/rep/roster", label: "申込名簿", icon: ClipboardList },
         { href: "/rep/proxy", label: "代行入力", icon: UserPlus },
         { href: "/rep/payments", label: "決済状況", icon: CreditCard },
       ],
