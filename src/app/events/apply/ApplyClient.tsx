@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
@@ -165,7 +164,7 @@ export function ApplyClient({
   };
 
   return (
-    <AppShell role="participant">
+    <>
       <PageHeader
         title="申込内容の入力"
         description="選択した複数イベントの内容をまとめて入力します。"
@@ -377,6 +376,6 @@ export function ApplyClient({
           {pending ? "送信中…" : "この内容で申し込む"}
         </Button>
       </StickyActionBar>
-    </AppShell>
+    </>
   );
 }

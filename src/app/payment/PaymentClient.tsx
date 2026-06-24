@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { ShieldCheck, CreditCard, CalendarCheck2 } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -36,7 +35,7 @@ export function PaymentClient({ items }: { items: PayItem[] }) {
   };
 
   return (
-    <AppShell role="participant">
+    <>
       <PageHeader
         title="まとめて決済"
         description="確定済みの複数イベントを1回でお支払いいただけます。"
@@ -101,6 +100,6 @@ export function PaymentClient({ items }: { items: PayItem[] }) {
           </p>
         </Card>
       )}
-    </AppShell>
+    </>
   );
 }

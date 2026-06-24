@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Alert } from "@/components/ui/Alert";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -18,19 +17,19 @@ export default async function UserHistoryPage({
 
   if (!data) {
     return (
-      <AppShell role="admin">
+      <>
         <Alert variant="error">ユーザーが見つからないか、権限がありません。</Alert>
         <div className="mt-4">
           <Link href="/admin/users" className="text-link underline">
             ユーザー一覧へ戻る
           </Link>
         </div>
-      </AppShell>
+      </>
     );
   }
 
   return (
-    <AppShell role="admin">
+    <>
       <PageHeader title={`申込履歴：${data.name}`} description="キャンセルを含む過去の申込をすべて表示します。" />
       <div className="mb-4">
         <Link href="/admin/users" className="text-link underline">
@@ -94,6 +93,6 @@ export default async function UserHistoryPage({
           </div>
         </>
       )}
-    </AppShell>
+    </>
   );
 }

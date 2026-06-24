@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/layout/AppShell";
 import { Card, PageHeader } from "@/components/ui/Card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,7 +44,7 @@ export default async function ReceptionListPage() {
   const rows = (data ?? []) as unknown as Row[];
 
   return (
-    <AppShell role="reception">
+    <>
       <PageHeader title="受付一覧" description="本日 受付が完了した方の一覧です（新しい順）。" />
       <Card>
         {error ? (
@@ -85,6 +84,6 @@ export default async function ReceptionListPage() {
           </>
         )}
       </Card>
-    </AppShell>
+    </>
   );
 }

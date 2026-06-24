@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -24,7 +23,7 @@ export function RepPaymentsClient({ rows }: { rows: PayRow[] }) {
   const unpaid = rows.filter((r) => r.status === "confirmed");
 
   return (
-    <AppShell role="representative">
+    <>
       <PageHeader
         title="決済状況"
         description={`確定 ${rows.length}名 / 未決済 ${unpaid.length}名`}
@@ -116,6 +115,6 @@ export function RepPaymentsClient({ rows }: { rows: PayRow[] }) {
           </div>
         </>
       )}
-    </AppShell>
+    </>
   );
 }

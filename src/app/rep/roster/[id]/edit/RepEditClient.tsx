@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
@@ -94,7 +93,7 @@ export function RepEditClient({ data }: { data: ParticipantEdit }) {
   };
 
   return (
-    <AppShell role="representative">
+    <>
       <Link
         href="/rep/roster"
         className="mb-3 inline-flex items-center gap-1 text-body-sm text-neutral-600 hover:text-neutral-900"
@@ -132,6 +131,6 @@ export function RepEditClient({ data }: { data: ParticipantEdit }) {
           </div>
         </div>
       </Card>
-    </AppShell>
+    </>
   );
 }

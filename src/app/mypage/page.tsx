@@ -13,7 +13,6 @@ import {
   Settings,
   MapPin,
 } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
@@ -80,7 +79,7 @@ export default async function MyPage() {
   ];
 
   return (
-    <AppShell role="participant">
+    <>
       <PageHeader title="マイページ" description={`${profile?.name ?? ""} さん（${branchName}）`} />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
@@ -258,6 +257,6 @@ export default async function MyPage() {
           )}
         </section>
       </div>
-    </AppShell>
+    </>
   );
 }

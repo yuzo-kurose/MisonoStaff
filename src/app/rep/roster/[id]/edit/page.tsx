@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AppShell } from "@/components/layout/AppShell";
 import { Alert } from "@/components/ui/Alert";
 import { getParticipantForEdit } from "../../actions";
 import { RepEditClient } from "./RepEditClient";
@@ -10,14 +9,14 @@ export default async function RepEditPage({ params }: { params: Promise<{ id: st
 
   if (!data) {
     return (
-      <AppShell role="representative">
+      <>
         <Alert variant="error">
           編集できる申込が見つかりません（権限がないか、削除された可能性があります）。
           <Link href="/rep/roster" className="ml-1 text-link underline">
             申込名簿へ戻る
           </Link>
         </Alert>
-      </AppShell>
+      </>
     );
   }
 

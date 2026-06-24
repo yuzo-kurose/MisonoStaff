@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { Search, SlidersHorizontal, MapPin, Users, Clock, CalendarX, Ticket } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Field";
@@ -95,7 +94,7 @@ export function EventsClient({
   );
 
   return (
-    <AppShell role="participant">
+    <>
       <PageHeader
         title="イベント一覧"
         description="参加したいイベントを選んで、詳細の確認や申し込みができます。"
@@ -264,6 +263,6 @@ export function EventsClient({
           })}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

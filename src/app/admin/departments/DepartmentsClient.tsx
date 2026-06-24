@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Check, X, Pencil, Trash2, Tags } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Field";
@@ -61,7 +60,7 @@ export function DepartmentsClient({ departments }: { departments: DeptRow[] }) {
   };
 
   return (
-    <AppShell role="admin">
+    <>
       <PageHeader
         title="部署マスタ"
         description="当日の配置先（部署）の選択肢を管理します。ここで追加した部署が登録・代行入力・マイページのプルダウンに表示されます。"
@@ -186,6 +185,6 @@ export function DepartmentsClient({ departments }: { departments: DeptRow[] }) {
           }
         />
       )}
-    </AppShell>
+    </>
   );
 }

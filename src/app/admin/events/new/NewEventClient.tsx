@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { EventForm, newEventInitial, type EventFormPayload } from "../EventForm";
 import { createEvent } from "./actions";
@@ -19,7 +18,7 @@ export function NewEventClient() {
   };
 
   return (
-    <AppShell role="admin">
+    <>
       <PageHeader
         title="イベントを作成"
         description="ステップ 1 / 2 ・ 開催情報を設定 → 作成後に申込フォームを編集します。"
@@ -32,6 +31,6 @@ export function NewEventClient() {
         cancelHref="/admin/events"
         onSubmit={onSubmit}
       />
-    </AppShell>
+    </>
   );
 }

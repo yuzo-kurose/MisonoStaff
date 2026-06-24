@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge, AttendanceBadge } from "@/components/ui/Badge";
@@ -145,7 +144,7 @@ export default function ReceptionPage() {
   ).length;
 
   return (
-    <AppShell role="reception">
+    <>
       <PageHeader title="当日受付" description="QRトークン または 氏名検索で対象者を呼び出します。" />
 
       <Alert variant="info">
@@ -276,6 +275,6 @@ export default function ReceptionPage() {
           )}
         </Card>
       </div>
-    </AppShell>
+    </>
   );
 }

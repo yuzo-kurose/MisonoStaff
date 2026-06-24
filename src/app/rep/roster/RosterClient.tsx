@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AppShell } from "@/components/layout/AppShell";
 import { Card, PageHeader } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
@@ -171,7 +170,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
   };
 
   return (
-    <AppShell role="representative">
+    <>
       <PageHeader
         title="申込名簿"
         description="申込締切（毎月25日）までに確定してください。確定後、各参加者へまとめて決済依頼が可能になります。"
@@ -292,6 +291,6 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
           })}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { UserPlus, Upload, Plus, Trash2 } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
@@ -224,7 +223,7 @@ export function ProxyClient({
   };
 
   return (
-    <AppShell role="representative">
+    <>
       <PageHeader
         title="代行入力"
         description="拠点メンバー分の申込をまとめて入力します。登録後、申込結果を本人へメールでお知らせします。"
@@ -457,6 +456,6 @@ export function ProxyClient({
           </ButtonLink>
         </div>
       </form>
-    </AppShell>
+    </>
   );
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { getMyProfile } from "@/lib/queries/me";
 import { getBranches } from "@/lib/queries/branches";
@@ -20,7 +19,7 @@ export default async function ProfileEditPage() {
   const branchOptions = branches.map((b) => ({ id: b.id, name: b.name }));
 
   return (
-    <AppShell role="participant">
+    <>
       <Link
         href="/mypage"
         className="mb-3 inline-flex items-center gap-1 text-body-sm text-neutral-600 hover:text-neutral-900"
@@ -43,6 +42,6 @@ export default async function ProfileEditPage() {
         {user && <HeroImageCard userId={user.id} currentUrl={profile?.hero_image_url ?? null} />}
         <ChangePasswordCard email={user?.email ?? ""} />
       </div>
-    </AppShell>
+    </>
   );
 }

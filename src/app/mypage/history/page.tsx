@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { Card, PageHeader } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Table, Th, Td } from "@/components/ui/Table";
@@ -12,7 +11,7 @@ export default async function HistoryPage() {
   const history = await getMyApplicationHistory();
 
   return (
-    <AppShell role="participant">
+    <>
       <Link
         href="/mypage"
         className="mb-3 inline-flex items-center gap-1 text-body-sm text-neutral-600 hover:text-neutral-900"
@@ -80,6 +79,6 @@ export default async function HistoryPage() {
           </div>
         </>
       )}
-    </AppShell>
+    </>
   );
 }

@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Check, X, Pencil, Building2 } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Field";
@@ -76,7 +75,7 @@ export function BranchesClient({
   );
 
   return (
-    <AppShell role="admin">
+    <>
       <PageHeader
         title="拠点マスタ"
         description="全国の拠点を登録・編集。拠点ごとに代表者を設定します（イベント横断で共有）。"
@@ -202,6 +201,6 @@ export function BranchesClient({
           }
         />
       )}
-    </AppShell>
+    </>
   );
 }

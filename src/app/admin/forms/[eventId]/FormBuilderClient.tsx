@@ -3,7 +3,6 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronUp, ChevronDown, Trash2, Plus, X, GripVertical } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardTitle, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -263,7 +262,7 @@ export function FormBuilderClient({
   };
 
   return (
-    <AppShell role="admin">
+    <>
       <PageHeader
         title={`フォーム編集：${eventName}`}
         description="この申込フォームはこのイベント専用です。項目の追加・並び替え・金額連動を設定できます。"
@@ -579,6 +578,6 @@ export function FormBuilderClient({
           {pending ? "保存中…" : "保存する"}
         </Button>
       </StickyActionBar>
-    </AppShell>
+    </>
   );
 }

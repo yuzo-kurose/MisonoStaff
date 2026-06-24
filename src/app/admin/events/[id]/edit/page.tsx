@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AppShell } from "@/components/layout/AppShell";
 import { Alert } from "@/components/ui/Alert";
 import { getEventWithForm } from "@/lib/queries/events";
 import { EditEventClient } from "./EditEventClient";
@@ -15,14 +14,14 @@ export default async function EditEventPage({
 
   if (!event) {
     return (
-      <AppShell role="admin">
+      <>
         <Alert variant="error">イベントが見つかりません。</Alert>
         <div className="mt-4">
           <Link href="/admin/events" className="text-link underline">
             イベント一覧へ戻る
           </Link>
         </div>
-      </AppShell>
+      </>
     );
   }
 

@@ -4,7 +4,6 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, History } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Field";
@@ -121,7 +120,7 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
   );
 
   return (
-    <AppShell role="admin">
+    <>
       <PageHeader
         title="全ユーザー一覧"
         description="ユーザーの権限を変更し、申込履歴を確認できます。"
@@ -196,6 +195,6 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
         ※「所属代表者」はメニュー権限です。どの拠点の名簿を扱うかは「拠点マスタ」で代表者に設定してください。
         権限名：{ROLE_OPTIONS.map((o) => o.label).join(" / ")}
       </p>
-    </AppShell>
+    </>
   );
 }

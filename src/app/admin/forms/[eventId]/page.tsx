@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AppShell } from "@/components/layout/AppShell";
 import { Alert } from "@/components/ui/Alert";
 import { getEventWithForm } from "@/lib/queries/events";
 import { getDepartmentNames } from "@/lib/queries/departments";
@@ -23,14 +22,14 @@ export default async function FormBuilderPage({
 
   if (!event) {
     return (
-      <AppShell role="admin">
+      <>
         <Alert variant="error">イベントが見つかりません。</Alert>
         <div className="mt-4">
           <Link href="/admin/forms" className="text-link underline">
             フォーム一覧へ戻る
           </Link>
         </div>
-      </AppShell>
+      </>
     );
   }
 

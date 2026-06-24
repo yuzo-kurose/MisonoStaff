@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/layout/AppShell";
 import { Card, PageHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { jpDate } from "@/lib/format";
@@ -10,7 +9,7 @@ export default async function AnnouncementsPage() {
     (new Date().getTime() - new Date(iso).getTime()) / 86400000 <= 7;
 
   return (
-    <AppShell role="participant">
+    <>
       <PageHeader title="神苑からのお知らせ" description="運営からの連絡事項を確認できます。" />
 
       <div className="max-w-3xl">
@@ -33,6 +32,6 @@ export default async function AnnouncementsPage() {
           )}
         </Card>
       </div>
-    </AppShell>
+    </>
   );
 }

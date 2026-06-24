@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -75,7 +74,7 @@ export default async function AdminEventsPage() {
   const drafts = events.filter((e) => e.status === "draft"); // 公開前（下書き）
 
   return (
-    <AppShell role="admin">
+    <>
       <PageHeader
         title="イベント管理"
         description="イベントの作成・編集・コピー・削除、締切・対象拠点・定員を管理します。"
@@ -162,6 +161,6 @@ export default async function AdminEventsPage() {
           </div>
         </details>
       )}
-    </AppShell>
+    </>
   );
 }

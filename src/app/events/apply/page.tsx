@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AppShell } from "@/components/layout/AppShell";
 import { Alert } from "@/components/ui/Alert";
 import { getEventWithForm } from "@/lib/queries/events";
 import { getMyProfile } from "@/lib/queries/me";
@@ -18,14 +17,14 @@ export default async function ApplyPage({
 
   if (eventIds.length === 0) {
     return (
-      <AppShell role="participant">
+      <>
         <Alert variant="info">
           イベントが選択されていません。
           <Link href="/events" className="ml-1 text-link underline">
             イベント一覧へ
           </Link>
         </Alert>
-      </AppShell>
+      </>
     );
   }
 

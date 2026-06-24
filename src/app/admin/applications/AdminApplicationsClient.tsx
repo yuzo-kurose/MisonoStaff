@@ -3,7 +3,6 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Search, RotateCcw, Inbox } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
 import { Card, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -111,7 +110,7 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
     ) : null;
 
   return (
-    <AppShell role="admin">
+    <>
       <PageHeader
         title="申込一覧"
         description="イベント・拠点・状態で絞り込み。人単位の明細を表示します。"
@@ -264,6 +263,6 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
           </div>
         </>
       )}
-    </AppShell>
+    </>
   );
 }
