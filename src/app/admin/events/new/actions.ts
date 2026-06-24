@@ -43,7 +43,7 @@ export async function createEvent(
     if (fErr) throw fErr;
     const formId = (formRow as { id: string }).id;
 
-    // 1-2) 固定項目（宿泊申込/往路/復路/食事申込）を投入。
+    // 1-2) 固定項目（参加費/往路/復路）を投入。
     //   いずれも単一選択・金額は選択肢ごと（option_based）。選択肢はイベントごとに後から設定。
     const fixedRows = FIXED_FIELDS.map((f, i) => ({
       form_id: formId,

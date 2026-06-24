@@ -508,7 +508,7 @@ export function FormBuilderClient({
             <Plus size={18} /> 予備項目を追加（{spareCount}/{MAX_SPARE_FIELDS}）
           </Button>
           <p className="text-body-sm text-neutral-500">
-            宿泊申込・往路・復路・食事申込は全イベント共通の固定項目です。選択肢と金額のみイベントごとに設定できます。
+            参加費・往路・復路は全イベント共通の固定項目です。選択肢と金額のみイベントごとに設定できます。
           </p>
         </div>
 
