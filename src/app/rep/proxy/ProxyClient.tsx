@@ -26,7 +26,10 @@ export function ProxyClient({
   divisions: DivisionOpt[];
   branches: { id: string; name: string }[];
 }) {
-  const [eventId, setEventId] = useState("");
+  // 初期表示から項目（列）を出すため、既定で先頭イベント（開催日が近い順）を選択する。
+  const [eventId, setEventId] = useState(
+    () => [...events].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))[0]?.id ?? "",
+  );
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
   const [division, setDivision] = useState("");
   const [rows, setRows] = useState<Row[]>(initialRows());
