@@ -177,7 +177,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
     <>
       <PageHeader
         title="申込名簿"
-        description="申込締切（毎月25日）までに確定してください。確定後、各参加者へまとめて決済依頼が可能になります。"
+        description="申込締切までに確定してください。確定後、各参加者へまとめて決済依頼が可能になります。"
       />
 
       {msg && (
