@@ -7,6 +7,7 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { toast } from "@/components/ui/toast";
+import { yen } from "@/lib/format";
 import { registerProxyMember, getProxyFields, type ProxyField } from "./actions";
 
 type EventOpt = { id: string; name: string; venue: string | null; date: string };
@@ -137,6 +138,22 @@ export function ProxyClient({
 
   // 入力済み（氏名 or メールがある）行のみ登録対象とする。
   const filledRows = rows.filter((r) => r.name.trim() || r.email.trim());
+
+  // 1行分の金額（サーバーの再計算と同じロジック：option_based＝選択肢価格、per_unit＝数量×単価）。
+  const rowAmount = (r: Row): number => {
+    let total = 0;
+    for (const f of fields) {
+      const c = cellOf(r, f.id);
+      if (f.priceCalcType === "per_unit") {
+        total += (Number(c.value) || 0) * (f.unitPrice ?? 0);
+      } else if (f.priceCalcType === "option_based") {
+        for (const oid of c.optionIds) total += f.options.find((o) => o.id === oid)?.price ?? 0;
+      }
+    }
+    return total;
+  };
+  // 登録対象（入力済み行）の合計金額。
+  const grandTotal = filledRows.reduce((s, r) => s + rowAmount(r), 0);
 
   const submitAll = () => {
     setMsg(null);
@@ -421,7 +438,13 @@ export function ProxyClient({
             ))}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-200 pt-4">
+          {/* 入力した内容の合計金額（登録対象の入力済み行の総額）。 */}
+          <div className="mt-4 flex items-center justify-end gap-3 border-t border-neutral-200 pt-4">
+            <span className="text-body-sm text-neutral-600">合計金額（{filledRows.length}名）</span>
+            <span className="text-heading-md font-bold tabular-nums text-primary-900">{yen(grandTotal)}</span>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <Button type="button" variant="secondary" disabled={pending} onClick={addRow}>
               <Plus size={18} /> 行を追加
             </Button>
