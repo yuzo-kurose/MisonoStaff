@@ -72,18 +72,20 @@ export function RepEditClient({ data }: { data: ParticipantEdit }) {
         </Select>
       );
     }
-    if (f.fieldType === "select_multiple") {
+    if (f.fieldType === "select_multiple" || f.fieldType === "radio") {
+      const isRadio = f.fieldType === "radio";
       return (
         <div className="space-y-1.5">
           {f.options.map((o) => (
-            <label key={o.id} className="flex items-center gap-2 text-body-md">
+            <label key={o.id} className="flex items-start gap-2 text-body-md">
               <input
-                type="checkbox"
-                className="h-4 w-4"
-                checked={c.optionIds.includes(o.id)}
-                onChange={() => toggleOpt(f.id, o.id)}
+                type={isRadio ? "radio" : "checkbox"}
+                name={isRadio ? `edit-${f.id}` : undefined}
+                className="mt-1 h-4 w-4 flex-none"
+                checked={isRadio ? c.optionIds[0] === o.id : c.optionIds.includes(o.id)}
+                onChange={() => (isRadio ? setVal(f.id, { optionIds: [o.id] }) : toggleOpt(f.id, o.id))}
               />
-              {o.label}
+              <span className="whitespace-pre-line">{o.label}</span>
             </label>
           ))}
         </div>

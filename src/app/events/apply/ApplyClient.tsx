@@ -34,7 +34,9 @@ export type ApplyEvent = {
   fields: ApplyField[];
 };
 
-const isSelect = (t: string) => t === "select_single" || t === "select_multiple";
+const isSelect = (t: string) => t === "select_single" || t === "select_multiple" || t === "radio";
+// 単一選択（プルダウン or ラジオ）
+const isSingleChoice = (t: string) => t === "select_single" || t === "radio";
 
 export function ApplyClient({
   events,
@@ -69,7 +71,7 @@ export function ApplyClient({
         if (!v) continue;
         const key = k(e.id, f.id);
         if (f.fieldType === "select_multiple") m[key] = v.optionIds;
-        else if (f.fieldType === "select_single") s[key] = v.optionIds[0] ?? "";
+        else if (isSingleChoice(f.fieldType)) s[key] = v.optionIds[0] ?? "";
         else t[key] = v.value ?? "";
       }
     }
@@ -146,7 +148,7 @@ export function ApplyClient({
           if (f.fieldType === "select_multiple") {
             return { fieldId: f.id, value: null, optionIds: multi[key] ?? [] };
           }
-          if (f.fieldType === "select_single") {
+          if (isSingleChoice(f.fieldType)) {
             return { fieldId: f.id, value: null, optionIds: single[key] ? [single[key]] : [] };
           }
           return { fieldId: f.id, value: text[key] ?? null, optionIds: [] };
@@ -282,15 +284,40 @@ export function ApplyClient({
                     <Field key={f.id} label={f.label} required={f.required}>
                       <div className="space-y-1.5">
                         {f.options.map((o) => (
-                          <label key={o.id} className="flex items-center gap-2 text-body-md">
+                          <label key={o.id} className="flex items-start gap-2 text-body-md">
                             <input
                               type="checkbox"
-                              className="h-4 w-4"
+                              className="mt-1 h-4 w-4 flex-none"
                               checked={(multi[key] ?? []).includes(o.id)}
                               onChange={() => toggleMulti(key, o.id)}
                             />
-                            {o.label}
-                            {o.price ? `（+${yen(o.price)}）` : ""}
+                            <span className="whitespace-pre-line">
+                              {o.label}
+                              {o.price ? `（+${yen(o.price)}）` : ""}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </Field>
+                  );
+                }
+                if (f.fieldType === "radio") {
+                  return (
+                    <Field key={f.id} label={f.label} required={f.required}>
+                      <div className="space-y-1.5">
+                        {f.options.map((o) => (
+                          <label key={o.id} className="flex items-start gap-2 text-body-md">
+                            <input
+                              type="radio"
+                              name={key}
+                              className="mt-1 h-4 w-4 flex-none"
+                              checked={single[key] === o.id}
+                              onChange={() => setSingle((s) => ({ ...s, [key]: o.id }))}
+                            />
+                            <span className="whitespace-pre-line">
+                              {o.label}
+                              {o.price ? `（+${yen(o.price)}）` : ""}
+                            </span>
                           </label>
                         ))}
                       </div>

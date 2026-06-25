@@ -11,6 +11,7 @@ export type FieldType =
   | "textarea"
   | "select_single"
   | "select_multiple"
+  | "radio"
   | "number"
   | "date";
 

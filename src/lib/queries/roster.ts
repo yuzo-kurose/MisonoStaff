@@ -150,7 +150,8 @@ export async function getRoster(): Promise<RosterGroup[]> {
   // participant_id → (form_field_id → 表示文字列)
   const valuesByParticipant = new Map<string, Record<string, string>>();
   for (const v of pvs) {
-    const isSelect = fieldType.get(v.form_field_id)?.startsWith("select");
+    const ft = fieldType.get(v.form_field_id);
+    const isSelect = ft?.startsWith("select") || ft === "radio";
     let display: string;
     if (isSelect) {
       display = pvos

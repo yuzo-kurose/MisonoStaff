@@ -32,13 +32,15 @@ const isFixed = (f: ClientField) => !!f.fieldKey;
 const typeOptions: { value: FieldType; label: string }[] = [
   { value: "text", label: "テキスト" },
   { value: "textarea", label: "複数行テキスト" },
-  { value: "select_single", label: "単一選択" },
+  { value: "select_single", label: "単一選択（プルダウン）" },
+  { value: "radio", label: "ラジオボタン（単一選択）" },
   { value: "select_multiple", label: "複数選択" },
   { value: "number", label: "数値" },
   { value: "date", label: "日付" },
 ];
 
-const isSelect = (t: FieldType) => t === "select_single" || t === "select_multiple";
+const isSelect = (t: FieldType) =>
+  t === "select_single" || t === "select_multiple" || t === "radio";
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 export function FormBuilderClient({
@@ -540,6 +542,25 @@ export function FormBuilderClient({
                     <Input type="number" disabled placeholder="0" />
                   ) : f.fieldType === "date" ? (
                     <Input type="date" disabled />
+                  ) : f.fieldType === "radio" || f.fieldType === "select_multiple" ? (
+                    <div className="space-y-1.5">
+                      {(f.options ?? []).map((o) => (
+                        <label key={o.id} className="flex items-start gap-2 text-body-md text-neutral-700">
+                          <input
+                            type={f.fieldType === "radio" ? "radio" : "checkbox"}
+                            disabled
+                            className="mt-1 h-4 w-4 flex-none"
+                          />
+                          <span className="whitespace-pre-line">
+                            {o.label}
+                            {o.price ? `（+${yen(o.price)}）` : ""}
+                          </span>
+                        </label>
+                      ))}
+                      {(f.options ?? []).length === 0 && (
+                        <p className="text-body-sm text-neutral-500">選択肢を追加してください。</p>
+                      )}
+                    </div>
                   ) : isSelect(f.fieldType) ? (
                     <Select disabled defaultValue="">
                       <option value="">選択してください</option>
