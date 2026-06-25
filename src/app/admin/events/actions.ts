@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getEventWithForm, getEventBranchIds } from "@/lib/queries/events";
@@ -92,6 +92,7 @@ export async function duplicateEvent(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/admin/events");
+  revalidateTag("events"); // 公開イベント一覧キャッシュを即時無効化
   redirect(`/admin/events/${newEventId}/edit`);
 }
 
@@ -138,6 +139,7 @@ export async function deleteEvent(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/admin/events");
+  revalidateTag("events"); // 公開イベント一覧キャッシュを即時無効化
   return { ok: true };
 }
 
@@ -163,5 +165,6 @@ export async function restoreEvent(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/admin/events");
+  revalidateTag("events"); // 公開イベント一覧キャッシュを即時無効化
   return { ok: true };
 }

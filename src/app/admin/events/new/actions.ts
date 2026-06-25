@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { FIXED_FIELDS } from "@/lib/forms/fixed";
 
@@ -75,6 +76,7 @@ export async function createEvent(
     if (eErr) throw eErr;
     const eventId = (evRow as { id: string }).id;
 
+    revalidateTag("events"); // 公開イベント一覧キャッシュを即時無効化
     return { ok: true, eventId };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "作成に失敗しました。" };

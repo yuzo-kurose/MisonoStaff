@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { AnnouncementLevel } from "@/types/database";
 
@@ -44,6 +44,7 @@ export async function createAnnouncement(input: AnnouncementInput): Promise<Resu
 
   revalidatePath("/admin/announcements");
   revalidatePath("/");
+  revalidateTag("announcements"); // 公開連絡事項キャッシュを即時無効化
   return { ok: true };
 }
 
@@ -66,6 +67,7 @@ export async function updateAnnouncement(id: string, input: AnnouncementInput): 
 
   revalidatePath("/admin/announcements");
   revalidatePath("/");
+  revalidateTag("announcements"); // 公開連絡事項キャッシュを即時無効化
   return { ok: true };
 }
 
@@ -77,5 +79,6 @@ export async function deleteAnnouncement(id: string): Promise<Result> {
 
   revalidatePath("/admin/announcements");
   revalidatePath("/");
+  revalidateTag("announcements"); // 公開連絡事項キャッシュを即時無効化
   return { ok: true };
 }

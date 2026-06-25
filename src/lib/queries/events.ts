@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { EventRow, FormField, FormFieldOption } from "@/types/database";
 
 /**
@@ -9,19 +11,28 @@ import type { EventRow, FormField, FormFieldOption } from "@/types/database";
  *    実接続後 `supabase gen types typescript` で自動生成に置き換えるとキャスト不要になる。
  */
 
-/** 公開中イベントを開催日順で取得 */
-export async function getPublishedEvents(): Promise<EventRow[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("status", "published")
-    .is("deleted_at", null)
-    .order("event_date", { ascending: true });
+/**
+ * 公開中イベントを開催日順で取得。
+ * 公開イベントは全ユーザー共通のため Next.js データキャッシュで共有する
+ * （60秒 / tag "events"）。管理者の作成・編集・削除時は revalidateTag("events")
+ * で即時無効化する（admin/events の各アクション）。
+ */
+export const getPublishedEvents = unstable_cache(
+  async (): Promise<EventRow[]> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("status", "published")
+      .is("deleted_at", null)
+      .order("event_date", { ascending: true });
 
-  if (error) throw error;
-  return (data ?? []) as unknown as EventRow[];
-}
+    if (error) throw error;
+    return (data ?? []) as unknown as EventRow[];
+  },
+  ["published-events"],
+  { revalidate: 60, tags: ["events"] },
+);
 
 export type EventListItem = EventRow & {
   formName: string;

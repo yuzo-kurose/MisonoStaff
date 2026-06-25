@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { EventFormPayload } from "../../EventForm";
 
@@ -40,5 +40,6 @@ export async function updateEvent(
 
   revalidatePath("/admin/events");
   revalidatePath(`/admin/events/${eventId}/edit`);
+  revalidateTag("events"); // 公開イベント一覧キャッシュを即時無効化
   return { ok: true };
 }
