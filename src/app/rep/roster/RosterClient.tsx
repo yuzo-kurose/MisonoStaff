@@ -242,7 +242,12 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                       rows={[
                         { label: "所属", value: m.branchName || "—" },
                         { label: "金額", value: yen(m.amount) },
-                        ...fields.map((f) => ({ label: f.label, value: m.values[f.id] || "—" })),
+                        ...fields.map((f) => ({
+                          label: f.label,
+                          value: (
+                            <span className="whitespace-pre-line">{m.values[f.id] || "—"}</span>
+                          ),
+                        })),
                         ...(m.request ? [{ label: "依頼", value: reqInfo(m) }] : []),
                       ]}
                       action={memberAction(m) ?? undefined}
@@ -250,8 +255,8 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                   ))}
                 </div>
 
-                {/* PC：テーブル表示（セルは折り返さず、必要なら横スクロール） */}
-                <div className="hidden overflow-x-auto md:block [&_td]:whitespace-nowrap">
+                {/* PC：テーブル表示（明示的な改行は反映・自動折り返しはしない／必要なら横スクロール） */}
+                <div className="hidden overflow-x-auto md:block [&_td]:whitespace-pre">
                   <Table
                     head={
                       <tr>

@@ -463,10 +463,13 @@ export function FormBuilderClient({
                     </div>
                     <div className="space-y-2">
                       {(f.options ?? []).map((o) => (
-                        <div key={o.id} className="flex items-center gap-2">
-                          <Input
+                        <div key={o.id} className="flex items-start gap-2">
+                          <Textarea
+                            rows={2}
                             value={o.label}
                             onChange={(e) => updateOption(f.id, o.id, { label: e.target.value })}
+                            className="!min-h-[2.75rem]"
+                            placeholder="選択肢（改行可）"
                           />
                           {f.priceCalc === "option_based" && (
                             <div className="w-28 flex-none">
