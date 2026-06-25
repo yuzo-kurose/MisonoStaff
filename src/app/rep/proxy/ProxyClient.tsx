@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { UserPlus, Upload, Plus, Trash2 } from "lucide-react";
-import { PageHeader } from "@/components/ui/Card";
+import { Card, PageHeader } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
@@ -246,6 +246,8 @@ export function ProxyClient({
           submitAll();
         }}
       >
+        {/* 登録条件とメンバー一覧を1つのカードにまとめ、間を区切り線で分ける */}
+        <Card>
         {/* 共通条件：登録先拠点・部・参加イベント（表の全行に適用） */}
         <div>
           <h2 className="text-heading-sm text-neutral-900">登録条件</h2>
@@ -310,8 +312,8 @@ export function ProxyClient({
           </div>
         </div>
 
-        {/* メンバー一覧表：1行＝1名。行ごとに 氏名／メール／フォーム項目 を入力 */}
-        <div>
+        {/* メンバー一覧表：1行＝1名。登録条件との間を区切り線で分ける */}
+        <div className="mt-6 border-t border-neutral-200 pt-6">
           <h2 className="text-heading-sm text-neutral-900">メンバー一覧</h2>
           <p className="mb-3 mt-0.5 text-body-sm text-neutral-600">
             1行に1名分を入力します。行を追加して複数名をまとめて登録できます。氏名またはメールが空の行は登録されません。
@@ -425,6 +427,7 @@ export function ProxyClient({
             </Button>
           </div>
         </div>
+        </Card>
 
         <div>
           <h2 className="text-heading-sm text-neutral-900">CSVで一括取り込み</h2>
