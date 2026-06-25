@@ -328,7 +328,7 @@ export function FormBuilderClient({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {isFixed(f) ? (
-                    <span className="text-neutral-300" title="固定項目（並び替え不可）">
+                    <span className="text-neutral-300" title="固定項目（削除・並び替え不可・編集は可能）">
                       <GripVertical size={18} />
                     </span>
                   ) : (
@@ -381,7 +381,6 @@ export function FormBuilderClient({
                 <Field label="項目名" required>
                   <Input
                     value={f.label}
-                    disabled={isFixed(f)}
                     onChange={(e) => update(f.id, { label: e.target.value })}
                   />
                 </Field>
@@ -390,7 +389,6 @@ export function FormBuilderClient({
                   <Field label="タイプ">
                     <Select
                       value={f.fieldType}
-                      disabled={isFixed(f)}
                       onChange={(e) => update(f.id, { fieldType: e.target.value as FieldType })}
                     >
                       {typeOptions.map((t) => (
@@ -403,7 +401,6 @@ export function FormBuilderClient({
                   <Field label="金額連動">
                     <Select
                       value={f.priceCalc}
-                      disabled={isFixed(f)}
                       onChange={(e) =>
                         update(f.id, { priceCalc: e.target.value as ClientField["priceCalc"] })
                       }
@@ -515,7 +512,8 @@ export function FormBuilderClient({
             <Plus size={18} /> 予備項目を追加（{spareCount}/{MAX_SPARE_FIELDS}）
           </Button>
           <p className="text-body-sm text-neutral-500">
-            参加費・往路・復路は全イベント共通の固定項目です。選択肢と金額のみイベントごとに設定できます。
+            参加費・往路・復路は全イベント共通の固定項目です。項目名・タイプ・金額連動・選択肢を
+            イベントごとに編集できます（削除・並び替えはできません）。
           </p>
         </div>
 
