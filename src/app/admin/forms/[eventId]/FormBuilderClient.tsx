@@ -43,6 +43,16 @@ const isSelect = (t: FieldType) =>
   t === "select_single" || t === "select_multiple" || t === "radio";
 const uid = () => Math.random().toString(36).slice(2, 9);
 
+// このタイプでは金額連動が成立しない（＝金額が計算されなくなる）かを判定する。
+//  - option_based は選択式（プルダウン/ラジオ/複数選択）が前提
+//  - per_unit は数値が前提
+const priceBreaksWithType = (
+  priceCalc: ClientField["priceCalc"],
+  fieldType: FieldType,
+) =>
+  (priceCalc === "option_based" && !isSelect(fieldType)) ||
+  (priceCalc === "per_unit" && fieldType !== "number");
+
 export function FormBuilderClient({
   eventName,
   formId,
@@ -389,7 +399,18 @@ export function FormBuilderClient({
                   <Field label="タイプ">
                     <Select
                       value={f.fieldType}
-                      onChange={(e) => update(f.id, { fieldType: e.target.value as FieldType })}
+                      onChange={(e) => {
+                        const newType = e.target.value as FieldType;
+                        // 金額連動が壊れるタイプ変更は確認する（誤って金額が0になるのを防ぐ）。
+                        if (
+                          priceBreaksWithType(f.priceCalc, newType) &&
+                          !window.confirm(
+                            "この項目は金額連動が設定されています。このタイプに変更すると金額が計算されなくなります。変更しますか？",
+                          )
+                        )
+                          return;
+                        update(f.id, { fieldType: newType });
+                      }}
                     >
                       {typeOptions.map((t) => (
                         <option key={t.value} value={t.value}>
@@ -401,9 +422,19 @@ export function FormBuilderClient({
                   <Field label="金額連動">
                     <Select
                       value={f.priceCalc}
-                      onChange={(e) =>
-                        update(f.id, { priceCalc: e.target.value as ClientField["priceCalc"] })
-                      }
+                      onChange={(e) => {
+                        const newCalc = e.target.value as ClientField["priceCalc"];
+                        // 金額連動を「なし」にする＝金額に反映されなくなるため確認する。
+                        if (
+                          f.priceCalc !== "none" &&
+                          newCalc === "none" &&
+                          !window.confirm(
+                            "金額連動を「なし」にすると、この項目は金額に反映されなくなります。変更しますか？",
+                          )
+                        )
+                          return;
+                        update(f.id, { priceCalc: newCalc });
+                      }}
                     >
                       <option value="none">なし</option>
                       <option value="per_unit">数値 × 単価</option>
