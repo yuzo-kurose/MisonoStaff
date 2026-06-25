@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   description: "神苑スタッフの参加申込・事前決済・受付管理",
 };
 
+// サーバー関数の実行リージョンを Supabase（Tokyo / ap-northeast-1）に合わせ、
+// DB・認証への往復遅延を最小化する。全ルートに適用される。
+export const preferredRegion = "hnd1";
+
 export default function RootLayout({
   children,
 }: {
