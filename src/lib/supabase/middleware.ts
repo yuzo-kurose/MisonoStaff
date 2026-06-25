@@ -53,9 +53,16 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
+  // 入口ゲート（早期リダイレクト）用の軽量チェック。
+  // getUser() は毎回 Supabase 認証サーバーへ往復するため全ナビゲーションが重くなる。
+  // ここはあくまで「未ログインを入口で弾く／権限のない区画を案内する」ためのUX用ゲートで、
+  // 実データは RLS、特権操作は各アクションの requireRole（= getUser で厳密検証）で守られている。
+  // そのため getSession()（クッキーのJWTをローカル検証、期限切れ時のみトークン更新の往復）で
+  // 十分高速に判定する。トークン更新は getSession でも行われ、上の setAll でクッキーへ反映される。
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
 
   const path = request.nextUrl.pathname;
   const needsAuth = PROTECTED.some((p) => path === p || path.startsWith(p + "/"));
