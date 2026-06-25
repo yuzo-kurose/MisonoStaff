@@ -70,7 +70,7 @@ export function ProfileCard({
     <CollapsibleCard title="登録情報">
       {!editing && (
         <div className="mb-3 flex justify-end">
-          <Button variant="ghost" onClick={() => { setDone(false); setEditing(true); }}>
+          <Button variant="secondary" size="sm" onClick={() => { setDone(false); setEditing(true); }}>
             <Pencil size={15} className="mr-1" />
             編集
           </Button>

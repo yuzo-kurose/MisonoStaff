@@ -72,7 +72,7 @@ export function ChangePasswordCard({ email }: { email: string }) {
     <CollapsibleCard title="パスワード">
       {!open && (
         <div className="mb-3 flex justify-end">
-          <Button variant="ghost" onClick={() => { setDone(false); setOpen(true); }}>
+          <Button variant="secondary" size="sm" onClick={() => { setDone(false); setOpen(true); }}>
             <KeyRound size={15} className="mr-1" />
             変更
           </Button>

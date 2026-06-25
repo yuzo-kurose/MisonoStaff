@@ -154,17 +154,12 @@ export function AnnouncementsClient({ items }: { items: Announcement[] }) {
                     <p className="mt-1 text-body-md text-neutral-900">{a.title}</p>
                     <p className="mt-0.5 line-clamp-2 text-body-sm text-neutral-600">{a.body}</p>
                   </div>
-                  <div className="flex flex-none gap-1">
-                    <Button variant="ghost" onClick={() => openEdit(a)} disabled={pending}>
+                  <div className="flex flex-none gap-1.5">
+                    <Button variant="secondary" size="sm" onClick={() => openEdit(a)} disabled={pending}>
                       <Pencil size={15} />
                       編集
                     </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => onDelete(a)}
-                      disabled={pending}
-                      className="text-error-900 hover:bg-error-100"
-                    >
+                    <Button variant="dangerOutline" size="sm" onClick={() => onDelete(a)} disabled={pending}>
                       <Trash2 size={15} />
                       削除
                     </Button>

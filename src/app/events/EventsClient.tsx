@@ -207,7 +207,7 @@ export function EventsClient({
                 {/* 内容 */}
                 <div className="min-w-0 flex-1">
                   <Badge variant="info">{e.category}</Badge>
-                  <p className="mt-1 truncate text-body-lg font-medium text-neutral-900">{e.name}</p>
+                  <p className="mt-1 truncate text-heading-sm text-neutral-900">{e.name}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-body-sm text-neutral-600">
                     {e.venue && (
                       <span className="inline-flex items-center gap-1">

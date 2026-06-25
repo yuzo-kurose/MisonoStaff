@@ -25,32 +25,27 @@ export function EventRowActions({ eventId, eventName }: { eventId: string; event
   }
 
   return (
-    <div className="flex justify-end gap-1">
+    <div className="flex flex-wrap justify-end gap-1.5">
       <Link href={`/admin/events/${eventId}/edit`}>
-        <Button variant="ghost">
+        <Button variant="secondary" size="sm">
           <Pencil size={15} />
           編集
         </Button>
       </Link>
       <Link href={`/admin/forms/${eventId}`}>
-        <Button variant="ghost">
+        <Button variant="secondary" size="sm">
           <FileText size={15} />
           フォーム
         </Button>
       </Link>
       <form action={duplicateEvent}>
         <input type="hidden" name="eventId" value={eventId} />
-        <Button type="submit" variant="ghost">
+        <Button type="submit" variant="secondary" size="sm">
           <Copy size={15} />
           コピー
         </Button>
       </form>
-      <Button
-        variant="ghost"
-        onClick={onDelete}
-        disabled={pending}
-        className="text-error-900 hover:bg-error-100"
-      >
+      <Button variant="dangerOutline" size="sm" onClick={onDelete} disabled={pending}>
         <Trash2 size={15} />
         {pending ? "削除中…" : "削除"}
       </Button>

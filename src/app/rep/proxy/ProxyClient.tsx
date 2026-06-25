@@ -320,7 +320,7 @@ export function ProxyClient({
           <div className="hidden md:block">
             <table className="w-full border-separate border-spacing-0 text-body-sm">
               <thead>
-                <tr className="text-left text-label-sm text-neutral-600">
+                <tr className="text-left text-label-md text-neutral-700">
                   <th className="w-10 px-2 pb-2 font-medium">#</th>
                   <th className="min-w-[8rem] px-2 pb-2 font-medium">氏名 *</th>
                   <th className="min-w-[12rem] px-2 pb-2 font-medium">メールアドレス *</th>
@@ -455,7 +455,7 @@ export function ProxyClient({
         </div>
 
         <div className="flex justify-end">
-          <ButtonLink href="/rep/roster" variant="ghost">
+          <ButtonLink href="/rep/roster" variant="secondary">
             名簿に戻る
           </ButtonLink>
         </div>

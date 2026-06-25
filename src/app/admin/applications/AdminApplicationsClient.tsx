@@ -96,10 +96,10 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
     r.status === "paid" ? (
       r.refundable ? (
         <Button
-          variant="ghost"
+          variant="dangerOutline"
+          size="sm"
           disabled={pending}
           onClick={() => refund(r.participantId, r.name)}
-          className="text-error-900 hover:bg-error-100"
         >
           <RotateCcw size={15} />
           返金
@@ -197,7 +197,8 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
           <span className="text-label-lg font-medium text-primary-900">{yen(paidTotal)}</span>
         </p>
         {(query || eventId || branchId || department || status) && (
-          <Button variant="ghost" onClick={resetFilters}>
+          <Button variant="secondary" size="sm" onClick={resetFilters}>
+            <RotateCcw size={14} />
             条件をリセット
           </Button>
         )}

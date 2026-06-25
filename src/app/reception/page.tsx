@@ -247,7 +247,7 @@ export default function ReceptionPage() {
                           </div>
                           <AttendanceBadge status={r.attendance_status} />
                           {!checkedIn && !cancelled && (
-                            <Button variant="ghost" size="md" onClick={() => dayCancel(r.participant_id)}>
+                            <Button variant="dangerOutline" size="sm" onClick={() => dayCancel(r.participant_id)}>
                               当日キャンセル
                             </Button>
                           )}

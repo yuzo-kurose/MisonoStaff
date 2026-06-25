@@ -442,8 +442,8 @@ export function FormBuilderClient({
                       <div className="flex flex-wrap gap-1">
                         {departments.length > 0 && (
                           <Button
-                            variant="ghost"
-                            size="md"
+                            variant="secondary"
+                            size="sm"
                             onClick={() => fillOptionsFromMaster(f.id, departments)}
                           >
                             部署マスタ
@@ -451,14 +451,14 @@ export function FormBuilderClient({
                         )}
                         {branchNames.length > 0 && (
                           <Button
-                            variant="ghost"
-                            size="md"
+                            variant="secondary"
+                            size="sm"
                             onClick={() => fillOptionsFromMaster(f.id, branchNames)}
                           >
                             拠点マスタ
                           </Button>
                         )}
-                        <Button variant="ghost" size="md" onClick={() => addOption(f.id)}>
+                        <Button variant="secondary" size="sm" onClick={() => addOption(f.id)}>
                           <Plus size={16} /> 追加
                         </Button>
                       </div>

@@ -25,7 +25,7 @@ export function RestoreEventButton({ eventId, eventName }: { eventId: string; ev
 
   return (
     <div className="flex justify-end">
-      <Button variant="ghost" onClick={onRestore} disabled={pending}>
+      <Button variant="secondary" size="sm" onClick={onRestore} disabled={pending}>
         <RotateCcw size={15} />
         {pending ? "復元中…" : "復元"}
       </Button>

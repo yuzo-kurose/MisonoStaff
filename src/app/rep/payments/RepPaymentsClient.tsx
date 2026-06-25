@@ -63,8 +63,8 @@ export function RepPaymentsClient({ rows }: { rows: PayRow[] }) {
                 action={
                   m.status === "confirmed" ? (
                     <Button
-                      variant="ghost"
-                      size="md"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setMsg(`${m.name} さんへリマインドを送信しました。`)}
                     >
                       リマインド
@@ -99,8 +99,8 @@ export function RepPaymentsClient({ rows }: { rows: PayRow[] }) {
                   <Td>
                     {m.status === "confirmed" ? (
                       <Button
-                        variant="ghost"
-                        size="md"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setMsg(`${m.name} さんへリマインドを送信しました。`)}
                       >
                         リマインド

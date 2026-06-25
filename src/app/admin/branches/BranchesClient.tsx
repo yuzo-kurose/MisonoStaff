@@ -155,8 +155,7 @@ export function BranchesClient({
                   {isEditing ? (
                     <>
                       <Button
-                        variant="ghost"
-                        size="md"
+                        size="sm"
                         disabled={pending}
                         onClick={() =>
                           run(
@@ -172,12 +171,12 @@ export function BranchesClient({
                       >
                         <Check size={16} /> 保存
                       </Button>
-                      <Button variant="ghost" size="md" aria-label="取消" onClick={() => setEditId(null)}>
+                      <Button variant="secondary" size="sm" aria-label="取消" onClick={() => setEditId(null)}>
                         <X size={16} />
                       </Button>
                     </>
                   ) : (
-                    <Button variant="ghost" size="md" onClick={() => startEdit(b)}>
+                    <Button variant="secondary" size="sm" onClick={() => startEdit(b)}>
                       <Pencil size={15} /> 編集
                     </Button>
                   )}

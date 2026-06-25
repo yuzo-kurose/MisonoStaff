@@ -128,7 +128,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
         {m.request.message && (
           <span className="text-body-sm text-neutral-600">{m.request.message}</span>
         )}
-        <Button variant="ghost" size="md" onClick={() => resolve(m.participantId)}>
+        <Button variant="secondary" size="sm" onClick={() => resolve(m.participantId)}>
           対応済み
         </Button>
       </span>
@@ -140,11 +140,10 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
     if (m.status === "paid")
       return isAdmin ? (
         <Button
-          variant="ghost"
-          size="md"
+          variant="dangerOutline"
+          size="sm"
           disabled={pending}
           onClick={() => refund(m.participantId)}
-          className="text-error-900 hover:bg-error-100"
         >
           削除（返金）
         </Button>
@@ -155,19 +154,18 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
     return (
       <div className="flex flex-wrap items-center gap-1.5">
         {m.status === "applying" && (
-          <Button size="md" disabled={pending} onClick={() => confirmRow(m.participantId)}>
+          <Button size="sm" disabled={pending} onClick={() => confirmRow(m.participantId)}>
             確定
           </Button>
         )}
-        <ButtonLink href={`/rep/roster/${m.participantId}/edit`} variant="secondary" size="md">
+        <ButtonLink href={`/rep/roster/${m.participantId}/edit`} variant="secondary" size="sm">
           編集
         </ButtonLink>
         <Button
-          variant="ghost"
-          size="md"
+          variant="dangerOutline"
+          size="sm"
           disabled={pending}
           onClick={() => remove(m.participantId)}
-          className="text-error-900 hover:bg-error-100"
         >
           削除
         </Button>

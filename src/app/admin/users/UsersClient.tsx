@@ -113,7 +113,7 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
 
   const historyButton = (u: AdminUserRow) => (
     <Link href={`/admin/users/${u.id}`}>
-      <Button variant="ghost" size="md">
+      <Button variant="secondary" size="sm">
         <History size={15} /> 申込履歴
       </Button>
     </Link>

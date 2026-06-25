@@ -132,8 +132,7 @@ export function DepartmentsClient({ departments }: { departments: DeptRow[] }) {
                     {isEditing ? (
                       <>
                         <Button
-                          variant="ghost"
-                          size="md"
+                          size="sm"
                           disabled={pending}
                           onClick={() =>
                             run(
@@ -145,21 +144,20 @@ export function DepartmentsClient({ departments }: { departments: DeptRow[] }) {
                         >
                           <Check size={16} /> 保存
                         </Button>
-                        <Button variant="ghost" size="md" aria-label="取消" onClick={() => setEditId(null)}>
+                        <Button variant="secondary" size="sm" aria-label="取消" onClick={() => setEditId(null)}>
                           <X size={16} />
                         </Button>
                       </>
                     ) : (
                       <>
-                        <Button variant="ghost" size="md" onClick={() => startEdit(d)}>
+                        <Button variant="secondary" size="sm" onClick={() => startEdit(d)}>
                           <Pencil size={15} /> 編集
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="md"
+                          variant="dangerOutline"
+                          size="sm"
                           disabled={pending}
                           onClick={() => onDelete(d)}
-                          className="text-error-900 hover:bg-error-100"
                         >
                           <Trash2 size={15} /> 削除
                         </Button>
