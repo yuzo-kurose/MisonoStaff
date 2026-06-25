@@ -41,6 +41,22 @@ export async function POST(req: NextRequest) {
     const groupId = session.metadata?.payment_group_id;
     if (!groupId) return NextResponse.json({ received: true });
 
+    // 冪等性：既に completed のグループは再処理しない。
+    // Stripe は配信失敗時にリトライし、同一イベントを重複配信することがある。
+    // 早期 return で重複時の無駄な更新・Stripe API 再取得（負荷）を避ける。
+    const { data: grp, error: grpErr } = await admin
+      .from("payment_groups")
+      .select("status")
+      .eq("id", groupId)
+      .single();
+    if (grpErr) {
+      // 一時障害の可能性。500 を返して Stripe にリトライさせる。
+      return NextResponse.json({ error: "group 取得失敗" }, { status: 500 });
+    }
+    if ((grp as unknown as { status: string } | null)?.status === "completed") {
+      return NextResponse.json({ received: true, skipped: "already completed" });
+    }
+
     // 実際に使われた支払い方法を PaymentIntent の charge から判定（types[0] は提示順で不正確）。
     let method: "paypay" | "credit_card" = "credit_card";
     if (session.payment_intent) {
@@ -57,8 +73,10 @@ export async function POST(req: NextRequest) {
     }
     const paidAt = new Date().toISOString();
 
+    // 各更新はエラーを検査し、失敗時は 500 を返して Stripe にリトライさせる。
+    // 更新はいずれも冪等（同じ status へ複数回更新しても結果は同じ）なので再実行で整合する。
     // payment_group 更新
-    await admin
+    const upGroup = await admin
       .from("payment_groups")
       .update({
         status: "completed",
@@ -67,26 +85,38 @@ export async function POST(req: NextRequest) {
         stripe_payment_intent_id: session.payment_intent,
       } as never)
       .eq("id", groupId);
+    if (upGroup.error) {
+      return NextResponse.json({ error: "payment_group 更新失敗" }, { status: 500 });
+    }
 
     // payments（按分）→ completed、participants → paid
-    const { data: pays } = await admin
+    const { data: pays, error: paysErr } = await admin
       .from("payments")
       .select("participant_id")
       .eq("payment_group_id", groupId);
+    if (paysErr) {
+      return NextResponse.json({ error: "payments 取得失敗" }, { status: 500 });
+    }
     const partIds = ((pays ?? []) as unknown as { participant_id: string }[]).map(
       (p) => p.participant_id,
     );
 
-    await admin
+    const upPays = await admin
       .from("payments")
       .update({ status: "completed" } as never)
       .eq("payment_group_id", groupId);
+    if (upPays.error) {
+      return NextResponse.json({ error: "payments 更新失敗" }, { status: 500 });
+    }
 
     if (partIds.length) {
-      await admin
+      const upParts = await admin
         .from("participants")
         .update({ status: "paid" } as never)
         .in("id", partIds);
+      if (upParts.error) {
+        return NextResponse.json({ error: "participants 更新失敗" }, { status: 500 });
+      }
     }
   }
 
