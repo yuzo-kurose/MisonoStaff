@@ -167,3 +167,28 @@ export function selectableViews(role: string | undefined): Role[] {
 export function navItemsForView(view: Role): NavItem[] {
   return navByRole[view] ?? [];
 }
+
+/**
+ * 現在のパスに対応する画面タイトル（上部ヘッダーに表示）。
+ * - メニューにある画面はメニュー名と一致させ、現在地を分かりやすくする。
+ * - メニューに無いサブ画面（編集・詳細など）は個別に補う（より具体的なパス優先）。
+ */
+export function pageTitleFor(pathname: string): string {
+  const overrides: [string, string][] = [
+    ["/mypage/profile", "プロフィール編集"],
+    ["/rep/roster/", "申込内容の編集"],
+    ["/admin/events/new", "イベントを作成"],
+    ["/admin/events/", "イベントを編集"],
+    ["/admin/forms/", "申込フォーム編集"],
+    ["/admin/users/", "ユーザー詳細"],
+    ["/events/apply", "申込内容の入力"],
+    ["/payment", "まとめて決済"],
+  ];
+  for (const [prefix, title] of overrides) {
+    if (pathname === prefix || pathname.startsWith(prefix)) return title;
+  }
+  const match = allNavItems
+    .filter((it) => pathname === it.href || pathname.startsWith(it.href + "/"))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  return match?.label ?? "神苑スタッフ";
+}

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, ChevronDown, Menu, X, Bell, UserCog } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { selectableViews, navItemsForView, roleLabels, type Role } from "@/lib/nav";
+import { selectableViews, navItemsForView, pageTitleFor, roleLabels, type Role } from "@/lib/nav";
 import { Select } from "@/components/ui/Field";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -59,6 +59,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
 
   const initial = (who ?? "").trim().charAt(0) || "ス";
   const roleLabel = roleLabels[view];
+  const pageTitle = pageTitleFor(pathname);
 
   // サイドバーの中身（PC・モバイルドロワーで共用）。
   const sidebarBody = (onNavigate?: () => void) => (
@@ -162,10 +163,12 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
           >
             <Menu size={22} />
           </button>
-          <Link href="/mypage" className="flex items-center gap-2 md:hidden">
-            <Image src="/mark.png" alt="神慈秀明会" width={24} height={24} priority />
-            <span className="text-heading-sm font-bold text-neutral-900">神苑スタッフ</span>
-          </Link>
+
+          {/* ページタイトル（現在地のメニュー名と一致） */}
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="hidden h-6 w-1.5 flex-none rounded-full bg-primary-700 md:block" aria-hidden />
+            <h1 className="truncate text-heading-md text-neutral-900">{pageTitle}</h1>
+          </div>
 
           <div className="ml-auto flex items-center gap-1.5">
             <Link

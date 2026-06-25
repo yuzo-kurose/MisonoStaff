@@ -55,27 +55,27 @@ export function SectionCard({
   );
 }
 
+/**
+ * ページ見出し（タイトルは上部ヘッダーに表示するため、ここでは説明文とアクションのみ）。
+ * `title` は呼び出し側の互換のため受け取るが描画しない（ヘッダー側で表示）。
+ * 説明・アクションのどちらも無ければ何も描画しない。
+ */
 export function PageHeader({
-  title,
   description,
   action,
 }: {
-  title: string;
+  title?: string;
   description?: string;
   action?: ReactNode;
 }) {
+  if (!description && !action) return null;
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div className="flex items-start gap-3">
-        {/* 見出しアクセント（全ページ共通の視認性・リッチ感） */}
-        <span className="mt-1 h-7 w-1.5 flex-none rounded-full bg-primary-700" aria-hidden />
-        <div>
-          <h1 className="text-heading-xl text-neutral-900">{title}</h1>
-          {description && (
-            <p className="mt-1 text-body-sm text-neutral-700">{description}</p>
-          )}
-        </div>
-      </div>
+      {description ? (
+        <p className="max-w-2xl text-body-sm text-neutral-700">{description}</p>
+      ) : (
+        <span />
+      )}
       {action}
     </div>
   );
