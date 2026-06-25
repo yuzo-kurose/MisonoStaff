@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, ChevronDown, Menu, X, Bell, UserCog } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { selectableViews, navItemsForView, pageTitleFor, roleLabels, type Role } from "@/lib/nav";
+import { HeaderMetaContext } from "@/components/layout/header-meta";
 import { Select } from "@/components/ui/Field";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -39,6 +40,8 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
 
   const [menuOpen, setMenuOpen] = useState(false); // スマホ：ドロワー
   const [accountOpen, setAccountOpen] = useState(false);
+  const [headerDesc, setHeaderDesc] = useState<string | null>(null); // ページ補足説明
+  const headerMeta = useMemo(() => ({ setDescription: setHeaderDesc }), []);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -127,6 +130,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
   );
 
   return (
+    <HeaderMetaContext.Provider value={headerMeta}>
     <div className="min-h-screen bg-neutral-50">
       {/* PC：固定サイドバー */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-neutral-200 bg-neutral-white md:flex">
@@ -154,7 +158,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
       {/* メイン領域 */}
       <div className="flex min-h-screen flex-col md:pl-60">
         {/* 上部バー */}
-        <header className="sticky top-0 z-20 flex h-16 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-4">
+        <header className="sticky top-0 z-20 flex min-h-16 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-4 py-2.5">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
@@ -164,10 +168,15 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
             <Menu size={22} />
           </button>
 
-          {/* ページタイトル（現在地のメニュー名と一致） */}
-          <div className="flex min-w-0 items-center gap-2.5">
-            <span className="hidden h-6 w-1.5 flex-none rounded-full bg-primary-700 md:block" aria-hidden />
-            <h1 className="truncate text-heading-md text-neutral-900">{pageTitle}</h1>
+          {/* ページタイトル（現在地のメニュー名と一致）＋補足説明 */}
+          <div className="flex min-w-0 items-start gap-2.5">
+            <span className="mt-1 hidden h-5 w-1.5 flex-none rounded-full bg-primary-700 md:block" aria-hidden />
+            <div className="min-w-0">
+              <h1 className="truncate text-heading-md leading-tight text-neutral-900">{pageTitle}</h1>
+              {headerDesc && (
+                <p className="mt-0.5 line-clamp-2 text-body-sm leading-snug text-neutral-600">{headerDesc}</p>
+              )}
+            </div>
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">
@@ -230,5 +239,6 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
         </main>
       </div>
     </div>
+    </HeaderMetaContext.Provider>
   );
 }
