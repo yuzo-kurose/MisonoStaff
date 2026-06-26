@@ -13,7 +13,7 @@ export function QrCard({ token }: { token: string }) {
 
   return (
     <div className="rounded-2xl border border-neutral-200 border-t-[3px] border-t-primary-700 bg-neutral-white p-5 shadow-sm">
-      <div className="mb-1 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2 border-b border-accent-700 pb-3">
         <span className="grid h-8 w-8 flex-none place-items-center rounded-lg bg-primary-50 text-primary-700">
           <QrCode size={17} />
         </span>

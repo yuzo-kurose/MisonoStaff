@@ -72,7 +72,7 @@ export default async function MyPage() {
 
         {/* お知らせ */}
         <section className="rounded-2xl border border-neutral-200 border-t-[3px] border-t-accent-700 bg-neutral-white p-5 shadow-sm lg:col-span-12">
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-3 flex items-center justify-between border-b border-accent-700 pb-3">
             <h2 className="flex items-center gap-2 text-heading-sm text-neutral-900">
               <span className="grid h-8 w-8 flex-none place-items-center rounded-lg bg-accent-50 text-accent-700">
                 <Bell size={17} />
@@ -112,7 +112,7 @@ export default async function MyPage() {
 
         {/* 申込中・参加予定のイベント */}
         <section className="rounded-2xl border border-neutral-200 border-t-[3px] border-t-info-900 bg-neutral-white p-5 shadow-sm lg:col-span-7">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between border-b border-accent-700 pb-3">
             <h2 className="flex items-center gap-2 text-heading-sm text-neutral-900">
               <span className="grid h-8 w-8 flex-none place-items-center rounded-lg bg-info-100 text-info-900">
                 <CalendarDays size={17} />
