@@ -44,6 +44,7 @@ export default async function ApplyPage({
       name: e.name,
       eventDate: e.event_date,
       venue: e.venue,
+      description: e.formDescription,
       fields: e.fields.map((f) => ({
         id: f.id,
         label: f.label,

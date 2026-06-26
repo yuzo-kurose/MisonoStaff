@@ -41,12 +41,13 @@ export async function saveForm(
   formId: string,
   formName: string,
   fields: SaveField[],
+  formDescription?: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = await createClient();
 
   const { error: nameErr } = await supabase
     .from("forms")
-    .update({ name: formName } as never)
+    .update({ name: formName, description: formDescription?.trim() || null } as never)
     .eq("id", formId);
   if (nameErr) return { ok: false, error: nameErr.message };
 

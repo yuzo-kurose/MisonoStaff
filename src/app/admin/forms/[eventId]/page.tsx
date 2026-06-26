@@ -54,6 +54,7 @@ export default async function FormBuilderPage({
       eventName={event.name}
       formId={event.form_id}
       formName={event.formName}
+      formDescription={event.formDescription}
       initialFields={initialFields}
       departments={departments}
       branchNames={branchNames}

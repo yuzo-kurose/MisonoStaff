@@ -31,6 +31,7 @@ export type ApplyEvent = {
   name: string;
   eventDate: string;
   venue: string | null;
+  description: string | null; // 申込フォームの説明文
   fields: ApplyField[];
 };
 
@@ -234,6 +235,11 @@ export function ApplyClient({
               </div>
               <span className="text-body-sm text-neutral-600">{jpDate(e.eventDate)}</span>
             </div>
+            {e.description && (
+              <p className="mt-3 whitespace-pre-line rounded-lg border border-info-100 bg-info-100/40 px-3 py-2.5 text-body-sm text-neutral-700">
+                {e.description}
+              </p>
+            )}
             {isLocked && (
               <p className="mt-3 rounded-lg bg-neutral-50 px-3 py-2 text-body-sm text-neutral-600">
                 確定済みのため直接編集できません。変更・取消は下のボタンから代表者へ依頼してください。

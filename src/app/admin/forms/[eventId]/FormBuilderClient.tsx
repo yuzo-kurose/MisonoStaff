@@ -57,6 +57,7 @@ export function FormBuilderClient({
   eventName,
   formId,
   formName: initialName,
+  formDescription: initialDescription,
   initialFields,
   departments,
   branchNames,
@@ -65,6 +66,7 @@ export function FormBuilderClient({
   eventName: string;
   formId: string;
   formName: string;
+  formDescription: string | null;
   initialFields: ClientField[];
   departments: string[];
   branchNames: string[];
@@ -74,16 +76,17 @@ export function FormBuilderClient({
   const [fields, setFields] = useState<ClientField[]>(initialFields);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [formName, setFormName] = useState(initialName);
+  const [formDescription, setFormDescription] = useState(initialDescription ?? "");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
   // 保存済みの内容と現在の内容を比較して「未保存の変更」を検出する。
   const [savedSnapshot, setSavedSnapshot] = useState(() =>
-    JSON.stringify({ formName: initialName, fields: initialFields }),
+    JSON.stringify({ formName: initialName, formDescription: initialDescription ?? "", fields: initialFields }),
   );
   const dirty = useMemo(
-    () => JSON.stringify({ formName, fields }) !== savedSnapshot,
-    [formName, fields, savedSnapshot],
+    () => JSON.stringify({ formName, formDescription, fields }) !== savedSnapshot,
+    [formName, formDescription, fields, savedSnapshot],
   );
 
   // 予備項目数（固定項目は除く）と、予備項目の開始位置。
@@ -264,9 +267,9 @@ export function FormBuilderClient({
   const onSave = () => {
     setMsg(null);
     startTransition(async () => {
-      const res = await saveForm(formId, formName, fieldsSavePayload());
+      const res = await saveForm(formId, formName, fieldsSavePayload(), formDescription);
       if (res.ok) {
-        setSavedSnapshot(JSON.stringify({ formName, fields }));
+        setSavedSnapshot(JSON.stringify({ formName, formDescription, fields }));
         setMsg({ ok: true, text: "フォームを保存しました。" });
         toast("フォームを保存しました。");
       } else {
@@ -289,9 +292,19 @@ export function FormBuilderClient({
         </div>
       )}
 
-      <div className="mb-6 max-w-md">
-        <Field label="フォーム名" required>
-          <Input value={formName} onChange={(e) => setFormName(e.target.value)} />
+      <div className="mb-6 max-w-2xl space-y-4">
+        <div className="max-w-md">
+          <Field label="フォーム名" required>
+            <Input value={formName} onChange={(e) => setFormName(e.target.value)} />
+          </Field>
+        </div>
+        <Field label="フォームの説明文" hint="申込画面の先頭に表示されます（任意・改行可）。注意事項や持ち物などを記載できます。">
+          <Textarea
+            rows={3}
+            value={formDescription}
+            onChange={(e) => setFormDescription(e.target.value)}
+            placeholder="例）当日は動きやすい服装でお越しください。集合は8:30、解散は16:00予定です。"
+          />
         </Field>
       </div>
 
@@ -555,6 +568,11 @@ export function FormBuilderClient({
               <CardTitle>プレビュー（参加者画面）</CardTitle>
               <Badge variant="neutral">{fields.length} 項目</Badge>
             </div>
+            {formDescription.trim() && (
+              <p className="mt-4 whitespace-pre-line rounded-lg border border-info-100 bg-info-100/40 px-3 py-2.5 text-body-sm text-neutral-700">
+                {formDescription}
+              </p>
+            )}
             <div className="mt-4 space-y-4">
               {fields.map((f) => (
                 <Field

@@ -110,6 +110,7 @@ export async function getEventBranchIds(eventId: string): Promise<string[]> {
 
 export type EventWithForm = EventRow & {
   formName: string;
+  formDescription: string | null;
   fields: (FormField & { options: FormFieldOption[] })[];
 };
 
@@ -127,10 +128,11 @@ export async function getEventWithForm(eventId: string): Promise<EventWithForm |
 
   const { data: formRow } = await supabase
     .from("forms")
-    .select("name")
+    .select("name,description")
     .eq("id", event.form_id)
     .single();
   const formName = (formRow as { name: string } | null)?.name ?? "";
+  const formDescription = (formRow as { description: string | null } | null)?.description ?? null;
 
   const { data: fieldsData } = await supabase
     .from("form_fields")
@@ -153,6 +155,7 @@ export async function getEventWithForm(eventId: string): Promise<EventWithForm |
   return {
     ...event,
     formName,
+    formDescription,
     fields: fields.map((f) => ({
       ...f,
       options: options.filter((o) => o.form_field_id === f.id),
