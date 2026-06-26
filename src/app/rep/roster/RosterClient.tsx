@@ -227,8 +227,9 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                 </div>
 
                 <Card>
-                {/* カード内 右上：件数表示 */}
-                <div className="mb-3 flex justify-end">
+                {/* カード見出し：左上に「申込一覧」、右上に件数、下に区切り線 */}
+                <div className="mb-4 flex items-center justify-between border-b border-neutral-200 pb-3">
+                  <h3 className="text-heading-sm text-neutral-900">申込一覧</h3>
                   <span className="text-body-sm text-neutral-600">
                     {flat.length}名（未確定 {applyingCount}名）
                   </span>
