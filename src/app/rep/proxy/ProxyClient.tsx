@@ -16,22 +16,29 @@ type DivisionOpt = { value: string; label: string };
 type CellValue = { value: string; optionIds: string[] };
 type Row = { name: string; email: string; values: Record<string, CellValue> };
 const emptyRow = (): Row => ({ name: "", email: "", values: {} });
-const initialRows = (): Row[] => [emptyRow(), emptyRow(), emptyRow()];
+const initialRows = (): Row[] => [emptyRow()];
 
 export function ProxyClient({
   events,
   divisions,
   branches,
+  defaultBranchId,
 }: {
   events: EventOpt[];
   divisions: DivisionOpt[];
   branches: { id: string; name: string }[];
+  defaultBranchId?: string; // ログイン中ユーザーの所属（登録先拠点の初期値）
 }) {
   // 初期表示から項目（列）を出すため、既定で先頭イベント（開催日が近い順）を選択する。
   const [eventId, setEventId] = useState(
     () => [...events].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))[0]?.id ?? "",
   );
-  const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
+  // 登録先拠点はユーザーの所属を初期表示（候補に含まれる場合）。無ければ先頭。
+  const [branchId, setBranchId] = useState(
+    () =>
+      (defaultBranchId && branches.some((b) => b.id === defaultBranchId) ? defaultBranchId : branches[0]?.id) ??
+      "",
+  );
   const [division, setDivision] = useState("");
   const [rows, setRows] = useState<Row[]>(initialRows());
   const [fields, setFields] = useState<ProxyField[]>([]);
