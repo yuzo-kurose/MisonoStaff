@@ -205,7 +205,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
             const fields = ev.apps[0]?.fields ?? [];
             return (
               <div key={ev.eventId}>
-                {/* 一覧のすぐ上：イベント選択＋件数＋一括確定ボタン */}
+                {/* 一覧のすぐ上：左にイベント選択、右端に一括確定ボタン */}
                 <div className="mb-2 flex flex-wrap items-end justify-between gap-3">
                   <div className="min-w-[16rem] flex-1 sm:max-w-md">
                     <label className="mb-1 block text-label-sm text-neutral-600">イベント</label>
@@ -217,21 +217,22 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                       ))}
                     </Select>
                   </div>
-                  <div className="flex items-center gap-3 pb-0.5">
-                    <span className="text-body-sm text-neutral-600">
-                      {flat.length}名（未確定 {applyingCount}名）
-                    </span>
-                    <Button
-                      size="md"
-                      disabled={pending || selectedPendingAppIds.length === 0}
-                      onClick={() => confirmAll(selectedPendingAppIds)}
-                    >
-                      一括確定
-                    </Button>
-                  </div>
+                  <Button
+                    size="md"
+                    disabled={pending || selectedPendingAppIds.length === 0}
+                    onClick={() => confirmAll(selectedPendingAppIds)}
+                  >
+                    一括確定
+                  </Button>
                 </div>
 
                 <Card>
+                {/* カード内 右上：件数表示 */}
+                <div className="mb-3 flex justify-end">
+                  <span className="text-body-sm text-neutral-600">
+                    {flat.length}名（未確定 {applyingCount}名）
+                  </span>
+                </div>
                 {/* スマホ：カード表示 */}
                 <div className="space-y-2 md:hidden">
                   {flat.map((m, i) => (
