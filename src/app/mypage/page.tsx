@@ -22,7 +22,6 @@ export default async function MyPage() {
 
   const branchName = branches.find((b) => b.id === profile?.branch_id)?.name ?? "—";
   const heroImage = profile?.hero_image_url || "/syuugou.jpeg";
-  const today = new Date().toISOString().slice(0, 10);
 
   // 申込中・参加予定（取消以外）。開催日順。
   const active = participations
@@ -32,15 +31,6 @@ export default async function MyPage() {
   const unpaidTotal = participations
     .filter((p) => p.status === "confirmed")
     .reduce((s, p) => s + p.amount, 0);
-
-  // 直近の参加予定イベント（QRカードのカウントダウン用）
-  const nextEvent = active.find((p) => (p.eventDate ?? "") >= today) ?? active[0] ?? null;
-  const daysLeft = nextEvent?.eventDate
-    ? Math.max(
-        0,
-        Math.round((new Date(nextEvent.eventDate).getTime() - new Date(today).getTime()) / 86400000),
-      )
-    : null;
 
   const isRecent = (iso: string) =>
     (new Date().getTime() - new Date(iso).getTime()) / 86400000 <= 7;
@@ -93,16 +83,17 @@ export default async function MyPage() {
           ) : (
             <ul className="divide-y divide-neutral-200">
               {announcements.slice(0, 3).map((a) => (
-                <li key={a.id} className="flex items-start gap-3 py-3">
+                <li key={a.id} className="flex items-center gap-3 py-2 md:items-start md:py-3">
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 text-body-md text-neutral-900">
                       {isRecent(a.published_at) && <Badge variant="error">NEW</Badge>}
                       <span className="truncate">{a.title}</span>
                     </p>
-                    <p className="mt-0.5 truncate text-body-sm text-neutral-600">{a.body}</p>
-                    <p className="mt-0.5 text-label-sm text-neutral-500">{jpDate(a.published_at)}</p>
+                    {/* スマホはタイトルのみ表示（本文・日付はmd以上で表示） */}
+                    <p className="mt-0.5 hidden truncate text-body-sm text-neutral-600 md:block">{a.body}</p>
+                    <p className="mt-0.5 hidden text-label-sm text-neutral-500 md:block">{jpDate(a.published_at)}</p>
                   </div>
-                  <ChevronRight size={16} className="mt-1 flex-none text-neutral-300" />
+                  <ChevronRight size={16} className="flex-none text-neutral-300 md:mt-1" />
                 </li>
               ))}
             </ul>
@@ -111,12 +102,7 @@ export default async function MyPage() {
 
         {/* 受付用QR（左）＋ 参加予定イベント（右） */}
         <div className="lg:col-span-5">
-          <QrCard
-            token={profile?.checkin_token ?? "no-token"}
-            daysLeft={daysLeft}
-            dateLabel={nextEvent?.eventDate ? jpDate(nextEvent.eventDate) : null}
-            venue={nextEvent?.venue ?? null}
-          />
+          <QrCard token={profile?.checkin_token ?? "no-token"} />
         </div>
 
         {/* 申込中・参加予定のイベント */}
