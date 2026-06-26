@@ -55,10 +55,10 @@ export function RepPaymentsClient({ rows }: { rows: PayRow[] }) {
               <MobileRecord
                 key={m.participantId}
                 title={m.name}
+                summary={yen(m.amount)}
                 badge={<StatusBadge status={m.status} />}
                 rows={[
                   { label: "イベント", value: m.eventName },
-                  { label: "金額", value: yen(m.amount) },
                 ]}
                 action={
                   m.status === "confirmed" ? (

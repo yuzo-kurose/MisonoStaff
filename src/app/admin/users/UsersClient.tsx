@@ -150,6 +150,7 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
           <MobileRecord
             key={u.id}
             title={u.name}
+            defaultOpen
             rows={[
               { label: "ID", value: idCell(u) },
               { label: "メール", value: u.email || "—" },

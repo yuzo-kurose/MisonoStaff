@@ -235,6 +235,7 @@ export function AdminApplicationsClient({
               <MobileRecord
                 key={r.participantId}
                 title={r.name}
+                summary={yen(r.amount)}
                 badge={<StatusBadge status={r.status} />}
                 rows={[
                   ...(eventId === "" ? [{ label: "イベント", value: r.eventName }] : []),
@@ -244,7 +245,6 @@ export function AdminApplicationsClient({
                     label: f.label,
                     value: <span className="whitespace-pre-line">{r.values[f.id] || "—"}</span>,
                   })),
-                  { label: "金額", value: <span className="tabular-nums">{yen(r.amount)}</span> },
                 ]}
                 action={rowAction(r) ?? undefined}
               />

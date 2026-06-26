@@ -33,11 +33,11 @@ export default async function HistoryPage() {
               <MobileRecord
                 key={h.participantId}
                 title={h.eventName}
+                summary={yen(h.amount)}
                 badge={<StatusBadge status={h.status} />}
                 rows={[
                   { label: "開催日", value: h.eventDate ? jpDate(h.eventDate) : "—" },
                   { label: "申込日", value: h.appliedAt ? jpDate(h.appliedAt) : "—" },
-                  { label: "金額", value: yen(h.amount) },
                   ...(h.status === "cancelled" && h.cancelledAt
                     ? [{ label: "取消日", value: jpDate(h.cancelledAt) }]
                     : []),

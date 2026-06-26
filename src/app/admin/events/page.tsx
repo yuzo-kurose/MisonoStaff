@@ -25,6 +25,7 @@ function ActiveEventList({ list }: { list: EventListItem[] }) {
           <MobileRecord
             key={e.id}
             title={e.name}
+            defaultOpen
             badge={statusBadge[e.status]}
             rows={[
               { label: "開催期間", value: eventPeriod(e.start_date, e.event_date) },

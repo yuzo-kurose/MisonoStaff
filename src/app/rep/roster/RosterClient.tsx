@@ -236,10 +236,10 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                     <MobileRecord
                       key={m.participantId}
                       title={`${i + 1}. ${m.name}`}
+                      summary={yen(m.amount)}
                       badge={<StatusBadge status={m.status} />}
                       rows={[
                         { label: "所属", value: m.branchName || "—" },
-                        { label: "金額", value: yen(m.amount) },
                         ...fields.map((f) => ({
                           label: f.label,
                           value: (
