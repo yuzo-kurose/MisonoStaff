@@ -1,14 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import {
-  CheckCircle2,
-  Clock,
-  ClipboardCheck,
-  Archive,
-  ChevronRight,
-  Settings,
-  MapPin,
-} from "lucide-react";
+import { ChevronRight, Settings, MapPin } from "lucide-react";
 import { PageHeader } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
@@ -37,13 +29,6 @@ export default async function MyPage() {
     .filter((p) => p.status !== "cancelled")
     .sort((a, b) => (a.eventDate ?? "").localeCompare(b.eventDate ?? ""));
 
-  // 参加ステータス集計
-  const stats = {
-    confirmed: participations.filter((p) => p.status === "confirmed").length,
-    applying: participations.filter((p) => p.status === "applying").length,
-    paid: participations.filter((p) => p.status === "paid").length,
-    cancelled: participations.filter((p) => p.status === "cancelled").length,
-  };
   const unpaidTotal = participations
     .filter((p) => p.status === "confirmed")
     .reduce((s, p) => s + p.amount, 0);
@@ -59,13 +44,6 @@ export default async function MyPage() {
 
   const isRecent = (iso: string) =>
     (new Date().getTime() - new Date(iso).getTime()) / 86400000 <= 7;
-
-  const statTiles = [
-    { key: "confirmed", label: "確定", value: stats.confirmed, icon: CheckCircle2, tone: "text-info-900 bg-info-100" },
-    { key: "applying", label: "申込中", value: stats.applying, icon: Clock, tone: "text-warning-900 bg-warning-100" },
-    { key: "paid", label: "完了", value: stats.paid, icon: ClipboardCheck, tone: "text-success-900 bg-success-100" },
-    { key: "cancelled", label: "キャンセル", value: stats.cancelled, icon: Archive, tone: "text-neutral-500 bg-neutral-100" },
-  ];
 
   return (
     <>
@@ -112,33 +90,8 @@ export default async function MyPage() {
           />
         </div>
 
-        {/* 参加ステータス */}
-        <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-heading-sm text-neutral-900">あなたの参加ステータス</h2>
-            <Badge variant="neutral">累計</Badge>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {statTiles.map((s) => (
-              <div key={s.key} className="flex flex-col items-center gap-1.5 text-center">
-                <span className={`grid h-11 w-11 place-items-center rounded-full ${s.tone}`}>
-                  <s.icon size={20} />
-                </span>
-                <span className="text-heading-lg leading-none text-neutral-900">{s.value}</span>
-                <span className="text-label-sm text-neutral-600">{s.label}</span>
-              </div>
-            ))}
-          </div>
-          <Link
-            href="/mypage/history"
-            className="mt-4 inline-flex items-center gap-1 text-body-sm font-medium text-primary-900 hover:underline"
-          >
-            申込履歴をすべて見る <ChevronRight size={15} />
-          </Link>
-        </section>
-
         {/* お知らせ */}
-        <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-7">
+        <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-12">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-heading-sm text-neutral-900">神苑からのお知らせ</h2>
             <Link href="/" className="text-body-sm text-primary-900 hover:underline">
