@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Settings, MapPin } from "lucide-react";
+import { ChevronRight, Settings, MapPin, Bell, CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
@@ -71,9 +71,14 @@ export default async function MyPage() {
         </section>
 
         {/* お知らせ */}
-        <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-12">
+        <section className="rounded-2xl border border-neutral-200 border-t-[3px] border-t-accent-700 bg-neutral-white p-5 shadow-sm lg:col-span-12">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-heading-sm text-neutral-900">神苑からのお知らせ</h2>
+            <h2 className="flex items-center gap-2 text-heading-sm text-neutral-900">
+              <span className="grid h-8 w-8 flex-none place-items-center rounded-lg bg-accent-50 text-accent-700">
+                <Bell size={17} />
+              </span>
+              神苑からのお知らせ
+            </h2>
             <Link href="/" className="text-body-sm text-primary-900 hover:underline">
               すべて見る
             </Link>
@@ -106,11 +111,16 @@ export default async function MyPage() {
         </div>
 
         {/* 申込中・参加予定のイベント */}
-        <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-7">
+        <section className="rounded-2xl border border-neutral-200 border-t-[3px] border-t-info-900 bg-neutral-white p-5 shadow-sm lg:col-span-7">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-heading-sm text-neutral-900">申込中・参加予定のイベント</h2>
+            <h2 className="flex items-center gap-2 text-heading-sm text-neutral-900">
+              <span className="grid h-8 w-8 flex-none place-items-center rounded-lg bg-info-100 text-info-900">
+                <CalendarDays size={17} />
+              </span>
+              参加予定イベント
+            </h2>
             <Link href="/events" className="inline-flex items-center gap-1 text-body-sm text-primary-900 hover:underline">
-              すべてのイベントを見る <ChevronRight size={15} />
+              すべて見る <ChevronRight size={15} />
             </Link>
           </div>
 

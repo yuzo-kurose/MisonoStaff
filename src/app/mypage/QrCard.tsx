@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Info, Maximize2, X } from "lucide-react";
+import { Maximize2, X, QrCode } from "lucide-react";
 
 /**
  * 受付用QRカード。checkin_token をQR化して表示する。
@@ -12,10 +12,12 @@ export function QrCard({ token }: { token: string }) {
   const [zoom, setZoom] = useState(false);
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm">
-      <div className="mb-1 flex items-center gap-1.5">
+    <div className="rounded-2xl border border-neutral-200 border-t-[3px] border-t-primary-700 bg-neutral-white p-5 shadow-sm">
+      <div className="mb-1 flex items-center gap-2">
+        <span className="grid h-8 w-8 flex-none place-items-center rounded-lg bg-primary-50 text-primary-700">
+          <QrCode size={17} />
+        </span>
         <h2 className="text-heading-sm text-neutral-900">受付用QRコード</h2>
-        <Info size={15} className="text-neutral-400" />
       </div>
       <p className="mb-4 text-body-sm text-neutral-600">このQRコードを受付でご提示ください</p>
 
