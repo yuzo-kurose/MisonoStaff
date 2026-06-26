@@ -2,23 +2,13 @@
 
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Info, CalendarDays, MapPin, Maximize2, X } from "lucide-react";
+import { Info, Maximize2, X } from "lucide-react";
 
 /**
- * 受付用QRカード。checkin_token をQR化し、直近イベントまでのカウントダウンを併記する。
+ * 受付用QRカード。checkin_token をQR化して表示する。
  * 「QRを拡大する」で全画面モーダル表示（受付でかざしやすくするため）。
  */
-export function QrCard({
-  token,
-  daysLeft,
-  dateLabel,
-  venue,
-}: {
-  token: string;
-  daysLeft: number | null;
-  dateLabel: string | null;
-  venue: string | null;
-}) {
+export function QrCard({ token }: { token: string }) {
   const [zoom, setZoom] = useState(false);
 
   return (
@@ -29,36 +19,9 @@ export function QrCard({
       </div>
       <p className="mb-4 text-body-sm text-neutral-600">このQRコードを受付でご提示ください</p>
 
-      <div className="flex items-stretch gap-4">
-        <div className="grid flex-none place-items-center rounded-xl border border-neutral-200 bg-neutral-white p-2.5">
-          <QRCodeSVG value={token} size={132} level="M" />
-        </div>
-        <div className="flex flex-1 flex-col justify-center rounded-xl bg-neutral-50 px-4 py-3">
-          {daysLeft !== null ? (
-            <>
-              <p className="text-label-sm text-neutral-500">開催まであと</p>
-              <p className="leading-none text-neutral-900">
-                <span className="text-[2.5rem] font-bold">{daysLeft}</span>
-                <span className="ml-1 text-body-md">日</span>
-              </p>
-              <div className="mt-2 space-y-1 text-body-sm text-neutral-700">
-                {dateLabel && (
-                  <p className="flex items-center gap-1.5">
-                    <CalendarDays size={14} className="flex-none text-neutral-400" />
-                    {dateLabel}
-                  </p>
-                )}
-                {venue && (
-                  <p className="flex items-center gap-1.5">
-                    <MapPin size={14} className="flex-none text-neutral-400" />
-                    {venue}
-                  </p>
-                )}
-              </div>
-            </>
-          ) : (
-            <p className="text-body-sm text-neutral-600">直近の参加予定はありません。</p>
-          )}
+      <div className="flex justify-center">
+        <div className="grid flex-none place-items-center rounded-xl border border-neutral-200 bg-neutral-white p-3">
+          <QRCodeSVG value={token} size={160} level="M" />
         </div>
       </div>
 
