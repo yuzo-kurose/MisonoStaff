@@ -69,7 +69,7 @@ export function ProxyClient({
         .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))
         .map((e) => ({
           id: e.id,
-          label: `${e.date ? e.date.replace(/-/g, "/") + "　" : ""}${e.name}`,
+          label: e.name,
         })),
     [events],
   );

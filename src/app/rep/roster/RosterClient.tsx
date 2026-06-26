@@ -9,7 +9,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { Select } from "@/components/ui/Field";
 import { MobileRecord } from "@/components/ui/MobileRecord";
-import { yen, jpDate } from "@/lib/format";
+import { yen } from "@/lib/format";
 import type { RosterGroup } from "@/lib/queries/roster";
 import { confirmApplication, confirmParticipant, removeParticipant, resolveChangeRequest } from "./actions";
 import { refundParticipant } from "@/app/admin/applications/actions";
@@ -212,7 +212,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                     <Select value={selectedEvent?.eventId ?? ""} onChange={(e) => setEventId(e.target.value)}>
                       {byEvent.map((e2) => (
                         <option key={e2.eventId} value={e2.eventId}>
-                          {e2.eventName}（{jpDate(e2.eventDate)}）
+                          {e2.eventName}
                         </option>
                       ))}
                     </Select>

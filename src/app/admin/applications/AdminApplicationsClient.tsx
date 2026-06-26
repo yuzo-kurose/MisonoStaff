@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search, RotateCcw, Inbox } from "lucide-react";
+import { Search, RotateCcw, Inbox, Download } from "lucide-react";
 import { Card, PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -11,7 +11,7 @@ import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { MobileRecord } from "@/components/ui/MobileRecord";
-import { yen, jpDate } from "@/lib/format";
+import { yen } from "@/lib/format";
 import type { AppRow, AppField } from "@/lib/queries/applications";
 import { refundParticipant } from "./actions";
 
@@ -131,11 +131,6 @@ export function AdminApplicationsClient({
       <PageHeader
         title="申込一覧"
         description="イベント・拠点・状態で絞り込み。人単位の明細を表示します。"
-        action={
-          <Button variant="secondary" onClick={exportCsv}>
-            CSV出力
-          </Button>
-        }
       />
 
       {msg && (
@@ -146,6 +141,16 @@ export function AdminApplicationsClient({
 
       {/* 絞り込み：イベント選択の横に氏名・拠点・部署・状態を1行でまとめる。 */}
       <Card className="mb-4">
+        {/* カード右上：条件をリセット */}
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-heading-sm text-neutral-900">絞り込み</h2>
+          {(query || eventId || branchId || department || status) && (
+            <Button variant="secondary" size="sm" onClick={resetFilters}>
+              <RotateCcw size={14} />
+              条件をリセット
+            </Button>
+          )}
+        </div>
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-[220px] flex-[2]">
             <label className="mb-1 block text-label-sm text-neutral-600">イベントを選択</label>
@@ -153,7 +158,7 @@ export function AdminApplicationsClient({
               <option value="">すべてのイベント</option>
               {events.map(([id, ev]) => (
                 <option key={id} value={id}>
-                  {ev.name}（{jpDate(ev.date)}）
+                  {ev.name}
                 </option>
               ))}
             </Select>
@@ -213,12 +218,10 @@ export function AdminApplicationsClient({
           <span className="font-medium text-neutral-900">{filtered.length}</span>件 / 支払済合計{" "}
           <span className="text-label-lg font-medium text-primary-900">{yen(paidTotal)}</span>
         </p>
-        {(query || eventId || branchId || department || status) && (
-          <Button variant="secondary" size="sm" onClick={resetFilters}>
-            <RotateCcw size={14} />
-            条件をリセット
-          </Button>
-        )}
+        <Button variant="secondary" size="sm" onClick={exportCsv}>
+          <Download size={14} />
+          CSV出力
+        </Button>
       </div>
 
       {filtered.length === 0 ? (

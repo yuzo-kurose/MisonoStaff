@@ -82,16 +82,16 @@ export default async function AdminEventsPage() {
       <PageHeader
         title="イベント管理"
         description="イベントの作成・編集・コピー・削除、締切・対象拠点・定員を管理します。"
-        action={
-          <Link href="/admin/events/new">
-            <Button>＋ イベントを作成</Button>
-          </Link>
-        }
       />
 
       {/* 公開中イベント */}
       <section>
-        <h2 className="mb-3 text-heading-md text-neutral-900">公開中イベント</h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-heading-md text-neutral-900">公開中イベント</h2>
+          <Link href="/admin/events/new">
+            <Button>＋ イベントを作成</Button>
+          </Link>
+        </div>
         {published.length > 0 ? (
           <ActiveEventList list={published} />
         ) : (
