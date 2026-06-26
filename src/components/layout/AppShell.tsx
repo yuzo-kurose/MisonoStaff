@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, ChevronDown, Menu, X, Bell, UserCog } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { selectableViews, navItemsForView, pageTitleFor, roleLabels, type Role } from "@/lib/nav";
+import { selectableViews, navItemsForView, pageTitleFor, pageIconFor, roleLabels, type Role } from "@/lib/nav";
 import { HeaderMetaContext } from "@/components/layout/header-meta";
 import { Select } from "@/components/ui/Field";
 import { createClient } from "@/lib/supabase/client";
@@ -63,6 +63,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
   const initial = (who ?? "").trim().charAt(0) || "ス";
   const roleLabel = roleLabels[view];
   const pageTitle = pageTitleFor(pathname);
+  const PageIcon = pageIconFor(pathname);
 
   // サイドバーの中身（PC・モバイルドロワーで共用）。
   const sidebarBody = (onNavigate?: () => void) => (
@@ -168,9 +169,11 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
             <Menu size={22} />
           </button>
 
-          {/* ページタイトル（現在地のメニュー名と一致）＋補足説明 */}
-          <div className="flex min-w-0 items-start gap-2.5">
-            <span className="mt-1 hidden h-5 w-1.5 flex-none rounded-full bg-primary-700 md:block" aria-hidden />
+          {/* ページタイトル（現在地のメニュー名と一致）＋アイコン＋補足説明 */}
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="grid h-9 w-9 flex-none place-items-center rounded-xl bg-primary-50 text-primary-700">
+              <PageIcon size={20} />
+            </span>
             <div className="min-w-0">
               <h1 className="truncate text-heading-md leading-tight text-neutral-900">{pageTitle}</h1>
               {headerDesc && (

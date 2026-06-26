@@ -13,6 +13,7 @@ import {
   Users,
   FileText,
   Bell,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 
@@ -191,4 +192,25 @@ export function pageTitleFor(pathname: string): string {
     .filter((it) => pathname === it.href || pathname.startsWith(it.href + "/"))
     .sort((a, b) => b.href.length - a.href.length)[0];
   return match?.label ?? "神苑スタッフ";
+}
+
+/** 現在のパスに対応するアイコン（上部ヘッダーのタイトル横に表示）。pageTitleFor と対応。 */
+export function pageIconFor(pathname: string): LucideIcon {
+  const overrides: [string, LucideIcon][] = [
+    ["/mypage/profile", UserCog],
+    ["/rep/roster/", ClipboardList],
+    ["/admin/events/new", CalendarPlus],
+    ["/admin/events/", Calendar],
+    ["/admin/forms/", FileText],
+    ["/admin/users/", Users],
+    ["/events/apply", CalendarPlus],
+    ["/payment", CreditCard],
+  ];
+  for (const [prefix, icon] of overrides) {
+    if (pathname === prefix || pathname.startsWith(prefix)) return icon;
+  }
+  const match = allNavItems
+    .filter((it) => pathname === it.href || pathname.startsWith(it.href + "/"))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  return match?.icon ?? Home;
 }
