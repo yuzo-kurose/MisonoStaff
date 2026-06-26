@@ -174,7 +174,10 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
             <div className="min-w-0">
               <h1 className="truncate text-heading-md leading-tight text-neutral-900">{pageTitle}</h1>
               {headerDesc && (
-                <p className="mt-0.5 line-clamp-2 text-body-sm leading-snug text-neutral-600">{headerDesc}</p>
+                // スマホでは省スペースのため補足説明は非表示（md以上で表示）。
+                <p className="mt-0.5 hidden text-body-sm leading-snug text-neutral-600 md:line-clamp-2">
+                  {headerDesc}
+                </p>
               )}
             </div>
           </div>

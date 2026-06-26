@@ -205,7 +205,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
               <div key={ev.eventId}>
                 {/* 一覧のすぐ上：イベント選択＋件数＋一括確定ボタン */}
                 <div className="mb-2 flex flex-wrap items-end justify-between gap-3">
-                  <div className="max-w-md flex-1">
+                  <div className="min-w-[16rem] flex-1 sm:max-w-md">
                     <label className="mb-1 block text-label-sm text-neutral-600">イベント</label>
                     <Select value={selectedEvent?.eventId ?? ""} onChange={(e) => setEventId(e.target.value)}>
                       {byEvent.map((e2) => (
@@ -224,7 +224,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                       disabled={pending || pendingAppIds.length === 0}
                       onClick={() => confirmAll(pendingAppIds)}
                     >
-                      未確定をまとめて確定する
+                      一括確定
                     </Button>
                   </div>
                 </div>
