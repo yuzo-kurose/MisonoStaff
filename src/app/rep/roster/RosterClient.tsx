@@ -42,6 +42,11 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
   const [eventId, setEventId] = useState(() => byEvent[0]?.eventId ?? "");
   const selectedEvent = byEvent.find((e) => e.eventId === eventId) ?? byEvent[0];
 
+  // 選択中イベントの未確定 application（一括確定の対象）。
+  const selectedPendingAppIds = (selectedEvent?.apps ?? [])
+    .filter((g) => g.members.some((m) => m.status === "applying"))
+    .map((g) => g.applicationId);
+
   // イベント内の未確定を含む application をまとめて確定する。
   const confirmAll = (applicationIds: string[]) => {
     if (applicationIds.length === 0) return;
@@ -178,6 +183,17 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
       <PageHeader
         title="申込名簿"
         description="申込締切までに確定してください。確定後、各参加者へまとめて決済依頼が可能になります。"
+        action={
+          groups.length > 0 ? (
+            <Button
+              size="md"
+              disabled={pending || selectedPendingAppIds.length === 0}
+              onClick={() => confirmAll(selectedPendingAppIds)}
+            >
+              一括確定
+            </Button>
+          ) : undefined
+        }
       />
 
       {msg && (
@@ -195,9 +211,6 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
             const flat = ev.apps
               .flatMap((g) => g.members.map((m) => ({ ...m, branchName: g.branchName })))
               .sort((a, b) => a.branchName.localeCompare(b.branchName, "ja") || a.name.localeCompare(b.name, "ja"));
-            const pendingAppIds = ev.apps
-              .filter((g) => g.members.some((m) => m.status === "applying"))
-              .map((g) => g.applicationId);
             const applyingCount = flat.filter((m) => m.status === "applying").length;
             // 申込フォーム項目（列見出し）。同一イベントは同じフォームなので先頭から取得。
             const fields = ev.apps[0]?.fields ?? [];
@@ -215,17 +228,10 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                       ))}
                     </Select>
                   </div>
-                  <div className="flex items-center gap-3 pb-0.5">
+                  <div className="flex items-center gap-3 pb-2">
                     <span className="text-body-sm text-neutral-600">
                       {flat.length}名（未確定 {applyingCount}名）
                     </span>
-                    <Button
-                      size="md"
-                      disabled={pending || pendingAppIds.length === 0}
-                      onClick={() => confirmAll(pendingAppIds)}
-                    >
-                      一括確定
-                    </Button>
                   </div>
                 </div>
 
