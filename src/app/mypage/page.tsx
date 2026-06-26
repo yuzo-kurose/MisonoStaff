@@ -51,7 +51,7 @@ export default async function MyPage() {
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* ヒーロー */}
-        <section className="relative min-h-[220px] overflow-hidden rounded-2xl lg:col-span-7">
+        <section className="relative min-h-[220px] overflow-hidden rounded-2xl lg:col-span-12">
           {/* 本人がアップロードした画像（外部URL）と既定画像の両対応のため img を使用 */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -79,16 +79,6 @@ export default async function MyPage() {
             </Link>
           </div>
         </section>
-
-        {/* 受付用QR */}
-        <div className="lg:col-span-5">
-          <QrCard
-            token={profile?.checkin_token ?? "no-token"}
-            daysLeft={daysLeft}
-            dateLabel={nextEvent?.eventDate ? jpDate(nextEvent.eventDate) : null}
-            venue={nextEvent?.venue ?? null}
-          />
-        </div>
 
         {/* お知らせ */}
         <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-12">
@@ -119,8 +109,18 @@ export default async function MyPage() {
           )}
         </section>
 
+        {/* 受付用QR（左）＋ 参加予定イベント（右） */}
+        <div className="lg:col-span-5">
+          <QrCard
+            token={profile?.checkin_token ?? "no-token"}
+            daysLeft={daysLeft}
+            dateLabel={nextEvent?.eventDate ? jpDate(nextEvent.eventDate) : null}
+            venue={nextEvent?.venue ?? null}
+          />
+        </div>
+
         {/* 申込中・参加予定のイベント */}
-        <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-12">
+        <section className="rounded-2xl border border-neutral-200 bg-neutral-white p-5 shadow-sm lg:col-span-7">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-heading-sm text-neutral-900">申込中・参加予定のイベント</h2>
             <Link href="/events" className="inline-flex items-center gap-1 text-body-sm text-primary-900 hover:underline">
@@ -141,7 +141,7 @@ export default async function MyPage() {
               申込中・参加予定のイベントはありません。
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
               {active.map((p) => (
                 <div key={p.participantId} className="flex gap-3 rounded-xl border border-neutral-200 p-3">
                   <div className="flex-none overflow-hidden rounded-lg">
