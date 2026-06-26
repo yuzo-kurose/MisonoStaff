@@ -183,17 +183,6 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
       <PageHeader
         title="申込名簿"
         description="申込締切までに確定してください。確定後、各参加者へまとめて決済依頼が可能になります。"
-        action={
-          groups.length > 0 ? (
-            <Button
-              size="md"
-              disabled={pending || selectedPendingAppIds.length === 0}
-              onClick={() => confirmAll(selectedPendingAppIds)}
-            >
-              一括確定
-            </Button>
-          ) : undefined
-        }
       />
 
       {msg && (
@@ -228,10 +217,17 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                       ))}
                     </Select>
                   </div>
-                  <div className="flex items-center gap-3 pb-2">
+                  <div className="flex items-center gap-3 pb-0.5">
                     <span className="text-body-sm text-neutral-600">
                       {flat.length}名（未確定 {applyingCount}名）
                     </span>
+                    <Button
+                      size="md"
+                      disabled={pending || selectedPendingAppIds.length === 0}
+                      onClick={() => confirmAll(selectedPendingAppIds)}
+                    >
+                      一括確定
+                    </Button>
                   </div>
                 </div>
 
