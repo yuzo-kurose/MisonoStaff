@@ -1,8 +1,25 @@
 import type { ReactNode } from "react";
 
-export function Table({ head, children }: { head: ReactNode; children: ReactNode }) {
+/**
+ * 共通テーブル。
+ * - scroll=true（既定）：列が多いと横スクロール（overflow-x-auto）。
+ * - scroll=false：横スクロールさせず、コンテナ幅に収める（セルは折り返す）。
+ */
+export function Table({
+  head,
+  children,
+  scroll = true,
+}: {
+  head: ReactNode;
+  children: ReactNode;
+  scroll?: boolean;
+}) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-neutral-white shadow-sm">
+    <div
+      className={`rounded-xl border border-neutral-200 bg-neutral-white shadow-sm ${
+        scroll ? "overflow-x-auto" : ""
+      }`}
+    >
       <table className="w-full border-collapse text-body-sm">
         <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-label-md text-neutral-700">
           {head}
@@ -15,10 +32,13 @@ export function Table({ head, children }: { head: ReactNode; children: ReactNode
   );
 }
 
-export function Th({ children }: { children: ReactNode }) {
-  return <th className="whitespace-nowrap px-4 py-3 font-medium">{children}</th>;
+export function Th({ children, className = "" }: { children: ReactNode; className?: string }) {
+  // className 指定時は折り返し可（既定は nowrap）。
+  return (
+    <th className={`px-3 py-3 font-medium ${className || "whitespace-nowrap"}`}>{children}</th>
+  );
 }
 
-export function Td({ children }: { children: ReactNode }) {
-  return <td className="px-4 py-3 text-neutral-900">{children}</td>;
+export function Td({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <td className={`px-3 py-3 align-top text-neutral-900 ${className}`}>{children}</td>;
 }

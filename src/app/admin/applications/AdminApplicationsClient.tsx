@@ -12,10 +12,16 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { MobileRecord } from "@/components/ui/MobileRecord";
 import { yen, jpDate } from "@/lib/format";
-import type { AppRow } from "@/lib/queries/applications";
+import type { AppRow, AppField } from "@/lib/queries/applications";
 import { refundParticipant } from "./actions";
 
-export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
+export function AdminApplicationsClient({
+  rows,
+  fieldsByEvent,
+}: {
+  rows: AppRow[];
+  fieldsByEvent: Record<string, AppField[]>;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   // 既定で最初（日付が近い）のイベントを選択＝イベント単位で表示する。
@@ -62,9 +68,20 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
     .filter((r) => r.status === "paid")
     .reduce((s, r) => s + r.amount, 0);
 
+  // 回答項目の列見出し。イベントを1つ選んでいるときのみ表示（イベントごとに項目が異なるため）。
+  const answerFields: AppField[] = eventId ? fieldsByEvent[eventId] ?? [] : [];
+
   const exportCsv = () => {
-    const header = ["氏名", "部署", "イベント", "拠点", "状態", "金額"];
-    const body = filtered.map((r) => [r.name, r.department, r.eventName, r.branchName, r.status, String(r.amount)]);
+    const header = ["氏名", "部署", "イベント", "拠点", ...answerFields.map((f) => f.label), "状態", "金額"];
+    const body = filtered.map((r) => [
+      r.name,
+      r.department,
+      r.eventName,
+      r.branchName,
+      ...answerFields.map((f) => (r.values[f.id] ?? "").replace(/\n/g, " ")),
+      r.status,
+      String(r.amount),
+    ]);
     const csv = [header, ...body]
       .map((cols) => cols.map((c) => `"${c.replace(/"/g, '""')}"`).join(","))
       .join("\n");
@@ -212,7 +229,7 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
         />
       ) : (
         <>
-          {/* スマホ：カード表示 */}
+          {/* スマホ：カード表示（イベントを1つ選んでいるときは回答項目も表示） */}
           <div className="space-y-2 md:hidden">
             {filtered.map((r) => (
               <MobileRecord
@@ -220,9 +237,13 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
                 title={r.name}
                 badge={<StatusBadge status={r.status} />}
                 rows={[
-                  { label: "イベント", value: r.eventName },
+                  ...(eventId === "" ? [{ label: "イベント", value: r.eventName }] : []),
                   { label: "拠点", value: r.branchName },
                   { label: "部署", value: r.department || "—" },
+                  ...answerFields.map((f) => ({
+                    label: f.label,
+                    value: <span className="whitespace-pre-line">{r.values[f.id] || "—"}</span>,
+                  })),
                   { label: "金額", value: <span className="tabular-nums">{yen(r.amount)}</span> },
                 ]}
                 action={rowAction(r) ?? undefined}
@@ -230,27 +251,38 @@ export function AdminApplicationsClient({ rows }: { rows: AppRow[] }) {
             ))}
           </div>
 
-          {/* PC：テーブル表示 */}
+          {/* PC：テーブル表示（横スクロールさせず、回答項目を全て列表示・セルは折り返す） */}
           <div className="hidden md:block">
             <Table
+              scroll={false}
               head={
                 <tr>
-                  <Th>氏名</Th>
-                  <Th>部署</Th>
-                  <Th>イベント</Th>
-                  <Th>拠点</Th>
-                  <Th>金額</Th>
-                  <Th>状態</Th>
-                  <Th>操作</Th>
+                  <Th className="break-words">氏名</Th>
+                  <Th className="break-words">部署</Th>
+                  <Th className="break-words">拠点</Th>
+                  {answerFields.map((f) => (
+                    <Th key={f.id} className="whitespace-pre-line break-words">
+                      {f.label}
+                    </Th>
+                  ))}
+                  <Th className="break-words">金額</Th>
+                  <Th className="break-words">状態</Th>
+                  <Th className="break-words">操作</Th>
                 </tr>
               }
             >
               {filtered.map((r) => (
                 <tr key={r.participantId}>
-                  <Td>{r.name}</Td>
-                  <Td>{r.department ? r.department : <span className="text-neutral-400">—</span>}</Td>
-                  <Td>{r.eventName}</Td>
-                  <Td>{r.branchName}</Td>
+                  <Td className="break-words">{r.name}</Td>
+                  <Td className="break-words">
+                    {r.department ? r.department : <span className="text-neutral-400">—</span>}
+                  </Td>
+                  <Td className="break-words">{r.branchName}</Td>
+                  {answerFields.map((f) => (
+                    <Td key={f.id} className="whitespace-pre-line break-words">
+                      {r.values[f.id] || <span className="text-neutral-400">—</span>}
+                    </Td>
+                  ))}
                   <Td>
                     <span className="tabular-nums">{yen(r.amount)}</span>
                   </Td>
