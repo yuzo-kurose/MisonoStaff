@@ -159,7 +159,7 @@ export function AppShell({ role, children }: { role: Role; children: ReactNode }
       {/* メイン領域 */}
       <div className="flex min-h-screen flex-col md:pl-60">
         {/* 上部バー */}
-        <header className="sticky top-0 z-20 flex min-h-16 flex-none items-center gap-2 border-b border-neutral-200 bg-neutral-white px-4 py-2.5">
+        <header className="sticky top-0 z-20 flex min-h-16 flex-none items-center gap-2 border-b-2 border-accent-700 bg-neutral-white px-4 py-2.5">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
