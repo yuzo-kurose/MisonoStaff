@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { CreditCard } from "lucide-react";
 import { PageHeader } from "@/components/ui/Card";
+import { SectionPanel } from "@/components/ui/SectionPanel";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
@@ -48,7 +50,7 @@ export function RepPaymentsClient({ rows }: { rows: PayRow[] }) {
       {rows.length === 0 ? (
         <Alert variant="info">確定済みの参加者がいません。先に名簿を確定してください。</Alert>
       ) : (
-        <>
+        <SectionPanel color="success" icon={CreditCard} title="決済一覧">
           {/* スマホ：カード表示 */}
           <div className="space-y-2 md:hidden">
             {rows.map((m) => (
@@ -113,7 +115,7 @@ export function RepPaymentsClient({ rows }: { rows: PayRow[] }) {
               ))}
             </Table>
           </div>
-        </>
+        </SectionPanel>
       )}
     </>
   );
