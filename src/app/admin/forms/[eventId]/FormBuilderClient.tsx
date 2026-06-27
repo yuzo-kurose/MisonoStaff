@@ -62,6 +62,7 @@ export function FormBuilderClient({
   departments,
   branchNames,
   templates,
+  embedded = false,
 }: {
   eventName: string;
   formId: string;
@@ -71,6 +72,8 @@ export function FormBuilderClient({
   departments: string[];
   branchNames: string[];
   templates: FormTemplate[];
+  // 編集ページに統合する場合は専用の見出しを出さない。
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const [fields, setFields] = useState<ClientField[]>(initialFields);
@@ -312,10 +315,12 @@ export function FormBuilderClient({
 
   return (
     <>
-      <PageHeader
-        title={`フォーム編集：${eventName}`}
-        description="この申込フォームはこのイベント専用です。項目の追加・並び替え・金額連動を設定できます。"
-      />
+      {!embedded && (
+        <PageHeader
+          title={`フォーム編集：${eventName}`}
+          description="この申込フォームはこのイベント専用です。項目の追加・並び替え・金額連動を設定できます。"
+        />
+      )}
 
       {msg && (
         <div className="mb-4">

@@ -56,6 +56,7 @@ export function EventForm({
   actionNote,
   cancelHref,
   onSubmit,
+  embedded = false,
 }: {
   initial: EventFormInitial;
   submitLabel: string;
@@ -63,6 +64,8 @@ export function EventForm({
   actionNote?: string;
   cancelHref: string;
   onSubmit: (payload: EventFormPayload) => Promise<{ ok: boolean; error?: string }>;
+  // 編集ページ等に埋め込む場合は固定の操作バーを使わずインライン保存にする。
+  embedded?: boolean;
 }) {
   const [name, setName] = useState(initial.name);
   const [startDate, setStartDate] = useState(initial.startDate);
@@ -101,7 +104,7 @@ export function EventForm({
       )}
 
       <form
-        className="mx-auto max-w-3xl space-y-6"
+        className={`${embedded ? "" : "mx-auto"} max-w-3xl space-y-6`}
         onSubmit={(e) => {
           e.preventDefault();
           submit();
@@ -164,15 +167,24 @@ export function EventForm({
           </Field>
         </SectionCard>
 
-        <StickyActionBar left={actionNote ? <span>{actionNote}</span> : undefined}>
-          <ButtonLink href={cancelHref} variant="secondary" size="lg">
-            キャンセル
-          </ButtonLink>
-          <Button type="submit" size="lg" disabled={pending}>
-            {pending ? pendingLabel : submitLabel}
-            {!pending && <ArrowRight size={18} />}
-          </Button>
-        </StickyActionBar>
+        {embedded ? (
+          <div className="flex flex-wrap items-center gap-3 border-t border-neutral-200 pt-4">
+            {actionNote && <span className="text-body-sm text-neutral-600">{actionNote}</span>}
+            <Button type="submit" size="md" disabled={pending} className="ml-auto">
+              {pending ? pendingLabel : submitLabel}
+            </Button>
+          </div>
+        ) : (
+          <StickyActionBar left={actionNote ? <span>{actionNote}</span> : undefined}>
+            <ButtonLink href={cancelHref} variant="secondary" size="lg">
+              キャンセル
+            </ButtonLink>
+            <Button type="submit" size="lg" disabled={pending}>
+              {pending ? pendingLabel : submitLabel}
+              {!pending && <ArrowRight size={18} />}
+            </Button>
+          </StickyActionBar>
+        )}
       </form>
     </>
   );

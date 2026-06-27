@@ -11,7 +11,7 @@ export function NewEventClient() {
   const onSubmit = async (payload: EventFormPayload) => {
     const res = await createEvent(payload);
     if (res.ok && res.eventId) {
-      router.push(`/admin/forms/${res.eventId}`);
+      router.push(`/admin/events/${res.eventId}/edit`);
       router.refresh();
     }
     return res;
@@ -21,13 +21,13 @@ export function NewEventClient() {
     <>
       <PageHeader
         title="イベントを作成"
-        description="ステップ 1 / 2 ・ 開催情報を設定 → 作成後に申込フォームを編集します。"
+        description="開催情報を設定して作成します。作成後、同じ編集画面で申込フォームを設定できます。"
       />
       <EventForm
         initial={newEventInitial}
-        submitLabel="作成してフォームを編集へ"
+        submitLabel="作成して編集へ"
         pendingLabel="作成中…"
-        actionNote="作成後、このイベント専用の申込フォーム編集へ進みます"
+        actionNote="作成後、編集画面で申込フォームを設定できます"
         cancelHref="/admin/events"
         onSubmit={onSubmit}
       />

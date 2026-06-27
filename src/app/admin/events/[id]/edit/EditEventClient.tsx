@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { PageHeader } from "@/components/ui/Card";
+import { toast } from "@/components/ui/toast";
 import { EventForm, type EventFormInitial, type EventFormPayload } from "../../EventForm";
 import { updateEvent } from "./actions";
 
@@ -14,29 +14,24 @@ export function EditEventClient({
 }) {
   const router = useRouter();
 
+  // 基本情報はその場保存（フォーム編集と同一画面のため遷移しない）。
   const onSubmit = async (payload: EventFormPayload) => {
     const res = await updateEvent(eventId, payload);
     if (res.ok) {
-      router.push("/admin/events");
+      toast("基本情報を保存しました。");
       router.refresh();
     }
     return res;
   };
 
   return (
-    <>
-      <PageHeader
-        title="イベントを編集"
-        description="開催情報・料金・交通手段・対象拠点を変更します。フォーム項目の追加はフォーム編集画面から行えます。"
-      />
-      <EventForm
-        initial={initial}
-        submitLabel="変更を保存"
-        pendingLabel="保存中…"
-        actionNote="保存後、イベント一覧に戻ります"
-        cancelHref="/admin/events"
-        onSubmit={onSubmit}
-      />
-    </>
+    <EventForm
+      embedded
+      initial={initial}
+      submitLabel="基本情報を保存"
+      pendingLabel="保存中…"
+      cancelHref="/admin/events"
+      onSubmit={onSubmit}
+    />
   );
 }
