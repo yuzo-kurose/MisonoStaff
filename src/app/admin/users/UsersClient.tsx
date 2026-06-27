@@ -1,36 +1,25 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, History } from "lucide-react";
+import { Search, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input, Select } from "@/components/ui/Field";
-import { Alert } from "@/components/ui/Alert";
+import { Input } from "@/components/ui/Field";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { MobileRecord } from "@/components/ui/MobileRecord";
-import { setUserRole, setUserDivision, type AdminUserRow } from "./actions";
+import { type AdminUserRow } from "./actions";
 
-const ROLE_OPTIONS: { value: string; label: string }[] = [
-  { value: "participant", label: "ユーザー" },
-  { value: "representative", label: "所属代表者" },
-  { value: "admin", label: "管理者" },
-  { value: "reception", label: "受付" },
-];
-const DIVISION_OPTIONS: { value: string; label: string }[] = [
-  { value: "student", label: "学生部" },
-  { value: "university", label: "大学生部" },
-  { value: "adult", label: "成人部" },
-  { value: "mens", label: "男子部" },
-  { value: "general", label: "一般" },
-];
+const DIVISION_LABEL: Record<string, string> = {
+  student: "学生部",
+  university: "大学生部",
+  adult: "成人部",
+  mens: "男子部",
+  general: "一般",
+};
 
 export function UsersClient({ users }: { users: AdminUserRow[] }) {
-  const router = useRouter();
   const [query, setQuery] = useState("");
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [pending, startTransition] = useTransition();
 
   const q = query.trim().toLowerCase();
   const filtered = useMemo(
@@ -46,75 +35,12 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
     [users, q],
   );
 
-  const changeRole = (userId: string, role: string) => {
-    setMsg(null);
-    startTransition(async () => {
-      const res = await setUserRole(userId, role);
-      if (res.ok) {
-        setMsg({
-          ok: true,
-          text: "権限を変更しました。対象ユーザーは次回ログインでメニューに反映されます。",
-        });
-        router.refresh();
-      } else {
-        setMsg({ ok: false, text: `変更に失敗：${res.error}` });
-      }
-    });
-  };
+  const divisionLabel = (u: AdminUserRow) => DIVISION_LABEL[u.division] ?? "—";
 
-  const changeDivision = (userId: string, division: string) => {
-    setMsg(null);
-    startTransition(async () => {
-      const res = await setUserDivision(userId, division);
-      if (res.ok) {
-        setMsg({ ok: true, text: "部を変更しました。" });
-        router.refresh();
-      } else {
-        setMsg({ ok: false, text: `変更に失敗：${res.error}` });
-      }
-    });
-  };
-
-  const roleSelect = (u: AdminUserRow) => (
-    <Select
-      value={u.role}
-      disabled={pending}
-      onChange={(e) => changeRole(u.id, e.target.value)}
-      className="max-w-[10rem]"
-    >
-      {ROLE_OPTIONS.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </Select>
-  );
-
-  const divisionSelect = (u: AdminUserRow) => (
-    <Select
-      value={u.division}
-      disabled={pending}
-      onChange={(e) => changeDivision(u.id, e.target.value)}
-      className="max-w-[9rem]"
-    >
-      {DIVISION_OPTIONS.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </Select>
-  );
-
-  const idCell = (u: AdminUserRow) => (
-    <span className="font-mono text-label-sm text-neutral-500" title={u.id}>
-      {u.id.slice(0, 8)}
-    </span>
-  );
-
-  const historyButton = (u: AdminUserRow) => (
+  const detailButton = (u: AdminUserRow) => (
     <Link href={`/admin/users/${u.id}`}>
       <Button variant="secondary" size="sm">
-        <History size={15} /> 申込履歴
+        詳細 <ChevronRight size={15} />
       </Button>
     </Link>
   );
@@ -123,14 +49,8 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
     <>
       <PageHeader
         title="全ユーザー一覧"
-        description="ユーザーの権限を変更し、申込履歴を確認できます。"
+        description="氏名・所属・部を一覧表示します。メール・権限の確認や変更は「詳細」から行えます。"
       />
-
-      {msg && (
-        <div className="mb-4">
-          <Alert variant={msg.ok ? "success" : "error"}>{msg.text}</Alert>
-        </div>
-      )}
 
       <div className="mb-4 max-w-md">
         <label className="mb-1 block text-label-sm text-neutral-600">ID・氏名・メールで検索</label>
@@ -150,15 +70,11 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
           <MobileRecord
             key={u.id}
             title={u.name}
-            defaultOpen
             rows={[
-              { label: "ID", value: idCell(u) },
-              { label: "メール", value: u.email || "—" },
-              { label: "部", value: divisionSelect(u) },
               { label: "所属", value: u.branchName ?? "—" },
-              { label: "権限", value: roleSelect(u) },
+              { label: "部", value: divisionLabel(u) },
             ]}
-            action={historyButton(u)}
+            action={detailButton(u)}
           />
         ))}
       </div>
@@ -169,34 +85,23 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
           scroll={false}
           head={
             <tr>
-              <Th className="break-words">ID</Th>
               <Th className="break-words">氏名</Th>
-              <Th className="break-words">メール</Th>
-              <Th className="break-words">部</Th>
               <Th className="break-words">所属</Th>
-              <Th className="break-words">権限</Th>
+              <Th className="break-words">部</Th>
               <Th className="break-words">操作</Th>
             </tr>
           }
         >
           {filtered.map((u) => (
             <tr key={u.id}>
-              <Td className="break-words">{idCell(u)}</Td>
               <Td className="break-words">{u.name}</Td>
-              <Td className="break-all">{u.email || <span className="text-neutral-400">—</span>}</Td>
-              <Td>{divisionSelect(u)}</Td>
               <Td className="break-words">{u.branchName ?? <span className="text-neutral-400">—</span>}</Td>
-              <Td>{roleSelect(u)}</Td>
-              <Td>{historyButton(u)}</Td>
+              <Td className="break-words">{divisionLabel(u)}</Td>
+              <Td>{detailButton(u)}</Td>
             </tr>
           ))}
         </Table>
       </div>
-
-      <p className="mt-4 text-body-sm text-neutral-500">
-        ※「所属代表者」はメニュー権限です。どの拠点の名簿を扱うかは「拠点マスタ」で代表者に設定してください。
-        権限名：{ROLE_OPTIONS.map((o) => o.label).join(" / ")}
-      </p>
     </>
   );
 }

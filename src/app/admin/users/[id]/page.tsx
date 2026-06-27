@@ -6,6 +6,7 @@ import { Table, Th, Td } from "@/components/ui/Table";
 import { MobileRecord } from "@/components/ui/MobileRecord";
 import { yen, jpDate } from "@/lib/format";
 import { getUserHistory } from "../actions";
+import { UserInfoClient } from "./UserInfoClient";
 
 export default async function UserHistoryPage({
   params,
@@ -30,13 +31,19 @@ export default async function UserHistoryPage({
 
   return (
     <>
-      <PageHeader title={`申込履歴：${data.name}`} description="キャンセルを含む過去の申込をすべて表示します。" />
+      <PageHeader
+        title={`ユーザー詳細：${data.user.name}`}
+        description="基本情報の確認・部／権限の変更と、申込履歴の確認ができます。"
+      />
       <div className="mb-4">
         <Link href="/admin/users" className="text-link underline">
           ← ユーザー一覧へ戻る
         </Link>
       </div>
 
+      <UserInfoClient user={data.user} />
+
+      <h2 className="mb-3 text-heading-sm text-neutral-900">申込履歴</h2>
       {data.rows.length === 0 ? (
         <Alert variant="info">申込履歴がありません。</Alert>
       ) : (

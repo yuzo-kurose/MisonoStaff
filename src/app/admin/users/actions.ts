@@ -102,16 +102,52 @@ export type UserHistoryRow = {
   cancelledAt: string | null;
 };
 
-/** 指定ユーザーの申込履歴（キャンセル含む全件・管理者のみ）。 */
+export type UserDetail = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  division: string;
+  branchName: string | null;
+};
+
+/** 指定ユーザーの詳細＋申込履歴（キャンセル含む全件・管理者のみ）。 */
 export async function getUserHistory(
   userId: string,
-): Promise<{ name: string; rows: UserHistoryRow[] } | null> {
+): Promise<{ user: UserDetail; rows: UserHistoryRow[] } | null> {
   const auth = await requireRole(["admin"]);
   if (!auth.ok) return null;
   const admin = createAdminClient();
 
-  const { data: prof } = await admin.from("profiles").select("name").eq("id", userId).single();
-  const name = (prof as { name: string } | null)?.name ?? "（不明）";
+  const { data: prof } = await admin
+    .from("profiles")
+    .select("name,role,division,branch_id")
+    .eq("id", userId)
+    .single();
+  const p = prof as { name: string; role: string; division: string; branch_id: string | null } | null;
+
+  // メール（認証情報）と所属拠点名を取得する。
+  let email = "";
+  try {
+    const { data: au } = await admin.auth.admin.getUserById(userId);
+    email = au.user?.email ?? "";
+  } catch {
+    // 取得失敗時は空（致命的でない）。
+  }
+  let branchName: string | null = null;
+  if (p?.branch_id) {
+    const { data: b } = await admin.from("branches").select("name").eq("id", p.branch_id).maybeSingle();
+    branchName = (b as { name: string } | null)?.name ?? null;
+  }
+
+  const user: UserDetail = {
+    id: userId,
+    name: p?.name ?? "（不明）",
+    email,
+    role: p?.role ?? "participant",
+    division: p?.division ?? "",
+    branchName,
+  };
 
   const { data: partData } = await admin
     .from("participants")
@@ -126,7 +162,7 @@ export async function getUserHistory(
     created_at: string | null;
     cancelled_at: string | null;
   }[];
-  if (participants.length === 0) return { name, rows: [] };
+  if (participants.length === 0) return { user, rows: [] };
 
   const { data: apps } = await admin
     .from("applications")
@@ -156,5 +192,5 @@ export async function getUserHistory(
     };
   });
 
-  return { name, rows };
+  return { user, rows };
 }
