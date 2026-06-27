@@ -194,7 +194,7 @@ export default async function MyPage() {
 
         {/* ご利用の流れ */}
         <SectionPanel
-          color="accent"
+          color="success"
           icon={ListChecks}
           title="ご利用の流れ"
           className="lg:col-span-12"
@@ -203,10 +203,10 @@ export default async function MyPage() {
             {flowSteps.map((s, i) => (
               <li key={s.title} className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
                 <div className="mb-2 flex items-center gap-2">
-                  <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-accent-700 text-label-md font-bold text-neutral-white">
+                  <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-success-900 text-label-md font-bold text-neutral-white">
                     {i + 1}
                   </span>
-                  <s.icon size={20} className="text-accent-700" />
+                  <s.icon size={20} className="text-success-900" />
                 </div>
                 <p className="text-body-md font-medium text-neutral-900">{s.title}</p>
                 <p className="mt-1 text-body-sm text-neutral-600">{s.desc}</p>
