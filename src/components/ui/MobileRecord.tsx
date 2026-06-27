@@ -12,6 +12,7 @@ import { ChevronDown } from "lucide-react";
  */
 export function MobileRecord({
   title,
+  subtitle,
   badge,
   summary,
   rows,
@@ -19,6 +20,7 @@ export function MobileRecord({
   defaultOpen = false,
 }: {
   title: ReactNode;
+  subtitle?: ReactNode; // 折りたたみ時に見せるタイトル下の補足（例：所属・部）
   badge?: ReactNode;
   summary?: ReactNode; // 折りたたみ時に見せる要約値（例：金額）
   rows: { label: string; value: ReactNode }[];
@@ -38,7 +40,10 @@ export function MobileRecord({
           hasDetails ? "hover:bg-neutral-50" : "cursor-default"
         }`}
       >
-        <p className="min-w-0 flex-1 truncate text-body-md font-medium text-neutral-900">{title}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-body-md font-medium text-neutral-900">{title}</p>
+          {subtitle && <p className="truncate text-body-sm text-neutral-500">{subtitle}</p>}
+        </div>
         {summary && (
           <span className="flex-none text-body-sm tabular-nums text-neutral-700">{summary}</span>
         )}
