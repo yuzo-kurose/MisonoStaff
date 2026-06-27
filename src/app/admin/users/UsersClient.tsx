@@ -68,35 +68,39 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
         description="氏名・所属・部を一覧表示します。メール・権限の確認や変更は「詳細」から行えます。"
       />
 
-      <div className="mb-4 flex flex-wrap items-end gap-3">
-        <div className="min-w-[200px] flex-1">
-          <label className="mb-1 block text-label-sm text-neutral-600">ID・氏名・メールで検索</label>
-          <div className="relative">
-            <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ID / 氏名 / メール" className="pl-10" />
+      <div className="mb-4 space-y-3">
+        {/* 1行目：所属・部 */}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="w-44">
+            <label className="mb-1 block text-label-sm text-neutral-600">所属</label>
+            <Select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
+              <option value="">すべて</option>
+              {branchOptions.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="w-36">
+            <label className="mb-1 block text-label-sm text-neutral-600">部</label>
+            <Select value={divisionFilter} onChange={(e) => setDivisionFilter(e.target.value)}>
+              <option value="">すべて</option>
+              {Object.entries(DIVISION_LABEL).map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </Select>
           </div>
         </div>
-        <div className="w-44">
-          <label className="mb-1 block text-label-sm text-neutral-600">所属</label>
-          <Select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
-            <option value="">すべて</option>
-            {branchOptions.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div className="w-36">
-          <label className="mb-1 block text-label-sm text-neutral-600">部</label>
-          <Select value={divisionFilter} onChange={(e) => setDivisionFilter(e.target.value)}>
-            <option value="">すべて</option>
-            {Object.entries(DIVISION_LABEL).map(([v, l]) => (
-              <option key={v} value={v}>
-                {l}
-              </option>
-            ))}
-          </Select>
+        {/* 2行目：名前（ID・氏名・メール）検索 */}
+        <div className="max-w-md">
+          <label className="mb-1 block text-label-sm text-neutral-600">名前で検索（ID・メールも可）</label>
+          <div className="relative">
+            <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="氏名 / ID / メール" className="pl-10" />
+          </div>
         </div>
       </div>
 
