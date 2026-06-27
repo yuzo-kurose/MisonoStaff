@@ -1,7 +1,27 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Settings, MapPin, Bell, CalendarDays } from "lucide-react";
+import {
+  ChevronRight,
+  Settings,
+  MapPin,
+  Bell,
+  CalendarDays,
+  CalendarPlus,
+  ClipboardCheck,
+  CreditCard,
+  QrCode,
+  ListChecks,
+} from "lucide-react";
 import { PageHeader } from "@/components/ui/Card";
+import { SectionPanel } from "@/components/ui/SectionPanel";
+
+// 参加者の利用フロー（マイページ最下部に掲載）。
+const flowSteps = [
+  { icon: CalendarPlus, title: "1. イベントに申し込む", desc: "「イベント申込」から参加するイベントを選んで申し込みます。" },
+  { icon: ClipboardCheck, title: "2. 代表者が名簿を確定", desc: "所属の代表者が申込名簿を確定します。確定後に決済できます。" },
+  { icon: CreditCard, title: "3. 参加費を決済", desc: "確定後、マイページから参加費をまとめて事前決済します。" },
+  { icon: QrCode, title: "4. 当日QRで受付", desc: "当日は受付用QRコードを提示してチェックインします。" },
+];
 import { ButtonLink } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
@@ -79,7 +99,7 @@ export default async function MyPage() {
               </span>
               神苑からのお知らせ
             </h2>
-            <Link href="/" className="text-body-sm text-primary-900 hover:underline">
+            <Link href="/announcements" className="text-body-sm text-primary-900 hover:underline">
               すべて見る
             </Link>
           </div>
@@ -171,6 +191,29 @@ export default async function MyPage() {
             </div>
           )}
         </section>
+
+        {/* ご利用の流れ */}
+        <SectionPanel
+          color="accent"
+          icon={ListChecks}
+          title="ご利用の流れ"
+          className="lg:col-span-12"
+        >
+          <ol className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {flowSteps.map((s, i) => (
+              <li key={s.title} className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-accent-700 text-label-md font-bold text-neutral-white">
+                    {i + 1}
+                  </span>
+                  <s.icon size={20} className="text-accent-700" />
+                </div>
+                <p className="text-body-md font-medium text-neutral-900">{s.title}</p>
+                <p className="mt-1 text-body-sm text-neutral-600">{s.desc}</p>
+              </li>
+            ))}
+          </ol>
+        </SectionPanel>
       </div>
     </>
   );
