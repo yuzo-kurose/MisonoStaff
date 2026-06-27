@@ -328,24 +328,15 @@ export function FormBuilderClient({
         </div>
       )}
 
-      <div className="mb-6 max-w-2xl space-y-4">
-        <div className="max-w-md">
-          <Field label="フォーム名" required>
-            <Input value={formName} onChange={(e) => setFormName(e.target.value)} />
-          </Field>
-        </div>
-        <Field label="フォームの説明文" hint="申込画面の先頭に表示されます（任意・改行可）。注意事項や持ち物などを記載できます。">
-          <Textarea
-            rows={3}
-            value={formDescription}
-            onChange={(e) => setFormDescription(e.target.value)}
-            placeholder="例）当日は動きやすい服装でお越しください。集合は8:30、解散は16:00予定です。"
-          />
+      {/* フォーム名 */}
+      <div className="mb-4 max-w-md">
+        <Field label="フォーム名" required>
+          <Input value={formName} onChange={(e) => setFormName(e.target.value)} />
         </Field>
       </div>
 
-      {/* テンプレート：保存・読込 */}
-      <Card className="mb-6">
+      {/* テンプレート：保存・読込（説明文もテンプレートに含まれるため説明文の上に配置） */}
+      <Card className="mb-4 max-w-2xl">
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-[220px] flex-1">
             <label className="mb-1 block text-label-sm text-neutral-600">テンプレートから読み込む</label>
@@ -372,6 +363,18 @@ export function FormBuilderClient({
           </Button>
         </div>
       </Card>
+
+      {/* フォームの説明文 */}
+      <div className="mb-6 max-w-2xl">
+        <Field label="フォームの説明文" hint="申込画面の先頭に表示されます（任意・改行可）。注意事項や持ち物などを記載できます。">
+          <Textarea
+            rows={3}
+            value={formDescription}
+            onChange={(e) => setFormDescription(e.target.value)}
+            placeholder="例）当日は動きやすい服装でお越しください。集合は8:30、解散は16:00予定です。"
+          />
+        </Field>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* 編集パネル */}
