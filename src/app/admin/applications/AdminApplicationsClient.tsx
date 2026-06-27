@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search, RotateCcw, Inbox, Download } from "lucide-react";
-import { Card, PageHeader } from "@/components/ui/Card";
+import { Search, RotateCcw, Inbox, Download, SlidersHorizontal } from "lucide-react";
+import { PageHeader } from "@/components/ui/Card";
+import { SectionPanel } from "@/components/ui/SectionPanel";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Input, Select } from "@/components/ui/Field";
@@ -140,17 +141,20 @@ export function AdminApplicationsClient({
       )}
 
       {/* 絞り込み：イベント選択の横に氏名・拠点・部署・状態を1行でまとめる。 */}
-      <Card className="mb-4">
-        {/* カード右上：条件をリセット */}
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-heading-sm text-neutral-900">絞り込み</h2>
-          {(query || eventId || branchId || department || status) && (
+      <SectionPanel
+        className="mb-4"
+        color="primary"
+        icon={SlidersHorizontal}
+        title="絞り込み"
+        action={
+          (query || eventId || branchId || department || status) ? (
             <Button variant="secondary" size="sm" onClick={resetFilters}>
               <RotateCcw size={14} />
               条件をリセット
             </Button>
-          )}
-        </div>
+          ) : undefined
+        }
+      >
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-[220px] flex-[2]">
             <label className="mb-1 block text-label-sm text-neutral-600">イベントを選択</label>
@@ -211,7 +215,7 @@ export function AdminApplicationsClient({
             </Select>
           </div>
         </div>
-      </Card>
+      </SectionPanel>
 
       <div className="mb-3 flex items-center justify-between">
         <p className="text-body-sm text-neutral-700">

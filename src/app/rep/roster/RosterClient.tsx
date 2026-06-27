@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Card, PageHeader } from "@/components/ui/Card";
+import { ClipboardList } from "lucide-react";
+import { PageHeader } from "@/components/ui/Card";
+import { SectionPanel } from "@/components/ui/SectionPanel";
 import { toast } from "@/components/ui/toast";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
@@ -226,14 +228,16 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                   </Button>
                 </div>
 
-                <Card>
-                {/* カード見出し：左上に「申込一覧」、右上に件数、下に区切り線 */}
-                <div className="mb-4 flex items-center justify-between border-b border-neutral-200 pb-3">
-                  <h3 className="text-heading-sm text-neutral-900">申込一覧</h3>
-                  <span className="text-body-sm text-neutral-600">
-                    {flat.length}名（未確定 {applyingCount}名）
-                  </span>
-                </div>
+                <SectionPanel
+                  color="info"
+                  icon={ClipboardList}
+                  title="申込一覧"
+                  action={
+                    <span className="flex-none text-body-sm text-neutral-600">
+                      {flat.length}名（未確定 {applyingCount}名）
+                    </span>
+                  }
+                >
                 {/* スマホ：カード表示 */}
                 <div className="space-y-2 md:hidden">
                   {flat.map((m, i) => (
@@ -298,7 +302,7 @@ export function RosterClient({ groups, isAdmin }: { groups: RosterGroup[]; isAdm
                     ))}
                   </Table>
                 </div>
-                </Card>
+                </SectionPanel>
               </div>
             );
           })}

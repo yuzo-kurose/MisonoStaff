@@ -163,28 +163,29 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
         ))}
       </div>
 
-      {/* PC：テーブル */}
+      {/* PC：テーブル（横スクロールさせずコンテナ幅に収める） */}
       <div className="hidden md:block">
         <Table
+          scroll={false}
           head={
             <tr>
-              <Th>ID</Th>
-              <Th>氏名</Th>
-              <Th>メール</Th>
-              <Th>部</Th>
-              <Th>所属</Th>
-              <Th>権限</Th>
-              <Th>操作</Th>
+              <Th className="break-words">ID</Th>
+              <Th className="break-words">氏名</Th>
+              <Th className="break-words">メール</Th>
+              <Th className="break-words">部</Th>
+              <Th className="break-words">所属</Th>
+              <Th className="break-words">権限</Th>
+              <Th className="break-words">操作</Th>
             </tr>
           }
         >
           {filtered.map((u) => (
             <tr key={u.id}>
-              <Td>{idCell(u)}</Td>
-              <Td>{u.name}</Td>
-              <Td>{u.email || <span className="text-neutral-400">—</span>}</Td>
+              <Td className="break-words">{idCell(u)}</Td>
+              <Td className="break-words">{u.name}</Td>
+              <Td className="break-all">{u.email || <span className="text-neutral-400">—</span>}</Td>
               <Td>{divisionSelect(u)}</Td>
-              <Td>{u.branchName ?? <span className="text-neutral-400">—</span>}</Td>
+              <Td className="break-words">{u.branchName ?? <span className="text-neutral-400">—</span>}</Td>
               <Td>{roleSelect(u)}</Td>
               <Td>{historyButton(u)}</Td>
             </tr>
