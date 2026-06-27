@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Search, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Field";
+import { Input, Select } from "@/components/ui/Field";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { MobileRecord } from "@/components/ui/MobileRecord";
 import { type AdminUserRow } from "./actions";
@@ -26,19 +26,28 @@ const ROLE_LABEL: Record<string, string> = {
 
 export function UsersClient({ users }: { users: AdminUserRow[] }) {
   const [query, setQuery] = useState("");
+  const [branchFilter, setBranchFilter] = useState("");
+  const [divisionFilter, setDivisionFilter] = useState("");
+
+  // 絞り込み候補：登録済みユーザーの所属（重複排除）。
+  const branchOptions = useMemo(
+    () => [...new Set(users.map((u) => u.branchName).filter((b): b is string => !!b))].sort(),
+    [users],
+  );
 
   const q = query.trim().toLowerCase();
   const filtered = useMemo(
     () =>
-      q === ""
-        ? users
-        : users.filter(
-            (u) =>
-              u.name.toLowerCase().includes(q) ||
-              u.email.toLowerCase().includes(q) ||
-              u.id.toLowerCase().includes(q),
-          ),
-    [users, q],
+      users.filter(
+        (u) =>
+          (q === "" ||
+            u.name.toLowerCase().includes(q) ||
+            u.email.toLowerCase().includes(q) ||
+            u.id.toLowerCase().includes(q)) &&
+          (branchFilter === "" || (u.branchName ?? "") === branchFilter) &&
+          (divisionFilter === "" || u.division === divisionFilter),
+      ),
+    [users, q, branchFilter, divisionFilter],
   );
 
   const divisionLabel = (u: AdminUserRow) => DIVISION_LABEL[u.division] ?? "—";
@@ -59,11 +68,35 @@ export function UsersClient({ users }: { users: AdminUserRow[] }) {
         description="氏名・所属・部を一覧表示します。メール・権限の確認や変更は「詳細」から行えます。"
       />
 
-      <div className="mb-4 max-w-md">
-        <label className="mb-1 block text-label-sm text-neutral-600">ID・氏名・メールで検索</label>
-        <div className="relative">
-          <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ID / 氏名 / メール" className="pl-10" />
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <div className="min-w-[200px] flex-1">
+          <label className="mb-1 block text-label-sm text-neutral-600">ID・氏名・メールで検索</label>
+          <div className="relative">
+            <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ID / 氏名 / メール" className="pl-10" />
+          </div>
+        </div>
+        <div className="w-44">
+          <label className="mb-1 block text-label-sm text-neutral-600">所属</label>
+          <Select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
+            <option value="">すべて</option>
+            {branchOptions.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div className="w-36">
+          <label className="mb-1 block text-label-sm text-neutral-600">部</label>
+          <Select value={divisionFilter} onChange={(e) => setDivisionFilter(e.target.value)}>
+            <option value="">すべて</option>
+            {Object.entries(DIVISION_LABEL).map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
+          </Select>
         </div>
       </div>
 
