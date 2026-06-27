@@ -29,7 +29,6 @@ import { yen, jpDate } from "@/lib/format";
 import { getMyProfile, getMyParticipations } from "@/lib/queries/me";
 import { getBranches } from "@/lib/queries/branches";
 import { getPublishedAnnouncements } from "@/lib/queries/announcements";
-import { getCurrentUser } from "@/lib/supabase/server";
 import { QrCard } from "./QrCard";
 
 export default async function MyPage() {

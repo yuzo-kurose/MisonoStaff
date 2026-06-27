@@ -69,16 +69,24 @@ export async function getAdminApplications(): Promise<AdminApplications> {
   const branches = (brs ?? []) as unknown as { id: string; name: string }[];
   const validEventIds = new Set(events.map((e) => e.id));
 
-  // 申込フォーム項目（列見出し）と回答（表示文字列）を取得する。
+  // 申込フォーム項目（列見出し）と回答（participant_values）は互いに独立なので並列取得する。
   const formIds = [...new Set(events.map((e) => e.form_id))];
-  const { data: fieldData } = formIds.length
-    ? await supabase
-        .from("form_fields")
-        .select("id,form_id,label,field_type,sort_order")
-        .in("form_id", formIds)
-        .order("sort_order", { ascending: true })
-    : { data: [] };
-  const fields = (fieldData ?? []) as unknown as {
+  const [fieldRes, pvRes] = await Promise.all([
+    formIds.length
+      ? supabase
+          .from("form_fields")
+          .select("id,form_id,label,field_type,sort_order")
+          .in("form_id", formIds)
+          .order("sort_order", { ascending: true })
+      : Promise.resolve({ data: [] as unknown[] }),
+    participants.length
+      ? supabase
+          .from("participant_values")
+          .select("id,participant_id,form_field_id,value")
+          .in("participant_id", participants.map((p) => p.id))
+      : Promise.resolve({ data: [] as unknown[] }),
+  ]);
+  const fields = (fieldRes.data ?? []) as unknown as {
     id: string;
     form_id: string;
     label: string;
@@ -94,13 +102,7 @@ export async function getAdminApplications(): Promise<AdminApplications> {
   const fieldType = new Map(fields.map((f) => [f.id, f.field_type]));
 
   // 回答（participant_values）＋選択肢ラベル。
-  const { data: pvData } = participants.length
-    ? await supabase
-        .from("participant_values")
-        .select("id,participant_id,form_field_id,value")
-        .in("participant_id", participants.map((p) => p.id))
-    : { data: [] };
-  const pvs = (pvData ?? []) as unknown as {
+  const pvs = (pvRes.data ?? []) as unknown as {
     id: string;
     participant_id: string;
     form_field_id: string;

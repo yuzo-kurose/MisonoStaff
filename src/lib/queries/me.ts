@@ -1,16 +1,16 @@
-import { createClient, getCurrentUser } from "@/lib/supabase/server";
+import { createClient, getSessionUserId } from "@/lib/supabase/server";
 import type { Profile, Participant, EventRow } from "@/types/database";
 
 /** ログイン中ユーザーのプロフィール（未ログインなら null） */
 export async function getMyProfile(): Promise<Profile | null> {
   const supabase = await createClient();
-  const user = await getCurrentUser();
-  if (!user) return null;
+  const userId = await getSessionUserId();
+  if (!userId) return null;
 
   const { data } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
   return (data as unknown as Profile | null) ?? null;
 }
@@ -27,8 +27,8 @@ export type MyParticipation = {
 /** ログイン中ユーザーの参加（申込）一覧 */
 export async function getMyParticipations(): Promise<MyParticipation[]> {
   const supabase = await createClient();
-  const user = await getCurrentUser();
-  if (!user) return [];
+  const userId = await getSessionUserId();
+  if (!userId) return [];
 
   // participants → applications → events を FK リレーション埋め込みで1往復で取得する。
   // （以前は participants/applications/events を直列に3往復していた）
@@ -36,7 +36,7 @@ export async function getMyParticipations(): Promise<MyParticipation[]> {
   const { data } = await supabase
     .from("participants")
     .select("id,status,total_amount,applications!inner(events!inner(name,event_date,venue))")
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   const rows = (data ?? []) as unknown as {
     id: string;
@@ -71,15 +71,15 @@ export type MyHistoryRow = {
 /** ログイン中ユーザーの申込履歴（取消含む全件・申込日の新しい順）。 */
 export async function getMyApplicationHistory(): Promise<MyHistoryRow[]> {
   const supabase = await createClient();
-  const user = await getCurrentUser();
-  if (!user) return [];
+  const userId = await getSessionUserId();
+  if (!userId) return [];
 
   const { data } = await supabase
     .from("participants")
     .select(
       "id,status,total_amount,created_at,cancelled_at,applications!inner(events!inner(name,event_date))",
     )
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   const rows = (data ?? []) as unknown as {

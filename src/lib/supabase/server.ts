@@ -54,3 +54,20 @@ export const getCurrentUser = cache(async () => {
   } = await supabase.auth.getUser();
   return user;
 });
+
+/**
+ * ログイン中ユーザーの ID をクッキーから取得する（getSession＝ローカル検証・原則ネットワーク往復なし）。
+ *
+ * 用途は「自分のデータを `.eq("user_id", id)` で絞り込む読み取りクエリ」専用。
+ * データ保護は RLS が担う（PostgREST は実際のクエリで JWT 署名を検証するため、
+ * 改ざんクッキーでは結果が空になる）。**特権操作の認可には使わないこと**
+ * （特権操作は getCurrentUser/requireRole の getUser 厳密検証を使う）。
+ * React cache() で同一リクエスト内は1回に集約。
+ */
+export const getSessionUserId = cache(async (): Promise<string | null> => {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.user?.id ?? null;
+});

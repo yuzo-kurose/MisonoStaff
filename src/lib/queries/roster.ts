@@ -1,4 +1,4 @@
-import { createClient, getCurrentUser } from "@/lib/supabase/server";
+import { createClient, getSessionUserId } from "@/lib/supabase/server";
 import type { ParticipantStatus } from "@/types/database";
 
 export type RosterMember = {
@@ -28,13 +28,13 @@ export type RosterGroup = {
  */
 export async function getRoster(): Promise<RosterGroup[]> {
   const supabase = await createClient();
-  const user = await getCurrentUser();
-  if (!user) return [];
+  const userId = await getSessionUserId();
+  if (!userId) return [];
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
   const role = (profile as { role: string } | null)?.role;
   const isAdmin = role === "admin";
@@ -45,7 +45,7 @@ export async function getRoster(): Promise<RosterGroup[]> {
     const { data: repBranches } = await supabase
       .from("branches")
       .select("id")
-      .eq("representative_user_id", user.id);
+      .eq("representative_user_id", userId);
     const branchIds = ((repBranches ?? []) as unknown as { id: string }[]).map((b) => b.id);
     if (branchIds.length === 0) return [];
     appsQuery = appsQuery.in("branch_id", branchIds);
