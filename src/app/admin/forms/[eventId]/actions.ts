@@ -10,6 +10,7 @@ export type BuilderField = {
   required: boolean;
   priceCalc: "none" | "per_unit" | "option_based";
   unitPrice?: number;
+  fieldKey?: string | null; // 固定項目キー（テンプレで固定項目の選択肢も保持するため）
   options?: BuilderOption[];
 };
 
@@ -148,23 +149,36 @@ export async function saveForm(
   return { ok: true };
 }
 
-export type FormTemplate = { id: string; name: string; fields: BuilderField[] };
+export type FormTemplate = {
+  id: string;
+  name: string;
+  description?: string | null;
+  fields: BuilderField[];
+};
 
 /** フォームテンプレート一覧（管理者）。テーブル未作成等は空扱いにしてビルダーを壊さない。 */
 export async function getFormTemplates(): Promise<FormTemplate[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  // description 列が未適用の環境でも壊れないようフォールバックする。
+  let res = await supabase
     .from("form_templates")
-    .select("id,name,fields")
+    .select("id,name,fields,description")
     .order("created_at", { ascending: false });
-  if (error) return [];
-  return (data ?? []) as unknown as FormTemplate[];
+  if (res.error) {
+    res = await supabase
+      .from("form_templates")
+      .select("id,name,fields")
+      .order("created_at", { ascending: false });
+    if (res.error) return [];
+  }
+  return (res.data ?? []) as unknown as FormTemplate[];
 }
 
 /** 現在のフォーム項目を名前付きテンプレートとして保存する（管理者のみ／RLS）。 */
 export async function saveFormTemplate(
   name: string,
   fields: BuilderField[],
+  description?: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
   if (!name.trim()) return { ok: false, error: "テンプレート名を入力してください。" };
   const supabase = await createClient();
@@ -173,9 +187,14 @@ export async function saveFormTemplate(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "ログインが必要です。" };
 
-  const { error } = await supabase
+  const base = { name: name.trim(), fields, created_by: user.id };
+  // description 列が未適用の環境向けにフォールバック。
+  let { error } = await supabase
     .from("form_templates")
-    .insert({ name: name.trim(), fields, created_by: user.id } as never);
+    .insert({ ...base, description: description?.trim() || null } as never);
+  if (error) {
+    ({ error } = await supabase.from("form_templates").insert(base as never));
+  }
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }

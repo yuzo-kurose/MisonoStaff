@@ -188,18 +188,18 @@ export function FormBuilderClient({
     router.push("/admin/events");
   };
 
-  // テンプレート保存用ペイロード（IDなし・予備項目のみ）。固定項目はテンプレ対象外。
+  // テンプレート保存用ペイロード（IDなし・全項目）。
+  // 固定項目（参加費/往路/復路）の選択肢・価格も保存するため fieldKey 付きで全項目を含める。
   const fieldsPayload = () =>
-    fields
-      .filter((f) => !isFixed(f))
-      .map((f) => ({
-        label: f.label,
-        fieldType: f.fieldType,
-        required: f.required,
-        priceCalc: f.priceCalc,
-        unitPrice: f.unitPrice,
-        options: f.options?.map((o) => ({ label: o.label, price: o.price })),
-      }));
+    fields.map((f) => ({
+      label: f.label,
+      fieldType: f.fieldType,
+      required: f.required,
+      priceCalc: f.priceCalc,
+      unitPrice: f.unitPrice,
+      fieldKey: f.fieldKey ?? null,
+      options: f.options?.map((o) => ({ label: o.label, price: o.price })),
+    }));
 
   // フォーム保存用ペイロード（差分更新のためID付き・固定キーを保持）。
   const fieldsSavePayload = () =>
@@ -228,7 +228,7 @@ export function FormBuilderClient({
     }
     setMsg(null);
     startTransition(async () => {
-      const res = await saveFormTemplate(name, fieldsPayload());
+      const res = await saveFormTemplate(name, fieldsPayload(), formDescription);
       if (res.ok) {
         setMsg({ ok: true, text: `テンプレート「${name.trim()}」を保存しました。` });
         router.refresh();
@@ -238,13 +238,42 @@ export function FormBuilderClient({
     });
   };
 
-  // テンプレートを読み込む（固定項目は維持し、予備項目だけを置き換える。最大5個）。
+  // テンプレートを読み込む。
+  //  - 固定項目（参加費/往路/復路）：現在の項目IDを保持しつつ、テンプレの選択肢・価格・
+  //    ラベル・タイプ等を反映（fieldKey で対応付け）。
+  //  - 予備項目：テンプレの予備項目で置き換える（最大5個）。
+  //  - 説明文：テンプレの説明文を反映。
   const onLoadTemplate = (templateId: string) => {
     const tpl = templates.find((t) => t.id === templateId);
     if (!tpl) return;
-    if (spareCount > 0 && !window.confirm(`予備項目を「${tpl.name}」の内容で置き換えます。よろしいですか？（固定項目は維持されます）`)) return;
-    const fixed = fields.filter((f) => isFixed(f));
-    const spares = tpl.fields.slice(0, MAX_SPARE_FIELDS).map((f) => ({
+    if (
+      !window.confirm(
+        `テンプレート「${tpl.name}」の内容（固定項目の選択肢・価格、予備項目、説明文）を反映します。現在の内容は置き換えられます。よろしいですか？`,
+      )
+    )
+      return;
+
+    const tplFixed = tpl.fields.filter((f) => !!f.fieldKey);
+    const tplSpares = tpl.fields.filter((f) => !f.fieldKey);
+
+    // 現在の固定項目に、テンプレの同キー項目の内容を反映（IDは保持＝差分更新を維持）。
+    const fixed = fields
+      .filter((f) => isFixed(f))
+      .map((f) => {
+        const t = tplFixed.find((x) => x.fieldKey === f.fieldKey);
+        if (!t) return f;
+        return {
+          ...f,
+          label: t.label,
+          fieldType: t.fieldType as ClientField["fieldType"],
+          required: t.required,
+          priceCalc: t.priceCalc,
+          unitPrice: t.unitPrice,
+          options: t.options?.map((o) => ({ id: uid(), label: o.label, price: o.price })),
+        };
+      });
+
+    const spares = tplSpares.slice(0, MAX_SPARE_FIELDS).map((f) => ({
       id: uid(),
       label: f.label,
       fieldType: f.fieldType as ClientField["fieldType"],
@@ -254,12 +283,14 @@ export function FormBuilderClient({
       options: f.options?.map((o) => ({ id: uid(), label: o.label, price: o.price })),
       fieldKey: null,
     }));
+
     setFields([...fixed, ...spares]);
-    const dropped = tpl.fields.length - spares.length;
+    setFormDescription(tpl.description ?? "");
+    const dropped = tplSpares.length - spares.length;
     setMsg({
       ok: true,
-      text: `テンプレート「${tpl.name}」の予備項目を読み込みました。${
-        dropped > 0 ? `（上限${MAX_SPARE_FIELDS}個のため${dropped}項目は読み込まれていません）` : ""
+      text: `テンプレート「${tpl.name}」を読み込みました。${
+        dropped > 0 ? `（予備項目は上限${MAX_SPARE_FIELDS}個のため${dropped}項目は読み込まれていません）` : ""
       }保存するには「保存」を押してください。`,
     });
   };
@@ -326,7 +357,7 @@ export function FormBuilderClient({
               </option>
               {templates.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.name}（{t.fields.length}項目）
+                  {t.name}（予備{t.fields.filter((f) => !f.fieldKey).length}項目）
                 </option>
               ))}
             </Select>
