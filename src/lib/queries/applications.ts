@@ -4,6 +4,7 @@ import type { ParticipantStatus } from "@/types/database";
 export type AppRow = {
   participantId: string;
   name: string;
+  division: string; // 部（学生部/成人部 等）
   department: string;
   eventId: string;
   eventName: string;
@@ -44,11 +45,16 @@ export async function getAdminApplications(): Promise<AdminApplications> {
       .in("id", [...new Set(participants.map((p) => p.application_id))]),
     supabase
       .from("profiles")
-      .select("id,name,department")
+      .select("id,name,division,department")
       .in("id", [...new Set(participants.map((p) => p.user_id))]),
   ]);
   const appList = (apps ?? []) as unknown as { id: string; event_id: string; branch_id: string }[];
-  const names = (profs ?? []) as unknown as { id: string; name: string; department: string | null }[];
+  const names = (profs ?? []) as unknown as {
+    id: string;
+    name: string;
+    division: string | null;
+    department: string | null;
+  }[];
 
   const [{ data: evs }, { data: brs }] = await Promise.all([
     // 論理削除済みイベントは申込一覧に出さない。
@@ -154,6 +160,7 @@ export async function getAdminApplications(): Promise<AdminApplications> {
       return {
         participantId: p.id,
         name: prof?.name ?? "（不明）",
+        division: prof?.division ?? "",
         department: prof?.department ?? "",
         eventId: app?.event_id ?? "",
         eventName: ev?.name ?? "（不明）",

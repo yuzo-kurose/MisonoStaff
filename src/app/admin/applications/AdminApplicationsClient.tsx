@@ -16,6 +16,15 @@ import { yen } from "@/lib/format";
 import type { AppRow, AppField } from "@/lib/queries/applications";
 import { refundParticipant } from "./actions";
 
+const DIVISION_LABEL: Record<string, string> = {
+  student: "学生部",
+  university: "大学生部",
+  adult: "成人部",
+  mens: "男子部",
+  general: "一般",
+};
+const divisionLabel = (v: string) => DIVISION_LABEL[v] ?? (v || "—");
+
 export function AdminApplicationsClient({
   rows,
   fieldsByEvent,
@@ -30,6 +39,7 @@ export function AdminApplicationsClient({
     () => rows.slice().sort((a, b) => a.eventDate.localeCompare(b.eventDate))[0]?.eventId ?? "",
   );
   const [branchId, setBranchId] = useState("");
+  const [division, setDivision] = useState("");
   const [department, setDepartment] = useState("");
   const [status, setStatus] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -38,6 +48,7 @@ export function AdminApplicationsClient({
     setQuery("");
     setEventId("");
     setBranchId("");
+    setDivision("");
     setDepartment("");
     setStatus("");
   };
@@ -62,6 +73,7 @@ export function AdminApplicationsClient({
       (q === "" || r.name.toLowerCase().includes(q)) &&
       (eventId === "" || r.eventId === eventId) &&
       (branchId === "" || r.branchId === branchId) &&
+      (division === "" || r.division === division) &&
       (department === "" || r.department === department) &&
       (status === "" || r.status === status),
   );
@@ -73,9 +85,10 @@ export function AdminApplicationsClient({
   const answerFields: AppField[] = eventId ? fieldsByEvent[eventId] ?? [] : [];
 
   const exportCsv = () => {
-    const header = ["氏名", "部署", "イベント", "拠点", ...answerFields.map((f) => f.label), "状態", "金額"];
+    const header = ["氏名", "部", "部署", "イベント", "拠点", ...answerFields.map((f) => f.label), "状態", "金額"];
     const body = filtered.map((r) => [
       r.name,
+      divisionLabel(r.division),
       r.department,
       r.eventName,
       r.branchName,
@@ -147,7 +160,7 @@ export function AdminApplicationsClient({
         icon={SlidersHorizontal}
         title="絞り込み"
         action={
-          (query || eventId || branchId || department || status) ? (
+          (query || eventId || branchId || division || department || status) ? (
             <Button variant="secondary" size="sm" onClick={resetFilters}>
               <RotateCcw size={14} />
               条件をリセット
@@ -189,6 +202,17 @@ export function AdminApplicationsClient({
               {branches.map(([id, name]) => (
                 <option key={id} value={id}>
                   {name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="w-32">
+            <label className="mb-1 block text-label-sm text-neutral-600">部</label>
+            <Select value={division} onChange={(e) => setDivision(e.target.value)}>
+              <option value="">すべて</option>
+              {Object.entries(DIVISION_LABEL).map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
                 </option>
               ))}
             </Select>
@@ -247,6 +271,7 @@ export function AdminApplicationsClient({
                 rows={[
                   ...(eventId === "" ? [{ label: "イベント", value: r.eventName }] : []),
                   { label: "拠点", value: r.branchName },
+                  { label: "部", value: divisionLabel(r.division) },
                   { label: "部署", value: r.department || "—" },
                   ...answerFields.map((f) => ({
                     label: f.label,
@@ -265,6 +290,7 @@ export function AdminApplicationsClient({
               head={
                 <tr>
                   <Th className="break-words">氏名</Th>
+                  <Th className="break-words">部</Th>
                   <Th className="break-words">部署</Th>
                   <Th className="break-words">拠点</Th>
                   {answerFields.map((f) => (
@@ -281,6 +307,7 @@ export function AdminApplicationsClient({
               {filtered.map((r) => (
                 <tr key={r.participantId}>
                   <Td className="break-words">{r.name}</Td>
+                  <Td className="break-words">{divisionLabel(r.division)}</Td>
                   <Td className="break-words">
                     {r.department ? r.department : <span className="text-neutral-400">—</span>}
                   </Td>
