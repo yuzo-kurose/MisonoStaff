@@ -59,13 +59,10 @@ export async function saveForm(
     .eq("form_id", formId);
   const existingFields = (exData ?? []) as { id: string; field_key: string | null }[];
   const existingFieldIds = new Set(existingFields.map((f) => f.id));
-  const fixedFieldIds = new Set(existingFields.filter((f) => f.field_key).map((f) => f.id));
   const keptFieldIds = new Set(fields.map((f) => f.id).filter((id) => existingFieldIds.has(id)));
 
-  // 削除された項目を削除（固定項目は削除しない。回答済みならFKで失敗 → 分かりやすいメッセージ）
-  const fieldsToDelete = [...existingFieldIds].filter(
-    (id) => !keptFieldIds.has(id) && !fixedFieldIds.has(id),
-  );
+  // 削除された項目を削除（区分なし＝全項目削除可。回答済みならFKで失敗→分かりやすいメッセージ）
+  const fieldsToDelete = [...existingFieldIds].filter((id) => !keptFieldIds.has(id));
   if (fieldsToDelete.length) {
     const { error } = await supabase.from("form_fields").delete().in("id", fieldsToDelete);
     if (error) return { ok: false, error: isFkError(error.message) ? FK_MSG : error.message };
