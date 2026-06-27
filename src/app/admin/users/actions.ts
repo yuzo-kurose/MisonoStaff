@@ -74,6 +74,45 @@ export async function setUserDivision(
   return { ok: true };
 }
 
+/** ユーザーの氏名を変更（管理者のみ）。 */
+export async function setUserName(
+  userId: string,
+  name: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return { ok: false, error: auth.error };
+  const n = name.trim();
+  if (!n) return { ok: false, error: "氏名を入力してください。" };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("profiles").update({ name: n } as never).eq("id", userId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
+/** ユーザーの所属拠点を変更（管理者のみ）。未設定（空）も可。 */
+export async function setUserBranch(
+  userId: string,
+  branchId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const auth = await requireRole(["admin"]);
+  if (!auth.ok) return { ok: false, error: auth.error };
+
+  const admin = createAdminClient();
+  if (branchId) {
+    const { data: b } = await admin.from("branches").select("id").eq("id", branchId).maybeSingle();
+    if (!b) return { ok: false, error: "不正な拠点です。" };
+  }
+  const { error } = await admin
+    .from("profiles")
+    .update({ branch_id: branchId || null } as never)
+    .eq("id", userId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
 /** ユーザーの権限ロールを変更（管理者のみ）。profiles.role を更新→トリガで app_metadata 同期。 */
 export async function setUserRole(
   userId: string,
@@ -108,6 +147,7 @@ export type UserDetail = {
   email: string;
   role: string;
   division: string;
+  branchId: string | null;
   branchName: string | null;
 };
 
@@ -146,6 +186,7 @@ export async function getUserHistory(
     email,
     role: p?.role ?? "participant",
     division: p?.division ?? "",
+    branchId: p?.branch_id ?? null,
     branchName,
   };
 

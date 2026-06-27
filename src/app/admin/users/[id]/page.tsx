@@ -6,6 +6,7 @@ import { Table, Th, Td } from "@/components/ui/Table";
 import { MobileRecord } from "@/components/ui/MobileRecord";
 import { yen, jpDate } from "@/lib/format";
 import { getUserHistory } from "../actions";
+import { getBranches } from "@/lib/queries/branches";
 import { UserInfoClient } from "./UserInfoClient";
 
 export default async function UserHistoryPage({
@@ -14,7 +15,8 @@ export default async function UserHistoryPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const data = await getUserHistory(id);
+  const [data, branchesRaw] = await Promise.all([getUserHistory(id), getBranches()]);
+  const branches = branchesRaw.map((b) => ({ id: b.id, name: b.name }));
 
   if (!data) {
     return (
@@ -41,7 +43,7 @@ export default async function UserHistoryPage({
         </Link>
       </div>
 
-      <UserInfoClient user={data.user} />
+      <UserInfoClient user={data.user} branches={branches} />
 
       <h2 className="mb-3 text-heading-sm text-neutral-900">申込履歴</h2>
       {data.rows.length === 0 ? (
