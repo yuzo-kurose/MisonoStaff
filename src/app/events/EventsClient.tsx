@@ -186,28 +186,20 @@ export function EventsClient({
             return (
               <div
                 key={e.id}
-                className="flex w-full items-stretch gap-3 rounded-xl border border-neutral-200 bg-neutral-white p-3 text-left shadow-sm sm:gap-4"
+                className="flex w-full flex-col gap-3 rounded-xl border border-neutral-200 bg-neutral-white p-4 text-left shadow-sm sm:flex-row sm:items-stretch sm:gap-4"
               >
-                {/* サムネイル */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/syuugou.jpeg"
-                  alt=""
-                  className="h-20 w-24 flex-none rounded-lg object-cover sm:h-28 sm:w-44"
-                />
-
-                {/* 日付ブロック */}
-                <div className="flex w-14 flex-none flex-col items-center justify-center sm:w-20">
+                {/* 日付ブロック（スマホは横並び、PCは左カラム） */}
+                <div className="flex flex-none items-baseline gap-2 sm:w-20 sm:flex-col sm:items-center sm:justify-center sm:gap-0">
                   <span className="text-heading-lg font-bold leading-none text-neutral-900 sm:text-[1.75rem]">
                     {md(e.eventDate)}
                   </span>
-                  <span className="mt-1 text-label-sm text-neutral-500">{weekday(e.eventDate)}</span>
+                  <span className="text-label-sm text-neutral-500 sm:mt-1">{weekday(e.eventDate)}</span>
                 </div>
 
                 {/* 内容 */}
                 <div className="min-w-0 flex-1">
                   <Badge variant="info">{e.category}</Badge>
-                  <p className="mt-1 truncate text-heading-sm text-neutral-900">{e.name}</p>
+                  <p className="mt-1 text-heading-sm text-neutral-900">{e.name}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-body-sm text-neutral-600">
                     {e.venue && (
                       <span className="inline-flex items-center gap-1">
@@ -238,22 +230,22 @@ export function EventsClient({
                 </div>
 
                 {/* 操作：申込済みは申込ボタン非活性＋修正ボタン。未申込は申込ボタン（締切後は非活性）。 */}
-                <div className="flex flex-none flex-col items-stretch justify-center gap-2">
+                <div className="flex flex-none flex-col justify-center gap-2 border-t border-neutral-100 pt-3 sm:border-0 sm:pt-0">
                   {applied ? (
                     <>
-                      <Button size="md" disabled>
+                      <Button size="md" disabled fullWidth>
                         申込済み
                       </Button>
-                      <ButtonLink href={`/events/apply?ids=${e.id}`} variant="secondary" size="md">
+                      <ButtonLink href={`/events/apply?ids=${e.id}`} variant="secondary" size="md" fullWidth>
                         修正
                       </ButtonLink>
                     </>
                   ) : closed ? (
-                    <Button size="md" disabled>
+                    <Button size="md" disabled fullWidth>
                       締切
                     </Button>
                   ) : (
-                    <ButtonLink href={`/events/apply?ids=${e.id}`} size="md">
+                    <ButtonLink href={`/events/apply?ids=${e.id}`} size="md" fullWidth>
                       申込
                     </ButtonLink>
                   )}
