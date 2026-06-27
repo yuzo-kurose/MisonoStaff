@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 type Result = { ok: boolean; error?: string };
@@ -31,6 +31,7 @@ export async function createBranch(input: {
   if (insErr) return { ok: false, error: insErr.message };
 
   revalidatePath("/admin/branches");
+  revalidateTag("branches");
   return { ok: true };
 }
 
@@ -53,5 +54,6 @@ export async function updateBranch(
   if (upErr) return { ok: false, error: upErr.message };
 
   revalidatePath("/admin/branches");
+  revalidateTag("branches");
   return { ok: true };
 }

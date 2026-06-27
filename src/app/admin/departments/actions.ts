@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 type Result = { ok: boolean; error?: string };
@@ -48,6 +48,7 @@ export async function createDepartment(name: string): Promise<Result> {
   }
 
   revalidatePath("/admin/departments");
+  revalidateTag("departments");
   return { ok: true };
 }
 
@@ -68,6 +69,7 @@ export async function updateDepartment(id: string, name: string): Promise<Result
   }
 
   revalidatePath("/admin/departments");
+  revalidateTag("departments");
   return { ok: true };
 }
 
@@ -84,5 +86,6 @@ export async function deleteDepartment(id: string): Promise<Result> {
   if (delErr) return { ok: false, error: delErr.message };
 
   revalidatePath("/admin/departments");
+  revalidateTag("departments");
   return { ok: true };
 }
